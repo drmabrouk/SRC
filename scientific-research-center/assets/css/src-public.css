@@ -76,3 +76,35 @@
     font-size: 0.9rem;
     color: #777;
 }
+
+.src-single-paper {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.src-paper-details {
+    display: flex;
+    gap: 3rem;
+}
+
+.src-abstract {
+    flex: 2;
+}
+
+.src-sidebar-info {
+    flex: 1;
+    padding-left: 2rem;
+    border-left: 1px solid #eee;
+}
+
+.info-item {
+    margin-bottom: 1.5rem;
+}
+
+.citation-text {
+    background: #fdfdfd;
+    padding: 10px;
+    border: 1px dashed #ccc;
+    font-style: italic;
+}

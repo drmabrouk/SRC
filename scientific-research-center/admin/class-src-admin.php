@@ -21,6 +21,10 @@ class SRC_Admin {
 	 */
 	public function enqueue_styles() {
 		wp_enqueue_style( 'src-admin-style', plugin_dir_url( dirname( __FILE__ ) ) . 'assets/css/src-admin.css', array(), $this->version, 'all' );
+
+		if ( is_rtl() ) {
+			wp_enqueue_style( 'src-rtl-style', plugin_dir_url( dirname( __FILE__ ) ) . 'assets/css/src-rtl.css', array( 'src-admin-style' ), $this->version, 'all' );
+		}
 	}
 
 	/**
@@ -254,6 +258,17 @@ class SRC_Admin {
 			<div class="card">
 				<h2><?php _e( 'Import Settings', 'scientific-research-center' ); ?></h2>
 				<p><?php _e( 'Upload a previously exported JSON configuration file.', 'scientific-research-center' ); ?></p>
+				<?php
+				if ( isset( $_POST['src_import_settings'] ) && ! empty( $_FILES['src_import_file']['tmp_name'] ) ) {
+					$import_data = json_decode( file_get_contents( $_FILES['src_import_file']['tmp_name'] ), true );
+					if ( $import_data ) {
+						foreach ( $import_data as $key => $value ) {
+							update_option( 'src_' . $key, $value );
+						}
+						echo '<div class="updated"><p>' . __( 'Settings imported successfully.', 'scientific-research-center' ) . '</p></div>';
+					}
+				}
+				?>
 				<form method="post" enctype="multipart/form-data">
 					<input type="file" name="src_import_file">
 					<input type="submit" name="src_import_settings" class="button button-secondary" value="<?php _e( 'Import Settings', 'scientific-research-center' ); ?>">
@@ -551,14 +566,11 @@ class SRC_Admin {
 			$reviewer_id = intval( $_POST['src_reviewer'] );
 			update_post_meta( $post_id, 'src_assigned_reviewer', $reviewer_id );
 
-			// Transition status to "Under Review" (custom logic could be more complex)
-			wp_update_post( array(
-				'ID' => $post_id,
-				'post_status' => 'publish', // Or a custom 'under-review' status
-			) );
+			// Transition status to "Under Review"
+			// We keep post_status as 'pending' so it's not public, but update our internal meta status.
 			update_post_meta( $post_id, 'src_paper_status', 'Under Review' );
 
-			echo '<div class="updated"><p>' . __( 'Reviewer assigned and paper moved to Under Review.', 'scientific-research-center' ) . '</p></div>';
+			echo '<div class="updated"><p>' . __( 'Reviewer assigned and paper marked as Under Review.', 'scientific-research-center' ) . '</p></div>';
 		}
 
 		$reviewers = get_users( array( 'role' => 'src_scientific_reviewer' ) );
@@ -641,6 +653,8 @@ class SRC_Admin {
 	 */
 	public function display_user_directory() {
 		if ( isset( $_GET['action'] ) && isset( $_GET['user_id'] ) ) {
+			check_admin_referer( 'src_user_action_' . $_GET['user_id'] );
+
 			$action = sanitize_text_field( $_GET['action'] );
 			$user_id = intval( $_GET['user_id'] );
 
@@ -651,6 +665,8 @@ class SRC_Admin {
 			} elseif ( $action === 'ban' ) {
 				update_user_meta( $user_id, 'src_account_status', 'Banned' );
 			}
+
+			echo '<div class="updated"><p>' . __( 'User status updated.', 'scientific-research-center' ) . '</p></div>';
 		}
 
 		$users = get_users( array(
@@ -679,12 +695,14 @@ class SRC_Admin {
 							<td><?php echo get_user_meta( $user->ID, 'src_account_status', true ) ?: 'Active'; ?></td>
 							<td>
 								<a href="<?php echo admin_url( 'admin.php?page=src-promote-user&user_id=' . $user->ID ); ?>"><?php _e( 'Promote', 'scientific-research-center' ); ?></a> |
-								<?php if ( get_user_meta( $user->ID, 'src_account_status', true ) === 'Suspended' ) : ?>
-									<a href="<?php echo admin_url( 'admin.php?page=src-user-directory&action=activate&user_id=' . $user->ID ); ?>"><?php _e( 'Activate', 'scientific-research-center' ); ?></a>
+								<?php
+								$nonce = wp_create_nonce( 'src_user_action_' . $user->ID );
+								if ( get_user_meta( $user->ID, 'src_account_status', true ) === 'Suspended' ) : ?>
+									<a href="<?php echo admin_url( 'admin.php?page=src-user-directory&action=activate&user_id=' . $user->ID . '&_wpnonce=' . $nonce ); ?>"><?php _e( 'Activate', 'scientific-research-center' ); ?></a>
 								<?php else : ?>
-									<a href="<?php echo admin_url( 'admin.php?page=src-user-directory&action=suspend&user_id=' . $user->ID ); ?>"><?php _e( 'Suspend', 'scientific-research-center' ); ?></a>
+									<a href="<?php echo admin_url( 'admin.php?page=src-user-directory&action=suspend&user_id=' . $user->ID . '&_wpnonce=' . $nonce ); ?>"><?php _e( 'Suspend', 'scientific-research-center' ); ?></a>
 								<?php endif; ?> |
-								<a href="<?php echo admin_url( 'admin.php?page=src-user-directory&action=ban&user_id=' . $user->ID ); ?>" style="color:red;"><?php _e( 'Ban', 'scientific-research-center' ); ?></a>
+								<a href="<?php echo admin_url( 'admin.php?page=src-user-directory&action=ban&user_id=' . $user->ID . '&_wpnonce=' . $nonce ); ?>" style="color:red;"><?php _e( 'Ban', 'scientific-research-center' ); ?></a>
 							</td>
 						</tr>
 					<?php endforeach; ?>

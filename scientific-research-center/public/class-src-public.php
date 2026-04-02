@@ -14,6 +14,26 @@ class SRC_Public {
 	 */
 	public function __construct( $version ) {
 		$this->version = $version;
+		add_action( 'wp_head', array( $this, 'add_google_scholar_metadata' ) );
+	}
+
+	/**
+	 * Add Google Scholar specific metadata to the head of research paper pages.
+	 */
+	public function add_google_scholar_metadata() {
+		if ( ! is_singular( 'research_paper' ) ) {
+			return;
+		}
+
+		global $post;
+		echo '<meta name="citation_title" content="' . esc_attr( $post->post_title ) . '">' . "\n";
+		echo '<meta name="citation_author" content="' . esc_attr( get_the_author_meta( 'display_name', $post->post_author ) ) . '">' . "\n";
+		echo '<meta name="citation_publication_date" content="' . get_the_date( 'Y/m/d', $post->ID ) . '">' . "\n";
+
+		$file_id = get_post_meta( $post->ID, 'src_paper_file', true );
+		if ( $file_id ) {
+			echo '<meta name="citation_pdf_url" content="' . esc_url( wp_get_attachment_url( $file_id ) ) . '">' . "\n";
+		}
 	}
 
 	/**

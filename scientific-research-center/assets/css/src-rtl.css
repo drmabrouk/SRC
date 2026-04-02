@@ -27,3 +27,25 @@ body.rtl .src-sidebar-filter {
 body.rtl .src-wizard-steps li {
     float: right;
 }
+
+/* Admin Dashboard RTL */
+.rtl #adminmenu .wp-menu-image img {
+    float: right;
+}
+
+.rtl .src-analytics-widgets {
+    flex-direction: row-reverse;
+}
+
+.rtl .src-directory-links a {
+    margin-right: 0;
+    margin-left: 10px;
+}
+
+/* Single View RTL */
+body.rtl .src-sidebar-info {
+    border-left: none;
+    border-right: 1px solid #eee;
+    padding-left: 0;
+    padding-right: 2rem;
+}
