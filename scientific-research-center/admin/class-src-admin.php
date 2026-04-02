@@ -160,6 +160,15 @@ class SRC_Admin {
 			'src-certificates',
 			array( $this, 'display_certificates' )
 		);
+
+		add_submenu_page(
+			'src-dashboard',
+			__( 'Tools', 'scientific-research-center' ),
+			__( 'Tools', 'scientific-research-center' ),
+			'manage_src_settings',
+			'src-tools',
+			array( $this, 'display_tools' )
+		);
 	}
 
 	/**
@@ -212,6 +221,44 @@ class SRC_Admin {
 					<input type="submit" name="submit" id="submit" class="button button-primary" value="<?php _e( 'Update Role', 'scientific-research-center' ); ?>">
 				</p>
 			</form>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Display the plugin tools page (Export/Import Settings).
+	 */
+	public function display_tools() {
+		if ( isset( $_POST['src_export_settings'] ) ) {
+			$settings = array(
+				'branding_color' => get_option( 'src_branding_color' ),
+				// Add other options here
+			);
+			$json = json_encode( $settings );
+			header('Content-Type: application/json');
+			header('Content-Disposition: attachment; filename="src-settings-export.json"');
+			echo $json;
+			exit;
+		}
+
+		?>
+		<div class="wrap">
+			<h1><?php _e( 'SRC Plugin Tools', 'scientific-research-center' ); ?></h1>
+			<div class="card">
+				<h2><?php _e( 'Export Settings', 'scientific-research-center' ); ?></h2>
+				<p><?php _e( 'Download the current plugin configuration as a JSON file.', 'scientific-research-center' ); ?></p>
+				<form method="post">
+					<input type="submit" name="src_export_settings" class="button button-primary" value="<?php _e( 'Export Settings (JSON)', 'scientific-research-center' ); ?>">
+				</form>
+			</div>
+			<div class="card">
+				<h2><?php _e( 'Import Settings', 'scientific-research-center' ); ?></h2>
+				<p><?php _e( 'Upload a previously exported JSON configuration file.', 'scientific-research-center' ); ?></p>
+				<form method="post" enctype="multipart/form-data">
+					<input type="file" name="src_import_file">
+					<input type="submit" name="src_import_settings" class="button button-secondary" value="<?php _e( 'Import Settings', 'scientific-research-center' ); ?>">
+				</form>
+			</div>
 		</div>
 		<?php
 	}

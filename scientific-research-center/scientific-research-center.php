@@ -51,6 +51,7 @@ class Scientific_Research_Center {
 		require_once plugin_dir_path( __FILE__ ) . 'includes/class-src-activator.php';
 		require_once plugin_dir_path( __FILE__ ) . 'includes/class-src-rewrites.php';
 		require_once plugin_dir_path( __FILE__ ) . 'includes/class-src-security.php';
+		require_once plugin_dir_path( __FILE__ ) . 'includes/class-src-portability.php';
 		require_once plugin_dir_path( __FILE__ ) . 'admin/class-src-admin.php';
 		require_once plugin_dir_path( __FILE__ ) . 'public/class-src-public.php';
 	}
@@ -120,6 +121,7 @@ class Scientific_Research_Center {
 	 * Execution of the plugin.
 	 */
 	public function run() {
+		SRC_Portability::init();
 		add_action( 'init', array( 'SRC_Post_Types', 'register_research_paper_cpt' ) );
 		add_action( 'init', array( 'SRC_Post_Types', 'register_taxonomies' ) );
 		add_action( 'init', array( 'SRC_Rewrites', 'add_rewrite_rules' ) );

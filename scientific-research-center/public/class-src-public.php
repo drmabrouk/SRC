@@ -162,8 +162,12 @@ class SRC_Public {
 	 * Render the Submission Wizard shortcode.
 	 */
 	public function render_submission_wizard() {
-		if ( isset( $_POST['paper_title'] ) ) {
-			$this->handle_submission();
+		if ( isset( $_POST['paper_title'] ) && isset( $_POST['src_submission_nonce'] ) ) {
+			if ( wp_verify_nonce( $_POST['src_submission_nonce'], 'src_submit_paper' ) ) {
+				$this->handle_submission();
+			} else {
+				echo '<div class="error"><p>' . __( 'Security check failed.', 'scientific-research-center' ) . '</p></div>';
+			}
 		}
 
 		if ( ! is_user_logged_in() ) {
@@ -185,6 +189,7 @@ class SRC_Public {
 				<li><?php _e( '3. Review', 'scientific-research-center' ); ?></li>
 			</ul>
 			<form id="src-submission-form" method="post" enctype="multipart/form-data">
+				<?php wp_nonce_field( 'src_submit_paper', 'src_submission_nonce' ); ?>
 				<div class="src-step-content" id="step-1">
 					<label for="paper_title"><?php _e( 'Paper Title:', 'scientific-research-center' ); ?></label>
 					<input type="text" name="paper_title" required>
@@ -203,7 +208,7 @@ class SRC_Public {
 	 * Handle the backend submission logic.
 	 */
 	private function handle_submission() {
-		if ( ! is_user_logged_in() || ! isset( $_FILES['paper_file'] ) ) {
+		if ( ! is_user_logged_in() || ! current_user_can( 'upload_src_papers' ) || ! isset( $_FILES['paper_file'] ) ) {
 			return;
 		}
 
