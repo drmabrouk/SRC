@@ -7,6 +7,12 @@
         var $steps = $('.src-wizard-steps li');
         var $nextBtn = $('#src-next-step');
 
+        // Handle filter form submission with skeleton loading
+        $('.src-sidebar-filter form').on('submit', function() {
+            $('.src-grid-view').hide();
+            $('#src-loading-skeletons').show();
+        });
+
         $nextBtn.on('click', function() {
             if (currentStep === 1) {
                 // Basic validation for Step 1

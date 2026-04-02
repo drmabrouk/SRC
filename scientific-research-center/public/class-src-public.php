@@ -154,6 +154,15 @@ class SRC_Public {
 			</aside>
 
 			<main class="src-results-list">
+				<div id="src-loading-skeletons" style="display:none;">
+					<?php for($i=0; $i<3; $i++): ?>
+						<div class="src-paper-skeleton">
+							<div class="src-skeleton" style="width:70%; height:1.5rem; margin-bottom:1rem;"></div>
+							<div class="src-skeleton" style="width:40%; margin-bottom:0.5rem;"></div>
+							<div class="src-skeleton" style="height:4rem;"></div>
+						</div>
+					<?php endfor; ?>
+				</div>
 				<?php if ( $query->have_posts() ) : ?>
 					<div class="src-grid-view">
 						<?php while ( $query->have_posts() ) : $query->the_post(); ?>
@@ -211,11 +220,15 @@ class SRC_Public {
 			<form id="src-submission-form" method="post" enctype="multipart/form-data">
 				<?php wp_nonce_field( 'src_submit_paper', 'src_submission_nonce' ); ?>
 				<div class="src-step-content" id="step-1">
-					<label for="paper_title"><?php _e( 'Paper Title:', 'scientific-research-center' ); ?></label>
-					<input type="text" name="paper_title" required>
+					<div class="src-floating-label">
+						<input type="text" name="paper_title" id="paper_title" placeholder=" " required>
+						<label for="paper_title"><?php _e( 'Paper Title', 'scientific-research-center' ); ?></label>
+					</div>
 
-					<label for="paper_abstract"><?php _e( 'Abstract:', 'scientific-research-center' ); ?></label>
-					<textarea name="paper_abstract" required></textarea>
+					<div class="src-floating-label">
+						<textarea name="paper_abstract" id="paper_abstract" placeholder=" " required></textarea>
+						<label for="paper_abstract"><?php _e( 'Abstract', 'scientific-research-center' ); ?></label>
+					</div>
 				</div>
 				<button type="button" id="src-next-step"><?php _e( 'Next', 'scientific-research-center' ); ?></button>
 			</form>

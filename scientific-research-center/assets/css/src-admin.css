@@ -1,0 +1,23 @@
+/* Modern Admin Aesthetic */
+.src-dashboard-wrap {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px solid #ddd;
+}
+
+.wp-list-table {
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid #eee !important;
+}
+
+.card {
+    border-radius: 12px !important;
+    border: 1px solid #eee !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.02) !important;
+}
+
+#adminmenu .wp-has-current-submenu .wp-submenu {
+    border-radius: 0 0 8px 8px;
+}

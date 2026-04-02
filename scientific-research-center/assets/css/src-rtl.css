@@ -8,11 +8,11 @@ body.rtl .src-hero-stats {
 }
 
 body.rtl .src-search-bar input[type="text"] {
-    border-radius: 0 4px 4px 0;
+    border-radius: 0 var(--src-radius) var(--src-radius) 0;
 }
 
 body.rtl .src-search-bar button {
-    border-radius: 4px 0 0 4px;
+    border-radius: var(--src-radius) 0 0 var(--src-radius);
 }
 
 body.rtl .src-search-container {
@@ -48,4 +48,9 @@ body.rtl .src-sidebar-info {
     border-right: 1px solid #eee;
     padding-left: 0;
     padding-right: 2rem;
+}
+
+body.rtl .src-floating-label label {
+    left: auto;
+    right: 1rem;
 }
