@@ -31,9 +31,34 @@ class SRC_Public {
 		echo '<meta name="citation_publication_date" content="' . get_the_date( 'Y/m/d', $post->ID ) . '">' . "\n";
 
 		$file_id = get_post_meta( $post->ID, 'src_paper_file', true );
-		if ( $file_id ) {
-			echo '<meta name="citation_pdf_url" content="' . esc_url( wp_get_attachment_url( $file_id ) ) . '">' . "\n";
+		$file_url = $file_id ? wp_get_attachment_url( $file_id ) : '';
+
+		if ( $file_url ) {
+			echo '<meta name="citation_pdf_url" content="' . esc_url( $file_url ) . '">' . "\n";
 		}
+
+		// Inject JSON-LD Schema.org Structured Data
+		$schema = array(
+			'@context' => 'https://schema.org',
+			'@type' => 'ScholarlyArticle',
+			'headline' => $post->post_title,
+			'author' => array(
+				'@type' => 'Person',
+				'name' => get_the_author_meta( 'display_name', $post->post_author ),
+			),
+			'datePublished' => get_the_date( 'c', $post->ID ),
+			'description' => wp_trim_words( $post->post_content, 30 ),
+		);
+
+		if ( $file_url ) {
+			$schema['encoding'] = array(
+				'@type' => 'MediaObject',
+				'contentUrl' => $file_url,
+				'encodingFormat' => 'application/pdf',
+			);
+		}
+
+		echo '<script type="application/ld+json">' . json_encode( $schema, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT ) . '</script>' . "\n";
 	}
 
 	/**
@@ -61,7 +86,7 @@ class SRC_Public {
 		ob_start();
 		?>
 		<div class="src-research-engine">
-			<div class="src-hero-stats">
+			<div class="src-hero-stats" role="region" aria-label="<?php esc_attr_e( 'Research Statistics', 'scientific-research-center' ); ?>">
 				<div class="stat-item">
 					<span class="stat-label"><?php _e( 'Total Papers', 'scientific-research-center' ); ?></span>
 					<span class="stat-value"><?php echo wp_count_posts( 'research_paper' )->publish; ?></span>
@@ -76,8 +101,9 @@ class SRC_Public {
 				</div>
 			</div>
 			<div class="src-search-bar">
-				<form action="<?php echo get_permalink( get_option( 'src_search_page_id' ) ); ?>" method="get">
-					<input type="text" name="src_query" placeholder="<?php _e( 'Search research papers...', 'scientific-research-center' ); ?>" required>
+				<form action="<?php echo get_permalink( get_option( 'src_search_page_id' ) ); ?>" method="get" role="search">
+					<label for="src_query_input" class="screen-reader-text"><?php _e( 'Search research papers', 'scientific-research-center' ); ?></label>
+					<input type="text" id="src_query_input" name="src_query" placeholder="<?php _e( 'Search research papers...', 'scientific-research-center' ); ?>" required>
 					<button type="submit"><?php _e( 'Search', 'scientific-research-center' ); ?></button>
 				</form>
 			</div>
