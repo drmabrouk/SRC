@@ -1,0 +1,78 @@
+.src-research-engine {
+    text-align: center;
+    padding: 2rem;
+    background: #f9f9f9;
+    border-radius: 8px;
+}
+
+.src-hero-stats {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 2rem;
+}
+
+.stat-item {
+    padding: 1rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: #fff;
+}
+
+.stat-label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+.stat-value {
+    font-size: 1.5rem;
+    color: #0073aa;
+}
+
+.src-search-bar form {
+    display: flex;
+    justify-content: center;
+}
+
+.src-search-bar input[type="text"] {
+    width: 60%;
+    padding: 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: 4px 0 0 4px;
+}
+
+.src-search-bar button {
+    padding: 0.5rem 1rem;
+    background: #0073aa;
+    color: #fff;
+    border: none;
+    border-radius: 0 4px 4px 0;
+    cursor: pointer;
+}
+
+.src-search-container {
+    display: flex;
+    margin-top: 2rem;
+}
+
+.src-sidebar-filter {
+    flex: 1;
+    padding: 1rem;
+    background: #f1f1f1;
+    margin-right: 2rem;
+}
+
+.src-results-list {
+    flex: 3;
+}
+
+.src-paper-item {
+    border-bottom: 1px solid #eee;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1.5rem;
+}
+
+.src-paper-meta {
+    font-size: 0.9rem;
+    color: #777;
+}
