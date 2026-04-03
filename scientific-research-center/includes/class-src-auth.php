@@ -22,7 +22,7 @@ class SRC_Auth {
 		$username = $user_data['username'];
 		$email    = $user_data['email'];
 		$password = $user_data['password'];
-		$role     = $user_data['role'];
+		$role     = ! empty( $user_data['role'] ) ? $user_data['role'] : 'src_member';
 
 		// Basic validation
 		if ( empty( $username ) || empty( $email ) || empty( $password ) ) {
@@ -43,9 +43,6 @@ class SRC_Auth {
 
 		// Role Whitelisting (Security)
 		$allowed_roles = apply_filters( 'src_allowed_registration_roles', array(
-			'src_supervisor',
-			'src_institution',
-			'src_reviewer',
 			'src_researcher',
 			'src_member'
 		) );
@@ -64,6 +61,18 @@ class SRC_Auth {
 		// Set role
 		$user = new WP_User( $user_id );
 		$user->set_role( $role );
+
+		// Update First and Last Name
+		wp_update_user( array(
+			'ID'         => $user_id,
+			'first_name' => sanitize_text_field( $user_data['first_name'] ),
+			'last_name'  => sanitize_text_field( $user_data['last_name'] ),
+		) );
+
+		// Save Institution meta
+		if ( isset( $user_data['institution'] ) ) {
+			update_user_meta( $user_id, 'src_institution', sanitize_text_field( $user_data['institution'] ) );
+		}
 
 		// Mark as unverified
 		update_user_meta( $user_id, 'src_email_verified', '0' );
