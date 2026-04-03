@@ -1,0 +1,130 @@
+/*
+ * Scientific Research Center - Monochromatic Style
+ */
+
+.src-auth-container.monochromatic {
+    max-width: 450px;
+    margin: 40px auto;
+    padding: 30px;
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+    color: #333;
+}
+
+.src-auth-tabs {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 30px;
+    border-bottom: 1px solid #eee;
+}
+
+.src-auth-tab {
+    flex: 1;
+    background: none;
+    border: none;
+    padding: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    color: #999;
+    transition: all 0.3s ease;
+    border-bottom: 2px solid transparent;
+}
+
+.src-auth-tab.active {
+    color: #000;
+    border-bottom: 2px solid #000;
+}
+
+.src-auth-form {
+    display: none;
+}
+
+.src-auth-form.active {
+    display: block;
+}
+
+.src-field-group {
+    position: relative;
+    margin-bottom: 25px;
+}
+
+.src-field-group input,
+.src-field-group select {
+    width: 100%;
+    padding: 12px 15px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 12px; /* 12px rounded corners */
+    background-color: #fff;
+    outline: none;
+    transition: border-color 0.3s;
+    box-sizing: border-box;
+}
+
+.src-field-group input:focus,
+.src-field-group select:focus {
+    border-color: #000;
+}
+
+/* Floating Labels */
+.src-field-group label {
+    position: absolute;
+    top: 50%;
+    left: 15px;
+    transform: translateY(-50%);
+    background-color: #fff;
+    padding: 0 5px;
+    color: #999;
+    font-size: 16px;
+    pointer-events: none;
+    transition: all 0.3s ease;
+}
+
+.src-field-group input:focus + label,
+.src-field-group input:not(:placeholder-shown) + label {
+    top: 0;
+    font-size: 12px;
+    color: #000;
+    font-weight: 600;
+}
+
+/* For Select/Dropdown which doesn't have placeholder-shown */
+.src-field-group select + label.select-label {
+    top: 0;
+    font-size: 12px;
+    color: #000;
+    font-weight: 600;
+}
+
+.src-submit-btn {
+    width: 100%;
+    padding: 12px;
+    background-color: #000;
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.src-submit-btn:hover {
+    background-color: #333;
+}
+
+.src-form-msg {
+    margin-top: 15px;
+    font-size: 14px;
+    text-align: center;
+}
+
+/* Micro-interactions (hover states) */
+.src-field-group input:hover,
+.src-field-group select:hover {
+    border-color: #999;
+}
