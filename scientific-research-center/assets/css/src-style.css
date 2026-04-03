@@ -1,9 +1,9 @@
 /*
- * Scientific Research Center - Monochromatic Style
+ * Scientific Research Center - Enhanced Monochromatic Style
  */
 
 .src-auth-container.monochromatic {
-    max-width: 450px;
+    max-width: 500px;
     margin: 40px auto;
     padding: 30px;
     background: #fff;
@@ -12,6 +12,23 @@
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
     color: #333;
+    transition: all 0.3s ease;
+}
+
+.src-welcome-msg {
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+.src-welcome-msg h2 {
+    font-size: 20px;
+    margin-bottom: 8px;
+    color: #000;
+}
+
+.src-welcome-msg p {
+    font-size: 14px;
+    color: #666;
 }
 
 .src-auth-tabs {
@@ -41,10 +58,25 @@
 
 .src-auth-form {
     display: none;
+    animation: fadeIn 0.4s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 .src-auth-form.active {
     display: block;
+}
+
+.src-field-row {
+    display: flex;
+    gap: 15px;
+}
+
+.src-field-row .src-field-group {
+    flex: 1;
 }
 
 .src-field-group {
@@ -58,7 +90,7 @@
     padding: 12px 15px;
     font-size: 16px;
     border: 1px solid #ccc;
-    border-radius: 12px; /* 12px rounded corners */
+    border-radius: 12px;
     background-color: #fff;
     outline: none;
     transition: border-color 0.3s;
@@ -92,12 +124,66 @@
     font-weight: 600;
 }
 
-/* For Select/Dropdown which doesn't have placeholder-shown */
 .src-field-group select + label.select-label {
     top: 0;
     font-size: 12px;
     color: #000;
     font-weight: 600;
+}
+
+/* Password Toggle */
+.src-toggle-pwd {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #999;
+    font-size: 20px;
+}
+
+.src-toggle-pwd:hover {
+    color: #000;
+}
+
+/* Forgot Password Link */
+.src-forgot-link {
+    text-align: right;
+    margin-top: -15px;
+    margin-bottom: 20px;
+}
+
+.src-forgot-link a {
+    font-size: 13px;
+    color: #666;
+    text-decoration: none;
+    transition: color 0.3s;
+}
+
+.src-forgot-link a:hover {
+    color: #000;
+}
+
+/* Terms Group */
+.src-terms-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 20px;
+    font-size: 14px;
+}
+
+.src-terms-group input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    cursor: pointer;
+}
+
+.src-terms-group a {
+    color: #000;
+    text-decoration: underline;
 }
 
 .src-submit-btn {
@@ -121,10 +207,29 @@
     margin-top: 15px;
     font-size: 14px;
     text-align: center;
+    min-height: 20px;
 }
 
-/* Micro-interactions (hover states) */
-.src-field-group input:hover,
-.src-field-group select:hover {
-    border-color: #999;
+/* Toggle Footer */
+.src-toggle-footer {
+    text-align: center;
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+}
+
+.src-toggle-footer p {
+    font-size: 14px;
+    color: #666;
+    margin: 0;
+}
+
+.src-toggle-footer a {
+    color: #000;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.src-toggle-footer a:hover {
+    text-decoration: underline;
 }

@@ -27,6 +27,7 @@ class SRC_Frontend {
 	 * Enqueue frontend CSS and JS
 	 */
 	public function enqueue_assets() {
+		wp_enqueue_style( 'dashicons' );
 		wp_enqueue_style( 'src-style', SRC_PLUGIN_URL . 'assets/css/src-style.css', array(), SRC_VERSION );
 		wp_enqueue_script( 'src-script', SRC_PLUGIN_URL . 'assets/js/src-script.js', array( 'jquery' ), SRC_VERSION, true );
 		wp_localize_script( 'src-script', 'src_ajax', array(
@@ -74,6 +75,11 @@ class SRC_Frontend {
 		do_action( 'src_before_auth_form' );
 		?>
 		<div class="src-auth-container monochromatic">
+			<div class="src-welcome-msg">
+				<h2><?php _e( 'Welcome to Scientific Research Center', 'scientific-research-center' ); ?></h2>
+				<p><?php _e( 'Please sign in or create an account to continue your academic journey.', 'scientific-research-center' ); ?></p>
+			</div>
+
 			<div class="src-auth-tabs">
 				<button class="src-auth-tab active" data-tab="login"><?php _e( 'Login', 'scientific-research-center' ); ?></button>
 				<button class="src-auth-tab" data-tab="register"><?php _e( 'Register', 'scientific-research-center' ); ?></button>
@@ -89,37 +95,81 @@ class SRC_Frontend {
 						<div class="src-field-group">
 							<input type="password" name="pwd" id="user_pass" placeholder=" " required>
 							<label for="user_pass"><?php _e( 'Password', 'scientific-research-center' ); ?></label>
+							<span class="src-toggle-pwd dashicons dashicons-visibility"></span>
+						</div>
+						<div class="src-forgot-link">
+							<a href="<?php echo esc_url( wp_lostpassword_url() ); ?>"><?php _e( 'Forgot Password?', 'scientific-research-center' ); ?></a>
 						</div>
 						<button type="submit" class="src-submit-btn"><?php _e( 'Login', 'scientific-research-center' ); ?></button>
+
+						<div class="src-toggle-footer">
+							<p><?php _e( "Don't have an account?", 'scientific-research-center' ); ?> <a href="#" class="src-switch-form" data-tab="register"><?php _e( 'Register now', 'scientific-research-center' ); ?></a></p>
+						</div>
+
 						<div class="src-form-msg"></div>
 					</form>
 				</div>
 
 				<div id="src-register-form" class="src-auth-form">
 					<form id="src-register-action">
+						<div class="src-field-row">
+							<div class="src-field-group">
+								<input type="text" name="first_name" id="reg_first_name" placeholder=" " required>
+								<label for="reg_first_name"><?php _e( 'First Name', 'scientific-research-center' ); ?></label>
+							</div>
+							<div class="src-field-group">
+								<input type="text" name="last_name" id="reg_last_name" placeholder=" " required>
+								<label for="reg_last_name"><?php _e( 'Last Name', 'scientific-research-center' ); ?></label>
+							</div>
+						</div>
 						<div class="src-field-group">
-							<input type="text" name="username" id="reg_username" placeholder=" " required>
-							<label for="reg_username"><?php _e( 'Username', 'scientific-research-center' ); ?></label>
+							<input type="text" name="username" id="reg_username" placeholder=" " minlength="4" required>
+							<label for="reg_username"><?php _e( 'Username (Min 4 chars)', 'scientific-research-center' ); ?></label>
 						</div>
 						<div class="src-field-group">
 							<input type="email" name="email" id="reg_email" placeholder=" " required>
 							<label for="reg_email"><?php _e( 'Email Address', 'scientific-research-center' ); ?></label>
 						</div>
-						<div class="src-field-group">
-							<input type="password" name="password" id="reg_password" placeholder=" " required>
-							<label for="reg_password"><?php _e( 'Password', 'scientific-research-center' ); ?></label>
+						<div class="src-field-row">
+							<div class="src-field-group">
+								<input type="password" name="password" id="reg_password" placeholder=" " required>
+								<label for="reg_password"><?php _e( 'Password', 'scientific-research-center' ); ?></label>
+								<span class="src-toggle-pwd dashicons dashicons-visibility"></span>
+							</div>
+							<div class="src-field-group">
+								<input type="password" name="password_confirm" id="reg_password_confirm" placeholder=" " required>
+								<label for="reg_password_confirm"><?php _e( 'Confirm Password', 'scientific-research-center' ); ?></label>
+							</div>
 						</div>
 						<div class="src-field-group">
 							<select name="role" id="reg_role" required>
 								<option value="src_member"><?php _e( 'Member', 'scientific-research-center' ); ?></option>
 								<option value="src_researcher"><?php _e( 'Researcher', 'scientific-research-center' ); ?></option>
-								<option value="src_reviewer"><?php _e( 'Reviewer', 'scientific-research-center' ); ?></option>
-								<option value="src_institution"><?php _e( 'Institution', 'scientific-research-center' ); ?></option>
-								<option value="src_supervisor"><?php _e( 'Supervisor', 'scientific-research-center' ); ?></option>
 							</select>
 							<label for="reg_role" class="select-label"><?php _e( 'I am a...', 'scientific-research-center' ); ?></label>
 						</div>
+
+						<div id="src-institution-field" class="src-field-group" style="display:none;">
+							<input type="text" name="institution" id="reg_institution" placeholder=" " list="src_institution_list">
+							<label for="reg_institution"><?php _e( 'Institution', 'scientific-research-center' ); ?></label>
+							<datalist id="src_institution_list">
+								<!-- Options populated via JS or hardcoded -->
+								<option value="Healthedia Research Center">
+								<option value="Global Science Institute">
+							</datalist>
+						</div>
+
+						<div class="src-terms-group">
+							<input type="checkbox" name="terms" id="reg_terms" required>
+							<label for="reg_terms"><?php printf( __( 'I agree to the %sTerms & Policies%s', 'scientific-research-center' ), '<a href="#">', '</a>' ); ?></label>
+						</div>
+
 						<button type="submit" class="src-submit-btn"><?php _e( 'Register', 'scientific-research-center' ); ?></button>
+
+						<div class="src-toggle-footer">
+							<p><?php _e( 'Already have an account?', 'scientific-research-center' ); ?> <a href="#" class="src-switch-form" data-tab="login"><?php _e( 'Login here', 'scientific-research-center' ); ?></a></p>
+						</div>
+
 						<div class="src-form-msg"></div>
 					</form>
 				</div>
