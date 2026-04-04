@@ -297,14 +297,27 @@ $current_section = isset( $_GET['section'] ) ? sanitize_text_field( $_GET['secti
 								$post_id = get_the_ID();
 								$type = strip_tags( get_the_term_list( $post_id, 'research_type', '', ', ' ) );
 								?>
-								<div class="src-research-card card" data-id="<?php echo $post_id; ?>">
+								<div class="src-research-card slide-entry card compact-card" data-id="<?php echo $post_id; ?>">
 									<div class="src-card-header">
-										<span class="src-badge"><?php echo esc_html( $type ); ?></span>
-										<button class="src-fav-toggle active"><span class="dashicons dashicons-heart"></span></button>
+										<span class="src-badge small-badge"><?php echo esc_html( $type ); ?></span>
+										<div class="src-card-top-actions">
+											<span class="src-date small-text"><?php echo get_the_date(); ?></span>
+											<button class="src-fav-toggle active" title="<?php _e( 'Remove from Favorites', 'scientific-research-center' ); ?>">
+												<span class="dashicons dashicons-heart"></span>
+											</button>
+										</div>
 									</div>
 									<h3><?php the_title(); ?></h3>
+									<div class="src-card-meta academic-meta">
+										<div class="src-meta-item"><span class="dashicons dashicons-admin-users"></span> <strong><?php the_author(); ?></strong></div>
+										<?php
+										$inst = get_user_meta( get_the_author_meta('ID'), 'src_institution', true );
+										if ( $inst ) : ?>
+											<div class="src-meta-item"><span class="dashicons dashicons-welcome-learn-more"></span> <span><?php echo esc_html( $inst ); ?></span></div>
+										<?php endif; ?>
+									</div>
 									<div class="src-card-actions">
-										<a href="<?php the_permalink(); ?>" class="src-submit-btn"><?php _e( 'View Details', 'scientific-research-center' ); ?></a>
+										<a href="<?php the_permalink(); ?>" class="src-view-details-btn"><?php _e( 'View Details', 'scientific-research-center' ); ?></a>
 									</div>
 								</div>
 								<?php
