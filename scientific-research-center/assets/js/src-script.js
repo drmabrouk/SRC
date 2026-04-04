@@ -1,5 +1,15 @@
 jQuery(document).ready(function($) {
     // Tab & Link Toggling (Auth Form)
+    // Profile Tabs Navigation
+    $(document).on('click', '.src-prof-tab-btn', function() {
+        const tab = $(this).data('tab');
+        $('.src-prof-tab-btn').removeClass('active');
+        $(this).addClass('active');
+
+        $('.src-prof-tab-content').removeClass('active');
+        $(`#src-prof-tab-${tab}`).addClass('active');
+    });
+
     $(document).on('click', '.src-auth-tab, .src-switch-form', function(e) {
         if ($(this).hasClass('src-switch-form')) e.preventDefault();
 
@@ -25,46 +35,23 @@ jQuery(document).ready(function($) {
         $(`.src-menu-item[data-section="${targetSection}"]`).trigger('click');
     }
 
-    // Control Panel Navigation (Collapsible)
-    $(document).on('click', '.src-menu-item', function(e) {
-        const $item = $(this);
-        const section = $item.data('section');
-
-        // Handle Submenu Toggle (Independent of Section Activation)
-        if ($(e.target).closest('.src-menu-toggle').length && $item.find('.src-submenu').length) {
-            const isExpanded = $item.hasClass('expanded');
-
-            // Optional: Collapse others
-            // $('.src-menu-item').not($item).removeClass('expanded').find('.src-submenu').slideUp();
-
-            $item.toggleClass('expanded');
-            $item.find('.src-submenu').slideToggle();
-
-            // If just toggling submenu, don't necessarily switch section unless it's a direct click
-        }
-
-        // Switch Main Section
-        if (section) {
-            $('.src-menu-item').removeClass('active');
-            $item.addClass('active');
-
-            $('.src-cp-section').removeClass('active');
-            $(`#src-cp-content-${section}`).addClass('active');
-
-            if (section === 'users-management' || section === 'institution-members') {
-                loadSystemUsers(section === 'institution-members');
-            } else if (section === 'submissions-management') {
-                loadSubmissions();
-            } else if (section === 'research-engine') {
-                loadTaxonomyEditor();
-            }
-        }
-
-        // Close sidebar on mobile
-        if ($(window).width() <= 992 && section) {
+    // Control Panel Navigation (Partial AJAX Removal - Full Page Transitions)
+    // We keep these for non-link UI parts if needed, but the template now uses <a> tags.
+    $(document).on('click', '.src-menu-item:not(.has-submenu)', function(e) {
+        if ($(window).width() <= 992) {
             $('.src-cp-sidebar').removeClass('active');
         }
     });
+
+    // Auto-load data for the active section on page load
+    const activeSection = $('.src-menu-item.active').find('a').parent().data('section') || 'dashboard';
+    if (activeSection === 'users-management' || activeSection === 'institution-members') {
+        loadSystemUsers(activeSection === 'institution-members');
+    } else if (activeSection === 'submissions-management') {
+        loadSubmissions();
+    } else if (activeSection === 'research-engine') {
+        loadTaxonomyEditor();
+    }
 
     // Mobile Sidebar Toggle
     $(document).on('click', '#src-cp-mobile-toggle', function() {
@@ -471,7 +458,7 @@ jQuery(document).ready(function($) {
         });
     }
 
-    // Library Search Redirection
+    // Search Button Redirection (Always to Results Page)
     $(document).on('click', '#lib_search_btn', function() {
         const query = $('#lib_search').val();
         const faculty = $('#lib_faculty').val();
@@ -565,7 +552,7 @@ jQuery(document).ready(function($) {
     }
 
     // Header List Interactions
-    $(document).on('click', '.src-pill-welcome', function(e) {
+    $(document).on('click', '.src-dropdown-trigger-area', function(e) {
         e.stopPropagation();
         $('.src-noti-dropdown').removeClass('active');
         $('.src-header-dropdown').not('.src-noti-dropdown').toggleClass('active');
@@ -770,6 +757,27 @@ jQuery(document).ready(function($) {
                     if ($('#src-cp-content-favorites').hasClass('active') && response.data.status === 'removed') {
                         $btn.closest('.src-research-card').fadeOut();
                     }
+                }
+            }
+        });
+    });
+
+    $(document).on('click', '#src-system-refresh', function(e) {
+        e.preventDefault();
+        const $btn = $(this);
+        $btn.find('.dashicons').addClass('spin');
+
+        $.ajax({
+            type: 'POST',
+            url: src_ajax.ajax_url,
+            data: {
+                action: 'src_system_refresh',
+                nonce: src_ajax.nonce
+            },
+            success: function(response) {
+                if (response.success) {
+                    alert(response.data.message);
+                    location.reload();
                 }
             }
         });

@@ -18,6 +18,8 @@ if ( empty( $full_name ) ) $full_name = $current_user->display_name;
 
 $role_definitions = SRC_Roles::get_roles_definition();
 $role_name = isset( $role_definitions[ $role ] ) ? $role_definitions[ $role ]['name'] : ucfirst( str_replace( 'src_', '', $role ) );
+
+$current_section = isset( $_GET['section'] ) ? sanitize_text_field( $_GET['section'] ) : 'dashboard';
 ?>
 
 <div class="src-control-panel monochromatic full-width-layout">
@@ -46,66 +48,50 @@ $role_name = isset( $role_definitions[ $role ] ) ? $role_definitions[ $role ]['n
 
 		<nav class="src-cp-nav">
 			<ul class="src-collapsible-menu">
-				<li class="src-menu-item active" data-section="dashboard">
-					<div class="src-menu-toggle">
+				<li class="src-menu-item <?php echo $current_section === 'dashboard' ? 'active' : ''; ?>">
+					<a href="?section=dashboard" class="src-menu-toggle">
 						<span class="dashicons dashicons-dashboard"></span> <?php _e( 'Overview', 'scientific-research-center' ); ?>
-					</div>
+					</a>
 				</li>
 
 				<?php if ( in_array( $role, array( 'src_administrator', 'administrator', 'src_supervisor' ) ) ) : ?>
-					<li class="src-menu-item" data-section="users-management">
-						<div class="src-menu-toggle">
+					<li class="src-menu-item <?php echo $current_section === 'users-management' ? 'active' : ''; ?>">
+						<a href="?section=users-management" class="src-menu-toggle">
 							<span class="dashicons dashicons-groups"></span> <?php _e( 'User Management', 'scientific-research-center' ); ?>
-							<span class="src-toggle-icon dashicons dashicons-arrow-down-alt2"></span>
-						</div>
-						<div class="src-submenu">
-							<p><?php _e( 'System Users', 'scientific-research-center' ); ?></p>
-							<p><?php _e( 'Role Management', 'scientific-research-center' ); ?></p>
-						</div>
+						</a>
 					</li>
-					<li class="src-menu-item" data-section="submissions-management">
-						<div class="src-menu-toggle">
+					<li class="src-menu-item <?php echo $current_section === 'submissions-management' ? 'active' : ''; ?>">
+						<a href="?section=submissions-management" class="src-menu-toggle">
 							<span class="dashicons dashicons-media-document"></span> <?php _e( 'Submissions', 'scientific-research-center' ); ?>
-							<span class="src-toggle-icon dashicons dashicons-arrow-down-alt2"></span>
-						</div>
-						<div class="src-submenu">
-							<p><?php _e( 'Moderation', 'scientific-research-center' ); ?></p>
-							<p><?php _e( 'Pending Review', 'scientific-research-center' ); ?></p>
-						</div>
+						</a>
 					</li>
-					<li class="src-menu-item" data-section="research-engine">
-						<div class="src-menu-toggle">
+					<li class="src-menu-item <?php echo $current_section === 'research-engine' ? 'active' : ''; ?>">
+						<a href="?section=research-engine" class="src-menu-toggle">
 							<span class="dashicons dashicons-rest-api"></span> <?php _e( 'Search Engine', 'scientific-research-center' ); ?>
-							<span class="src-toggle-icon dashicons dashicons-arrow-down-alt2"></span>
-						</div>
-						<div class="src-submenu">
-							<p><?php _e( 'Index Controls', 'scientific-research-center' ); ?></p>
-							<p><?php _e( 'Discovery Settings', 'scientific-research-center' ); ?></p>
-							<p><?php _e( 'Hierarchy Management', 'scientific-research-center' ); ?></p>
-						</div>
+						</a>
 					</li>
 				<?php endif; ?>
 
 				<?php if ( $role === 'src_institution' ) : ?>
-					<li class="src-menu-item" data-section="institution-members">
-						<div class="src-menu-toggle">
+					<li class="src-menu-item <?php echo $current_section === 'institution-members' ? 'active' : ''; ?>">
+						<a href="?section=institution-members" class="src-menu-toggle">
 							<span class="dashicons dashicons-businessperson"></span> <?php _e( 'Institution Members', 'scientific-research-center' ); ?>
-						</div>
+						</a>
 					</li>
 				<?php endif; ?>
 
 				<?php if ( in_array( $role, array( 'src_researcher', 'src_reviewer', 'src_member' ) ) ) : ?>
-					<li class="src-menu-item" data-section="favorites">
-						<div class="src-menu-toggle">
+					<li class="src-menu-item <?php echo $current_section === 'favorites' ? 'active' : ''; ?>">
+						<a href="?section=favorites" class="src-menu-toggle">
 							<span class="dashicons dashicons-heart"></span> <?php _e( 'My Favorites', 'scientific-research-center' ); ?>
-						</div>
+						</a>
 					</li>
 				<?php endif; ?>
 
-				<li class="src-menu-item" data-section="settings">
-					<div class="src-menu-toggle">
+				<li class="src-menu-item <?php echo $current_section === 'settings' ? 'active' : ''; ?>">
+					<a href="?section=settings" class="src-menu-toggle">
 						<span class="dashicons dashicons-admin-settings"></span> <?php _e( 'Settings', 'scientific-research-center' ); ?>
-					</div>
+					</a>
 				</li>
 			</ul>
 		</nav>
@@ -113,6 +99,7 @@ $role_name = isset( $role_definitions[ $role ] ) ? $role_definitions[ $role ]['n
 
 	<!-- Right Main Column -->
 	<main class="src-cp-main tight-layout">
+		<?php if ( $current_section === 'dashboard' ) : ?>
 		<div id="src-cp-content-dashboard" class="src-cp-section active">
 			<h1><?php printf( __( '%s Control Panel', 'scientific-research-center' ), $role_name ); ?></h1>
 			<p><?php _e( 'Welcome to your professional workspace.', 'scientific-research-center' ); ?></p>
@@ -154,9 +141,11 @@ $role_name = isset( $role_definitions[ $role ] ) ? $role_definitions[ $role ]['n
 				</div>
 			</div>
 		</div>
+		<?php endif; ?>
 
 		<?php if ( in_array( $role, array( 'src_administrator', 'administrator', 'src_supervisor' ) ) ) : ?>
-			<div id="src-cp-content-users-management" class="src-cp-section">
+			<?php if ( $current_section === 'users-management' ) : ?>
+			<div id="src-cp-content-users-management" class="src-cp-section active">
 				<h1><?php _e( 'System Users Management', 'scientific-research-center' ); ?></h1>
 
 				<div class="src-search-filters-bar">
@@ -187,8 +176,10 @@ $role_name = isset( $role_definitions[ $role ] ) ? $role_definitions[ $role ]['n
 					<div class="src-loading-skeleton"></div>
 				</div>
 			</div>
+			<?php endif; ?>
 
-			<div id="src-cp-content-submissions-management" class="src-cp-section">
+			<?php if ( $current_section === 'submissions-management' ) : ?>
+			<div id="src-cp-content-submissions-management" class="src-cp-section active">
 				<h1><?php _e( 'Submissions Management', 'scientific-research-center' ); ?></h1>
 
 				<div class="src-submission-search-container">
@@ -216,11 +207,13 @@ $role_name = isset( $role_definitions[ $role ] ) ? $role_definitions[ $role ]['n
 					<div class="src-loading-skeleton"></div>
 				</div>
 			</div>
+			<?php endif; ?>
 
-			<div id="src-cp-content-research-engine" class="src-cp-section">
+			<?php if ( $current_section === 'research-engine' ) : ?>
+			<div id="src-cp-content-research-engine" class="src-cp-section active">
 				<h1><?php _e( 'Research Engine Management', 'scientific-research-center' ); ?></h1>
 
-				<div class="src-engine-layout">
+				<div class="src-engine-layout grid-2">
 					<div class="src-engine-controls card">
 						<h3><?php _e( 'Index Control', 'scientific-research-center' ); ?></h3>
 						<p><?php _e( 'Manage how research is indexed and discovered.', 'scientific-research-center' ); ?></p>
@@ -263,10 +256,12 @@ $role_name = isset( $role_definitions[ $role ] ) ? $role_definitions[ $role ]['n
 					</div>
 				</div>
 			</div>
+			<?php endif; ?>
 		<?php endif; ?>
 
 		<?php if ( $role === 'src_institution' ) : ?>
-			<div id="src-cp-content-institution-members" class="src-cp-section">
+			<?php if ( $current_section === 'institution-members' ) : ?>
+			<div id="src-cp-content-institution-members" class="src-cp-section active">
 				<h1><?php _e( 'Institution Members', 'scientific-research-center' ); ?></h1>
 				<p><?php _e( 'Reviewers and Researchers associated with your institution.', 'scientific-research-center' ); ?></p>
 
@@ -275,10 +270,12 @@ $role_name = isset( $role_definitions[ $role ] ) ? $role_definitions[ $role ]['n
 					<div class="src-loading-skeleton"></div>
 				</div>
 			</div>
+			<?php endif; ?>
 		<?php endif; ?>
 
 		<?php if ( in_array( $role, array( 'src_researcher', 'src_reviewer', 'src_member' ) ) ) : ?>
-			<div id="src-cp-content-favorites" class="src-cp-section">
+			<?php if ( $current_section === 'favorites' ) : ?>
+			<div id="src-cp-content-favorites" class="src-cp-section active">
 				<h1><?php _e( 'My Saved Research', 'scientific-research-center' ); ?></h1>
 				<p><?php _e( 'Quick access to scientific contributions you have marked as favorites.', 'scientific-research-center' ); ?></p>
 
@@ -318,15 +315,17 @@ $role_name = isset( $role_definitions[ $role ] ) ? $role_definitions[ $role ]['n
 					?>
 				</div>
 			</div>
+			<?php endif; ?>
 		<?php endif; ?>
 
-		<div id="src-cp-content-settings" class="src-cp-section">
-			<h1><?php _e( 'Account Settings', 'scientific-research-center' ); ?></h1>
-			<p><?php _e( 'Manage your preferences and security settings.', 'scientific-research-center' ); ?></p>
+		<?php if ( $current_section === 'settings' ) : ?>
+		<div id="src-cp-content-settings" class="src-cp-section active">
+			<h1><?php _e( 'Advanced Platform Settings', 'scientific-research-center' ); ?></h1>
+			<p><?php _e( 'Customize the appearance, typography, and functional labels of your research gateway.', 'scientific-research-center' ); ?></p>
 
-			<div class="src-settings-tabs">
+			<div class="src-settings-layout grid-2">
 				<div class="src-card">
-					<h3><?php _e( 'Platform Customization', 'scientific-research-center' ); ?></h3>
+					<h3><span class="dashicons dashicons-admin-appearance"></span> <?php _e( 'Identity & Labels', 'scientific-research-center' ); ?></h3>
 					<div class="src-field-group">
 						<input type="text" name="custom_label_research" id="set_label_res" placeholder=" " value="<?php echo esc_attr( get_option( 'src_label_research', 'Research' ) ); ?>">
 						<label for="set_label_res"><?php _e( 'Research Field Label', 'scientific-research-center' ); ?></label>
@@ -339,10 +338,29 @@ $role_name = isset( $role_definitions[ $role ] ) ? $role_definitions[ $role ]['n
 						</select>
 						<label for="set_theme_font" class="select-label"><?php _e( 'Platform Font Style', 'scientific-research-center' ); ?></label>
 					</div>
-					<button class="src-submit-btn"><?php _e( 'Save Preferences', 'scientific-research-center' ); ?></button>
+				</div>
+
+				<div class="src-card">
+					<h3><span class="dashicons dashicons-art"></span> <?php _e( 'Visual Theme', 'scientific-research-center' ); ?></h3>
+					<div class="src-field-group">
+						<select id="set_theme_color">
+							<option value="monochrome"><?php _e( 'Strict Monochrome (Standard)', 'scientific-research-center' ); ?></option>
+							<option value="midnight"><?php _e( 'Midnight Scholar', 'scientific-research-center' ); ?></option>
+						</select>
+						<label for="set_theme_color" class="select-label"><?php _e( 'Color Palette', 'scientific-research-center' ); ?></label>
+					</div>
+					<div class="src-field-group">
+						<input type="text" name="custom_accent" placeholder="#000000" value="#000000">
+						<label><?php _e( 'Primary Accent Color', 'scientific-research-center' ); ?></label>
+					</div>
 				</div>
 			</div>
+
+			<div class="src-settings-footer" style="margin-top: 30px; text-align: right;">
+				<button class="src-submit-btn"><?php _e( 'Update System Preferences', 'scientific-research-center' ); ?></button>
+			</div>
 		</div>
+		<?php endif; ?>
 	</main>
 </div>
 

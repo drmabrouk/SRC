@@ -334,12 +334,12 @@ class SRC_Research {
 				$intervals = floor( ( $current_time - $start_time ) / ( 30 * 60 ) );
 				$live_count = $start_count + max( 0, $intervals );
 				?>
-				<div class="src-live-counter">
-					<span class="src-count-number" data-count="<?php echo $live_count; ?>"><?php echo number_format( $live_count ); ?></span>
-					<span class="src-count-label"><?php _e( 'Scientific Contributions', 'scientific-research-center' ); ?></span>
-				</div>
-
-				<p class="src-home-subheadline"><?php _e( 'Access thousands of scientific papers, theses, and case studies.', 'scientific-research-center' ); ?></p>
+				<p class="src-home-subheadline">
+					<?php printf(
+						__( 'You can access %s scientific papers, theses, studies, and case reports.', 'scientific-research-center' ),
+						'<span class="src-inline-counter" data-count="' . $live_count . '">' . number_format( $live_count ) . '</span>'
+					); ?>
+				</p>
 
 				<div class="src-search-engine centered">
 					<div class="src-search-input-wrapper">
