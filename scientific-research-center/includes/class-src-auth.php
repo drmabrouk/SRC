@@ -25,8 +25,16 @@ class SRC_Auth {
 		$role     = ! empty( $user_data['role'] ) ? $user_data['role'] : 'src_member';
 
 		// Basic validation
-		if ( empty( $username ) || empty( $email ) || empty( $password ) ) {
+		if ( empty( $username ) || empty( $email ) || empty( $password ) || empty( $user_data['first_name'] ) || empty( $user_data['last_name'] ) ) {
 			return new WP_Error( 'src_missing_fields', __( 'Please fill in all required fields.', 'scientific-research-center' ) );
+		}
+
+		if ( empty( $user_data['terms'] ) ) {
+			return new WP_Error( 'src_terms_required', __( 'You must agree to the Terms & Policies.', 'scientific-research-center' ) );
+		}
+
+		if ( $role === 'src_researcher' && empty( $user_data['institution'] ) ) {
+			return new WP_Error( 'src_institution_required', __( 'Researchers must provide an institution.', 'scientific-research-center' ) );
 		}
 
 		if ( ! is_email( $email ) ) {
@@ -103,8 +111,12 @@ class SRC_Auth {
 				// Trigger Hook for After Email Verification
 				do_action( 'src_user_email_verified', $user_id );
 
-				// Redirect to login page with success message
-				wp_safe_redirect( apply_filters( 'src_verification_redirect_url', add_query_arg( 'src_msg', 'verified', home_url( '/login-register/' ) ), $user_id ) );
+				// Log the user in
+				wp_set_current_user( $user_id );
+				wp_set_auth_cookie( $user_id );
+
+				// Redirect to profile completion page
+				wp_safe_redirect( apply_filters( 'src_verification_redirect_url', home_url( '/profile-completion/' ), $user_id ) );
 				exit;
 			} else {
 				wp_die( __( 'Invalid or expired verification token.', 'scientific-research-center' ) );
@@ -127,6 +139,32 @@ class SRC_Auth {
 		}
 
 		return $user;
+	}
+
+	/**
+	 * Handle forgot password request
+	 */
+	public static function forgot_password( $user_login ) {
+		if ( empty( $user_login ) ) {
+			return new WP_Error( 'src_missing_email', __( 'Please enter your email address.', 'scientific-research-center' ) );
+		}
+
+		$user = get_user_by( 'email', $user_login );
+		if ( ! $user ) {
+			$user = get_user_by( 'login', $user_login );
+		}
+
+		if ( ! $user ) {
+			return new WP_Error( 'src_invalid_user', __( 'User not found.', 'scientific-research-center' ) );
+		}
+
+		$errors = retrieve_password( $user->user_login );
+
+		if ( is_wp_error( $errors ) ) {
+			return $errors;
+		}
+
+		return true;
 	}
 
 	/**

@@ -10,19 +10,42 @@ jQuery(document).ready(function($) {
         $('.src-auth-form').removeClass('active');
         $(`#src-${tab}-form`).addClass('active');
 
+        // Hide forgot form if open
+        $('#src-login-action').show();
+        $('#src-forgot-form').hide();
+
         // Reset messages
         $('.src-form-msg').text('');
     });
 
-    // Role-based field toggling (Institution)
-    $('#reg_role').on('change', function() {
-        if ($(this).val() === 'src_researcher') {
+    // User Type Selection
+    $('.src-type-box').on('click', function() {
+        $('.src-type-box').removeClass('active');
+        $(this).addClass('active');
+        const role = $(this).data('role');
+        $('#reg_role').val(role);
+
+        if (role === 'src_researcher') {
             $('#src-institution-field').slideDown();
             $('#reg_institution').attr('required', true);
         } else {
             $('#src-institution-field').slideUp();
             $('#reg_institution').attr('required', false);
         }
+    });
+
+    // Forgot Password Toggle
+    $('#src-show-forgot').on('click', function(e) {
+        e.preventDefault();
+        $('#src-login-action').fadeOut(200, function() {
+            $('#src-forgot-form').fadeIn(200);
+        });
+    });
+
+    $('#src-back-to-login').on('click', function() {
+        $('#src-forgot-form').fadeOut(200, function() {
+            $('#src-login-action').fadeIn(200);
+        });
     });
 
     // Show/Hide Password
@@ -64,6 +87,31 @@ jQuery(document).ready(function($) {
         });
     });
 
+    // Forgot Password Submission
+    $('#src-forgot-action').on('submit', function(e) {
+        e.preventDefault();
+        const $form = $(this);
+        const $msg = $form.find('.src-form-msg');
+        $msg.text('Processing...').css('color', '#333');
+
+        $.ajax({
+            type: 'POST',
+            url: src_ajax.ajax_url,
+            data: {
+                action: 'src_forgot_password',
+                nonce: src_ajax.nonce,
+                user_login: $form.find('input[name="user_login"]').val()
+            },
+            success: function(response) {
+                if (response.success) {
+                    $msg.text(response.data.message).css('color', 'green');
+                } else {
+                    $msg.text(response.data.message).css('color', 'red');
+                }
+            }
+        });
+    });
+
     // Register Submission
     $('#src-register-action').on('submit', function(e) {
         e.preventDefault();
@@ -98,7 +146,7 @@ jQuery(document).ready(function($) {
                 username: username,
                 email: $form.find('input[name="email"]').val(),
                 password: password,
-                role: $form.find('select[name="role"]').val(),
+                role: $('#reg_role').val(),
                 institution: $form.find('input[name="institution"]').val(),
                 terms: $form.find('input[name="terms"]').is(':checked') ? 1 : 0
             },
@@ -107,6 +155,39 @@ jQuery(document).ready(function($) {
                     $msg.text(response.data.message).css('color', 'green');
                     $form[0].reset();
                     $('#src-institution-field').hide();
+                    $('.src-type-box').removeClass('active');
+                    $('.src-type-box[data-role="src_member"]').addClass('active');
+                    $('#reg_role').val('src_member');
+                } else {
+                    $msg.text(response.data.message).css('color', 'red');
+                }
+            }
+        });
+    });
+
+    // Profile Completion Submission
+    $('#src-profile-completion-action').on('submit', function(e) {
+        e.preventDefault();
+        const $form = $(this);
+        const $msg = $form.find('.src-form-msg');
+        $msg.text('Saving profile...').css('color', '#333');
+
+        const formData = new FormData(this);
+        formData.append('action', 'src_complete_profile');
+        formData.append('nonce', src_ajax.nonce);
+
+        $.ajax({
+            type: 'POST',
+            url: src_ajax.ajax_url,
+            data: formData,
+            contentType: false,
+            processData: false,
+            success: function(response) {
+                if (response.success) {
+                    $msg.text(response.data.message).css('color', 'green');
+                    setTimeout(function() {
+                        window.location.href = response.data.redirect;
+                    }, 1500);
                 } else {
                     $msg.text(response.data.message).css('color', 'red');
                 }

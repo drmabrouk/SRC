@@ -28,10 +28,10 @@ class SRC_Emails {
 
 		$subject = __( 'Verify Your Account - Scientific Research Center', 'scientific-research-center' );
 		$message = self::get_email_template(
-			__( 'Welcome to the Platform', 'scientific-research-center' ),
-			sprintf( __( 'Please click the button below to verify your account and complete your registration as a %s.', 'scientific-research-center' ), self::get_role_name( $user ) ),
+			__( 'Welcome to Scientific Research Center', 'scientific-research-center' ),
+			sprintf( __( 'Please confirm your email to complete your registration as a %s. After confirmation, you will be guided to complete your official researcher profile.', 'scientific-research-center' ), self::get_role_name( $user ) ),
 			$verification_url,
-			__( 'Verify Account', 'scientific-research-center' )
+			__( 'Confirm Registration', 'scientific-research-center' )
 		);
 
 		$headers = array( 'Content-Type: text/html; charset=UTF-8' );
