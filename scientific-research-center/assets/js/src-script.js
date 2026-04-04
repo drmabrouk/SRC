@@ -23,24 +23,36 @@ jQuery(document).ready(function($) {
         const $item = $(this);
         const section = $item.data('section');
 
-        // Toggle submenu if exists
-        if ($item.find('.src-submenu').length) {
+        // Handle Submenu Toggle (Independent of Section Activation)
+        if ($(e.target).closest('.src-menu-toggle').length && $item.find('.src-submenu').length) {
+            const isExpanded = $item.hasClass('expanded');
+
+            // Optional: Collapse others
+            // $('.src-menu-item').not($item).removeClass('expanded').find('.src-submenu').slideUp();
+
             $item.toggleClass('expanded');
             $item.find('.src-submenu').slideToggle();
+
+            // If just toggling submenu, don't necessarily switch section unless it's a direct click
         }
 
-        $('.src-menu-item').removeClass('active');
-        $item.addClass('active');
+        // Switch Main Section
+        if (section) {
+            $('.src-menu-item').removeClass('active');
+            $item.addClass('active');
 
-        $('.src-cp-section').removeClass('active');
-        $(`#src-cp-content-${section}`).addClass('active');
+            $('.src-cp-section').removeClass('active');
+            $(`#src-cp-content-${section}`).addClass('active');
 
-        if (section === 'users-management' || section === 'institution-members') {
-            loadSystemUsers(section === 'institution-members');
+            if (section === 'users-management' || section === 'institution-members') {
+                loadSystemUsers(section === 'institution-members');
+            } else if (section === 'submissions-management') {
+                loadSubmissions();
+            }
         }
 
         // Close sidebar on mobile
-        if ($(window).width() <= 992) {
+        if ($(window).width() <= 992 && section) {
             $('.src-cp-sidebar').removeClass('active');
         }
     });
@@ -405,6 +417,18 @@ jQuery(document).ready(function($) {
         });
     });
 
+    // Submission Filtering Logic
+    $(document).on('keyup', '#src-sub-search', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            loadSubmissions();
+        }, 500);
+    });
+
+    $(document).on('change', '#src-sub-filter-type, #src-sub-filter-status', function() {
+        loadSubmissions();
+    });
+
     // Submission Management Actions
     $(document).on('click', '.src-sub-act', function() {
         const $btn = $(this);
@@ -443,7 +467,13 @@ jQuery(document).ready(function($) {
             url: src_ajax.ajax_url,
             data: {
                 action: 'src_load_submissions',
-                nonce: src_ajax.nonce
+                nonce: src_ajax.nonce,
+                search: $('#src-sub-search').val() || '',
+                type: $('#src-sub-filter-type').val() || '',
+                status: $('#src-sub-filter-status').val() || 'pending'
+            },
+            beforeSend: function() {
+                $container.html('<div class="src-loading-skeleton"></div>');
             },
             success: function(response) {
                 if (response.success) {
@@ -452,11 +482,6 @@ jQuery(document).ready(function($) {
             }
         });
     }
-
-    // Load submissions if section active
-    $(document).on('click', '[data-section="submissions-management"]', function() {
-        loadSubmissions();
-    });
 
     // Header List Interactions
     $(document).on('click', '.src-pill-welcome', function(e) {
@@ -480,6 +505,35 @@ jQuery(document).ready(function($) {
         e.preventDefault();
         e.stopPropagation();
         $('#src-header-avatar-input').click();
+    });
+
+    $(document).on('click', '#src-trigger-dashboard-upload img', function() {
+        $('#src-dashboard-avatar-input').click();
+    });
+
+    $(document).on('change', '#src-dashboard-avatar-input', function() {
+        const file = this.files[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('action', 'src_upload_avatar');
+        formData.append('nonce', src_ajax.nonce);
+        formData.append('avatar', file);
+
+        $.ajax({
+            type: 'POST',
+            url: src_ajax.ajax_url,
+            data: formData,
+            contentType: false,
+            processData: false,
+            success: function(response) {
+                if (response.success) {
+                    $('.src-cp-avatar img, .src-pill-avatar img').attr('src', response.data.url);
+                } else {
+                    alert(response.data.message);
+                }
+            }
+        });
     });
 
     $(document).on('change', '#src-header-avatar-input', function() {

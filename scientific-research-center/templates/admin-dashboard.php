@@ -28,16 +28,19 @@ $role_name = isset( $role_definitions[ $role ] ) ? $role_definitions[ $role ]['n
 
 	<!-- Left Sidebar -->
 	<aside class="src-cp-sidebar fixed-sidebar">
-		<div class="src-cp-profile">
-			<div class="src-cp-avatar">
+		<div class="src-cp-profile horizontal">
+			<div class="src-cp-avatar small left" id="src-trigger-dashboard-upload">
 				<img src="<?php echo esc_url( $profile_picture_url ); ?>" alt="<?php echo esc_attr( $full_name ); ?>">
+				<input type="file" id="src-dashboard-avatar-input" style="display:none;" accept="image/*">
 			</div>
 			<div class="src-cp-user-info">
 				<h4><?php echo esc_html( $full_name ); ?></h4>
 				<span class="src-cp-role"><?php echo esc_html( $role_name ); ?></span>
 			</div>
-			<a href="<?php echo esc_url( home_url( '/profile-completion/' ) ); ?>" class="src-cp-edit-btn" title="<?php _e( 'Edit Profile', 'scientific-research-center' ); ?>">
-				<span class="dashicons dashicons-edit"></span>
+			<a href="<?php echo esc_url( home_url( '/profile-completion/' ) ); ?>" class="src-cp-settings-btn" title="<?php _e( 'Edit Profile', 'scientific-research-center' ); ?>">
+				<div class="src-gear-circle">
+					<span class="dashicons dashicons-admin-generic"></span>
+				</div>
 			</a>
 		</div>
 
@@ -130,7 +133,28 @@ $role_name = isset( $role_definitions[ $role ] ) ? $role_definitions[ $role ]['n
 
 			<div id="src-cp-content-submissions-management" class="src-cp-section">
 				<h1><?php _e( 'Submissions Management', 'scientific-research-center' ); ?></h1>
-				<p><?php _e( 'Review and moderate pending scientific research submissions.', 'scientific-research-center' ); ?></p>
+
+				<div class="src-submission-search-container">
+					<div class="src-search-bar compact">
+						<input type="text" id="src-sub-search" placeholder="<?php _e( 'Search by title, author, or keywords...', 'scientific-research-center' ); ?>">
+						<span class="dashicons dashicons-search"></span>
+					</div>
+					<div class="src-sub-filters">
+						<select id="src-sub-filter-type">
+							<option value=""><?php _e( 'All Types', 'scientific-research-center' ); ?></option>
+							<option value="thesis"><?php _e( 'Theses', 'scientific-research-center' ); ?></option>
+							<option value="paper"><?php _e( 'Papers', 'scientific-research-center' ); ?></option>
+							<option value="study"><?php _e( 'Studies', 'scientific-research-center' ); ?></option>
+						</select>
+						<select id="src-sub-filter-status">
+							<option value="pending"><?php _e( 'Pending Only', 'scientific-research-center' ); ?></option>
+							<option value="publish"><?php _e( 'Approved', 'scientific-research-center' ); ?></option>
+							<option value="draft"><?php _e( 'Rejected', 'scientific-research-center' ); ?></option>
+							<option value="any"><?php _e( 'Any Status', 'scientific-research-center' ); ?></option>
+						</select>
+					</div>
+				</div>
+
 				<div class="src-user-list-container" id="src-submission-list">
 					<div class="src-loading-skeleton"></div>
 				</div>
