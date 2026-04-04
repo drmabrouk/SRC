@@ -21,6 +21,60 @@ class SRC_Frontend {
 		// AJAX handlers
 		add_action( 'wp_ajax_nopriv_src_login', array( $this, 'handle_ajax_login' ) );
 		add_action( 'wp_ajax_nopriv_src_register', array( $this, 'handle_ajax_register' ) );
+		add_action( 'wp_ajax_nopriv_src_forgot_password', array( $this, 'handle_ajax_forgot_password' ) );
+		add_action( 'wp_ajax_src_complete_profile', array( $this, 'handle_ajax_complete_profile' ) );
+	}
+
+	/**
+	 * AJAX Profile Completion Handler
+	 */
+	public function handle_ajax_complete_profile() {
+		check_ajax_referer( 'src_auth_nonce', 'nonce' );
+		$user_id = get_current_user_id();
+
+		if ( ! $user_id ) {
+			wp_send_json_error( array( 'message' => __( 'You must be logged in to complete your profile.', 'scientific-research-center' ) ) );
+		}
+
+		$meta_fields = array( 'country', 'mobile', 'alt_email', 'gender', 'academic_degree' );
+		foreach ( $meta_fields as $field ) {
+			if ( isset( $_POST[ $field ] ) ) {
+				update_user_meta( $user_id, 'src_' . $field, sanitize_text_field( $_POST[ $field ] ) );
+			}
+		}
+
+		// Handle Profile Picture
+		if ( ! empty( $_FILES['profile_picture'] ) ) {
+			require_once( ABSPATH . 'wp-admin/includes/image.php' );
+			require_once( ABSPATH . 'wp-admin/includes/file.php' );
+			require_once( ABSPATH . 'wp-admin/includes/media.php' );
+
+			$attachment_id = media_handle_upload( 'profile_picture', 0 );
+			if ( ! is_wp_error( $attachment_id ) ) {
+				update_user_meta( $user_id, 'src_profile_picture', $attachment_id );
+			}
+		}
+
+		wp_send_json_success( array(
+			'message' => __( 'Profile completed successfully! Redirecting...', 'scientific-research-center' ),
+			'redirect' => home_url( '/login-register/' )
+		) );
+	}
+
+	/**
+	 * AJAX Forgot Password Handler
+	 */
+	public function handle_ajax_forgot_password() {
+		check_ajax_referer( 'src_auth_nonce', 'nonce' );
+
+		$user_login = sanitize_text_field( $_POST['user_login'] );
+		$result = SRC_Auth::forgot_password( $user_login );
+
+		if ( is_wp_error( $result ) ) {
+			wp_send_json_error( array( 'message' => $result->get_error_message() ) );
+		} else {
+			wp_send_json_success( array( 'message' => __( 'Password reset link has been sent to your email.', 'scientific-research-center' ) ) );
+		}
 	}
 
 	/**
@@ -54,6 +108,10 @@ class SRC_Frontend {
 			if ( str_contains( $slug, '-dashboard' ) ) {
 				return SRC_PLUGIN_DIR . 'templates/dashboard.php';
 			}
+
+			if ( $slug === 'profile-completion' ) {
+				return SRC_PLUGIN_DIR . 'templates/profile-completion.php';
+			}
 		}
 
 		return $template;
@@ -64,7 +122,7 @@ class SRC_Frontend {
 	 */
 	public function render_auth_form() {
 		if ( is_user_logged_in() ) {
-			return sprintf( '<div class="src-auth-container monochromatic"><p>%s <a href="%s">%s</a></p></div>',
+			return sprintf( '<div class="src-auth-container monochromatic compact"><p>%s <a href="%s">%s</a></p></div>',
 				__( 'You are already logged in.', 'scientific-research-center' ),
 				wp_logout_url( home_url( '/login-register/' ) ),
 				__( 'Logout', 'scientific-research-center' )
@@ -74,15 +132,14 @@ class SRC_Frontend {
 		ob_start();
 		do_action( 'src_before_auth_form' );
 		?>
-		<div class="src-auth-container monochromatic">
+		<div class="src-auth-container monochromatic compact">
 			<div class="src-welcome-msg">
-				<h2><?php _e( 'Welcome to Scientific Research Center', 'scientific-research-center' ); ?></h2>
-				<p><?php _e( 'Please sign in or create an account to continue your academic journey.', 'scientific-research-center' ); ?></p>
+				<h2><?php _e( 'Welcome', 'scientific-research-center' ); ?></h2>
 			</div>
 
 			<div class="src-auth-tabs">
 				<button class="src-auth-tab active" data-tab="login"><?php _e( 'Login', 'scientific-research-center' ); ?></button>
-				<button class="src-auth-tab" data-tab="register"><?php _e( 'Register', 'scientific-research-center' ); ?></button>
+				<button class="src-auth-tab" data-tab="register"><?php _e( 'Registration', 'scientific-research-center' ); ?></button>
 			</div>
 
 			<div class="src-auth-forms">
@@ -98,7 +155,7 @@ class SRC_Frontend {
 							<span class="src-toggle-pwd dashicons dashicons-visibility"></span>
 						</div>
 						<div class="src-forgot-link">
-							<a href="<?php echo esc_url( wp_lostpassword_url() ); ?>"><?php _e( 'Forgot Password?', 'scientific-research-center' ); ?></a>
+							<a href="#" id="src-show-forgot"><?php _e( 'Forgot Password?', 'scientific-research-center' ); ?></a>
 						</div>
 						<button type="submit" class="src-submit-btn"><?php _e( 'Login', 'scientific-research-center' ); ?></button>
 
@@ -108,10 +165,38 @@ class SRC_Frontend {
 
 						<div class="src-form-msg"></div>
 					</form>
+
+					<!-- Inline Forgot Password Form -->
+					<div id="src-forgot-form" style="display:none;">
+						<form id="src-forgot-action">
+							<p class="src-hint"><?php _e( 'Enter your email address to reset your password.', 'scientific-research-center' ); ?></p>
+							<div class="src-field-group">
+								<input type="email" name="user_login" id="forgot_email" placeholder=" " required>
+								<label for="forgot_email"><?php _e( 'Email Address', 'scientific-research-center' ); ?></label>
+							</div>
+							<div class="src-btn-group">
+								<button type="submit" class="src-submit-btn"><?php _e( 'Reset Password', 'scientific-research-center' ); ?></button>
+								<button type="button" id="src-back-to-login" class="src-cancel-btn"><?php _e( 'Back to Login', 'scientific-research-center' ); ?></button>
+							</div>
+							<div class="src-form-msg"></div>
+						</form>
+					</div>
 				</div>
 
 				<div id="src-register-form" class="src-auth-form">
 					<form id="src-register-action">
+						<div class="src-user-type-selection">
+							<div class="src-type-box active" data-role="src_member">
+								<span class="dashicons dashicons-id-alt"></span>
+								<span><?php _e( 'Member', 'scientific-research-center' ); ?></span>
+							</div>
+							<div class="src-type-box" data-role="src_researcher">
+								<span class="dashicons dashicons-welcome-learn-more"></span>
+								<span><?php _e( 'Researcher', 'scientific-research-center' ); ?></span>
+							</div>
+							<input type="hidden" name="role" id="reg_role" value="src_member">
+						</div>
+
 						<div class="src-field-row">
 							<div class="src-field-group">
 								<input type="text" name="first_name" id="reg_first_name" placeholder=" " required>
@@ -122,13 +207,15 @@ class SRC_Frontend {
 								<label for="reg_last_name"><?php _e( 'Last Name', 'scientific-research-center' ); ?></label>
 							</div>
 						</div>
-						<div class="src-field-group">
-							<input type="text" name="username" id="reg_username" placeholder=" " minlength="4" required>
-							<label for="reg_username"><?php _e( 'Username (Min 4 chars)', 'scientific-research-center' ); ?></label>
-						</div>
-						<div class="src-field-group">
-							<input type="email" name="email" id="reg_email" placeholder=" " required>
-							<label for="reg_email"><?php _e( 'Email Address', 'scientific-research-center' ); ?></label>
+						<div class="src-field-row">
+							<div class="src-field-group">
+								<input type="text" name="username" id="reg_username" placeholder=" " minlength="4" required>
+								<label for="reg_username"><?php _e( 'Username', 'scientific-research-center' ); ?></label>
+							</div>
+							<div class="src-field-group">
+								<input type="email" name="email" id="reg_email" placeholder=" " required>
+								<label for="reg_email"><?php _e( 'Email Address', 'scientific-research-center' ); ?></label>
+							</div>
 						</div>
 						<div class="src-field-row">
 							<div class="src-field-group">
@@ -141,21 +228,17 @@ class SRC_Frontend {
 								<label for="reg_password_confirm"><?php _e( 'Confirm Password', 'scientific-research-center' ); ?></label>
 							</div>
 						</div>
-						<div class="src-field-group">
-							<select name="role" id="reg_role" required>
-								<option value="src_member"><?php _e( 'Member', 'scientific-research-center' ); ?></option>
-								<option value="src_researcher"><?php _e( 'Researcher', 'scientific-research-center' ); ?></option>
-							</select>
-							<label for="reg_role" class="select-label"><?php _e( 'I am a...', 'scientific-research-center' ); ?></label>
-						</div>
 
 						<div id="src-institution-field" class="src-field-group" style="display:none;">
 							<input type="text" name="institution" id="reg_institution" placeholder=" " list="src_institution_list">
 							<label for="reg_institution"><?php _e( 'Institution', 'scientific-research-center' ); ?></label>
 							<datalist id="src_institution_list">
-								<!-- Options populated via JS or hardcoded -->
-								<option value="Healthedia Research Center">
-								<option value="Global Science Institute">
+								<?php
+								$institutions = get_utils_institutions();
+								foreach ( $institutions as $inst ) {
+									echo '<option value="' . esc_attr( $inst ) . '">';
+								}
+								?>
 							</datalist>
 						</div>
 
@@ -210,10 +293,14 @@ class SRC_Frontend {
 		check_ajax_referer( 'src_auth_nonce', 'nonce' );
 
 		$user_data = array(
-			'username' => sanitize_user( $_POST['username'] ),
-			'email'    => sanitize_email( $_POST['email'] ),
-			'password' => $_POST['password'],
-			'role'     => sanitize_text_field( $_POST['role'] ),
+			'username'    => sanitize_user( $_POST['username'] ),
+			'email'       => sanitize_email( $_POST['email'] ),
+			'password'    => $_POST['password'],
+			'first_name'  => sanitize_text_field( $_POST['first_name'] ),
+			'last_name'   => sanitize_text_field( $_POST['last_name'] ),
+			'role'        => sanitize_text_field( $_POST['role'] ),
+			'institution' => isset( $_POST['institution'] ) ? sanitize_text_field( $_POST['institution'] ) : '',
+			'terms'       => isset( $_POST['terms'] ) ? (int) $_POST['terms'] : 0,
 		);
 
 		$result = SRC_Auth::register_user( $user_data );

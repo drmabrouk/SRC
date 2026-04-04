@@ -21,6 +21,7 @@ define( 'SRC_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'SRC_VERSION', '1.0.0' );
 
 // Include core files
+require_once SRC_PLUGIN_DIR . 'includes/utils.php';
 require_once SRC_PLUGIN_DIR . 'includes/class-src-activator.php';
 require_once SRC_PLUGIN_DIR . 'includes/class-src-deactivator.php';
 require_once SRC_PLUGIN_DIR . 'includes/class-src-roles.php';
