@@ -156,14 +156,26 @@ function src_highlight_keywords( $text, $query ) {
 
 				if ( $query->have_posts() ) :
 					while ( $query->have_posts() ) : $query->the_post();
+						$post_id = get_the_ID();
 						$author_id = get_the_author_meta( 'ID' );
 						$institution = get_user_meta( $author_id, 'src_institution', true );
-						$type = strip_tags( get_the_term_list( get_the_ID(), 'research_type', '', ', ' ) );
+						$type = strip_tags( get_the_term_list( $post_id, 'research_type', '', ', ' ) );
+
+						$user_id = get_current_user_id();
+						$favorites = get_user_meta( $user_id, 'src_favorites', true ) ?: array();
+						$is_fav = in_array( $post_id, $favorites );
 						?>
-						<div class="src-research-card slide-entry card">
+						<div class="src-research-card slide-entry card" data-id="<?php echo $post_id; ?>">
 							<div class="src-card-header">
 								<span class="src-badge"><?php echo esc_html( $type ); ?></span>
-								<span class="src-date"><?php echo get_the_date(); ?></span>
+								<div class="src-card-top-actions">
+									<span class="src-date"><?php echo get_the_date(); ?></span>
+									<?php if ( is_user_logged_in() ) : ?>
+										<button class="src-fav-toggle <?php echo $is_fav ? 'active' : ''; ?>" title="<?php _e( 'Add to Favorites', 'scientific-research-center' ); ?>">
+											<span class="dashicons <?php echo $is_fav ? 'dashicons-heart' : 'dashicons-heart'; ?>"></span>
+										</button>
+									<?php endif; ?>
+								</div>
 							</div>
 							<h3><?php echo src_highlight_keywords( get_the_title(), $search_query ); ?></h3>
 							<div class="src-card-meta">
