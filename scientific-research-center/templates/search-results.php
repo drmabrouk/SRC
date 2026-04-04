@@ -11,7 +11,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 get_header();
 
 $search_query = isset( $_GET['s'] ) ? sanitize_text_field( $_GET['s'] ) : '';
-$specialties = isset( $_GET['specialties'] ) ? sanitize_text_field( $_GET['specialties'] ) : '';
+$faculty = isset( $_GET['faculty'] ) ? absint( $_GET['faculty'] ) : 0;
+$specialty = isset( $_GET['specialty'] ) ? absint( $_GET['specialty'] ) : 0;
+$subspecialty = isset( $_GET['subspecialty'] ) ? absint( $_GET['subspecialty'] ) : 0;
+$institution = isset( $_GET['institution'] ) ? absint( $_GET['institution'] ) : 0;
 $type_filter = isset( $_GET['type'] ) ? sanitize_text_field( $_GET['type'] ) : '';
 $sort_by = isset( $_GET['sort'] ) ? sanitize_text_field( $_GET['sort'] ) : 'relevance';
 
@@ -40,6 +43,47 @@ function src_highlight_keywords( $text, $query ) {
 		<aside class="src-results-sidebar">
 			<form id="src-advanced-filters" method="GET" action="<?php echo esc_url( home_url( '/research-results/' ) ); ?>">
 				<input type="hidden" name="s" value="<?php echo esc_attr( $search_query ); ?>">
+
+				<div class="src-filter-group collapsible expanded">
+					<h3 class="src-filter-toggle"><?php _e( 'Faculty / College', 'scientific-research-center' ); ?> <span class="dashicons dashicons-arrow-down-alt2"></span></h3>
+					<div class="src-filter-content">
+						<select name="faculty" id="res_faculty" class="src-filter-select">
+							<option value="0"><?php _e( 'All Faculties', 'scientific-research-center' ); ?></option>
+							<?php
+							$facs = get_terms( array( 'taxonomy' => 'src_faculty', 'hide_empty' => false, 'parent' => 0 ) );
+							foreach ( $facs as $fac ) echo '<option value="'.$fac->term_id.'" '.selected($faculty, $fac->term_id, false).'>'.$fac->name.'</option>';
+							?>
+						</select>
+					</div>
+				</div>
+
+				<div class="src-filter-group collapsible expanded">
+					<h3 class="src-filter-toggle"><?php _e( 'Specialty', 'scientific-research-center' ); ?> <span class="dashicons dashicons-arrow-down-alt2"></span></h3>
+					<div class="src-filter-content">
+						<select name="specialty" id="res_specialty" class="src-filter-select" <?php echo ! $faculty ? 'disabled' : ''; ?>>
+							<option value="0"><?php _e( 'All Specialties', 'scientific-research-center' ); ?></option>
+							<?php
+							if ( $faculty ) {
+								$specs = get_terms( array( 'taxonomy' => 'src_specialty', 'hide_empty' => false, 'parent' => $faculty ) );
+								foreach ( $specs as $spec ) echo '<option value="'.$spec->term_id.'" '.selected($specialty, $spec->term_id, false).'>'.$spec->name.'</option>';
+							}
+							?>
+						</select>
+					</div>
+				</div>
+
+				<div class="src-filter-group collapsible expanded">
+					<h3 class="src-filter-toggle"><?php _e( 'Institution', 'scientific-research-center' ); ?> <span class="dashicons dashicons-arrow-down-alt2"></span></h3>
+					<div class="src-filter-content">
+						<select name="institution" class="src-filter-select">
+							<option value="0"><?php _e( 'All Institutions', 'scientific-research-center' ); ?></option>
+							<?php
+							$insts = get_terms( array( 'taxonomy' => 'src_institution_tax', 'hide_empty' => false ) );
+							foreach ( $insts as $inst ) echo '<option value="'.$inst->term_id.'" '.selected($institution, $inst->term_id, false).'>'.$inst->name.'</option>';
+							?>
+						</select>
+					</div>
+				</div>
 
 				<div class="src-filter-group collapsible expanded">
 					<h3 class="src-filter-toggle"><?php _e( 'Research Type', 'scientific-research-center' ); ?> <span class="dashicons dashicons-arrow-down-alt2"></span></h3>
@@ -86,15 +130,26 @@ function src_highlight_keywords( $text, $query ) {
 					case 'title_asc': $args['orderby'] = 'title'; $args['order'] = 'ASC'; break;
 				}
 
-				// Apply Type Filter
+				// Apply Taxonomy Filters
+				$tax_query = array( 'relation' => 'AND' );
 				if ( $type_filter ) {
-					$args['tax_query'] = array(
-						array(
-							'taxonomy' => 'research_type',
-							'field'    => 'slug',
-							'terms'    => $type_filter,
-						),
-					);
+					$tax_query[] = array( 'taxonomy' => 'research_type', 'field' => 'slug', 'terms' => $type_filter );
+				}
+				if ( $faculty ) {
+					$tax_query[] = array( 'taxonomy' => 'src_faculty', 'field' => 'term_id', 'terms' => $faculty );
+				}
+				if ( $specialty ) {
+					$tax_query[] = array( 'taxonomy' => 'src_specialty', 'field' => 'term_id', 'terms' => $specialty );
+				}
+				if ( $subspecialty ) {
+					$tax_query[] = array( 'taxonomy' => 'src_sub_specialty', 'field' => 'term_id', 'terms' => $subspecialty );
+				}
+				if ( $institution ) {
+					$tax_query[] = array( 'taxonomy' => 'src_institution_tax', 'field' => 'term_id', 'terms' => $institution );
+				}
+
+				if ( count( $tax_query ) > 1 ) {
+					$args['tax_query'] = $tax_query;
 				}
 
 				$query = new WP_Query( $args );

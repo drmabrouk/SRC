@@ -22,6 +22,8 @@ class SRC_Research {
 		add_action( 'wp_ajax_src_filter_research', array( $this, 'handle_ajax_filter_research' ) );
 		add_action( 'wp_ajax_src_load_submissions', array( $this, 'handle_ajax_load_submissions' ) );
 		add_action( 'wp_ajax_src_process_submission', array( $this, 'handle_ajax_process_submission' ) );
+		add_action( 'wp_ajax_src_manage_taxonomy', array( $this, 'handle_ajax_manage_taxonomy' ) );
+		add_action( 'wp_ajax_src_get_child_taxonomies', array( $this, 'handle_ajax_get_child_taxonomies' ) );
 	}
 
 	/**
@@ -301,12 +303,42 @@ class SRC_Research {
 	/**
 	 * Render Research Library (Public Search Engine)
 	 */
+	public function handle_ajax_get_child_taxonomies() {
+		check_ajax_referer( 'src_auth_nonce', 'nonce' );
+		$parent_id = absint( $_POST['parent_id'] );
+		$target_tax = sanitize_text_field( $_POST['target_tax'] );
+		$label = sanitize_text_field( $_POST['label'] );
+
+		$terms = get_terms( array( 'taxonomy' => $target_tax, 'hide_empty' => false, 'parent' => $parent_id ) );
+
+		ob_start();
+		echo '<option value="">' . $label . '</option>';
+		foreach ( $terms as $term ) {
+			echo '<option value="' . $term->term_id . '">' . esc_html( $term->name ) . '</option>';
+		}
+		wp_send_json_success( ob_get_clean() );
+	}
+
 	public function render_research_library() {
 		ob_start();
 		?>
 		<div class="src-library-container monochromatic home-engine">
 			<div class="src-library-header">
 				<h1 class="src-home-headline"><?php _e( 'Explore Global Research', 'scientific-research-center' ); ?></h1>
+
+				<?php
+				// Dynamic Live Counter Logic
+				$start_count = 27520;
+				$start_time = 1714521600; // May 1, 2024
+				$current_time = current_time( 'timestamp' );
+				$intervals = floor( ( $current_time - $start_time ) / ( 30 * 60 ) );
+				$live_count = $start_count + max( 0, $intervals );
+				?>
+				<div class="src-live-counter">
+					<span class="src-count-number" data-count="<?php echo $live_count; ?>"><?php echo number_format( $live_count ); ?></span>
+					<span class="src-count-label"><?php _e( 'Scientific Contributions', 'scientific-research-center' ); ?></span>
+				</div>
+
 				<p class="src-home-subheadline"><?php _e( 'Access thousands of scientific papers, theses, and case studies.', 'scientific-research-center' ); ?></p>
 
 				<div class="src-search-engine centered">
@@ -314,16 +346,39 @@ class SRC_Research {
 						<input type="text" id="lib_search" placeholder="<?php _e( 'Search research, papers, authors...', 'scientific-research-center' ); ?>">
 						<span class="dashicons dashicons-search"></span>
 					</div>
-					<div class="src-filters inline">
-						<div class="src-multi-select-wrapper">
-							<select id="lib_specialty" multiple class="src-multi-select">
-								<option value="medicine"><?php _e( 'Medicine', 'scientific-research-center' ); ?></option>
-								<option value="physics"><?php _e( 'Physics', 'scientific-research-center' ); ?></option>
-								<option value="engineering"><?php _e( 'Engineering', 'scientific-research-center' ); ?></option>
-								<option value="biology"><?php _e( 'Biology', 'scientific-research-center' ); ?></option>
-								<option value="ai"><?php _e( 'Artificial Intelligence', 'scientific-research-center' ); ?></option>
-							</select>
-							<label for="lib_specialty"><?php _e( 'Select Specialties', 'scientific-research-center' ); ?></label>
+					<div class="src-filters inline advanced-filters-row">
+						<div class="src-filter-pill-wrapper">
+							<div class="src-field-group compact-select">
+								<select id="lib_faculty" class="src-hier-search-select">
+									<option value=""><?php _e( 'Select Faculty', 'scientific-research-center' ); ?></option>
+									<?php
+									$faculties = get_terms( array( 'taxonomy' => 'src_faculty', 'hide_empty' => false, 'parent' => 0 ) );
+									foreach ( $faculties as $fac ) echo '<option value="'.$fac->term_id.'">'.$fac->name.'</option>';
+									?>
+								</select>
+							</div>
+
+							<div class="src-field-group compact-select">
+								<select id="lib_specialty" class="src-hier-search-select" disabled>
+									<option value=""><?php _e( 'Specialty', 'scientific-research-center' ); ?></option>
+								</select>
+							</div>
+
+							<div class="src-field-group compact-select">
+								<select id="lib_sub_specialty" class="src-hier-search-select" disabled>
+									<option value=""><?php _e( 'Sub-specialty', 'scientific-research-center' ); ?></option>
+								</select>
+							</div>
+
+							<div class="src-field-group compact-select">
+								<select id="lib_institution" class="src-hier-search-select">
+									<option value=""><?php _e( 'Select Institution', 'scientific-research-center' ); ?></option>
+									<?php
+									$insts = get_terms( array( 'taxonomy' => 'src_institution_tax', 'hide_empty' => false ) );
+									foreach ( $insts as $inst ) echo '<option value="'.$inst->term_id.'">'.$inst->name.'</option>';
+									?>
+								</select>
+							</div>
 						</div>
 
 						<button id="lib_search_btn" class="src-submit-btn"><?php _e( 'Start Discovery', 'scientific-research-center' ); ?></button>
@@ -427,6 +482,80 @@ class SRC_Research {
 	/**
 	 * AJAX Process Submission (Approve/Reject)
 	 */
+	public function handle_ajax_manage_taxonomy() {
+		check_ajax_referer( 'src_auth_nonce', 'nonce' );
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Access Denied.', 'scientific-research-center' ) ) );
+		}
+
+		$act = sanitize_text_field( $_POST['hier_action'] );
+		$type = sanitize_text_field( $_POST['hier_type'] );
+
+		if ( $act === 'add' ) {
+			$name = sanitize_text_field( $_POST['hier_name'] );
+			$parent = absint( $_POST['hier_parent'] );
+			$term = wp_insert_term( $name, $type, array( 'parent' => $parent ) );
+			if ( is_wp_error( $term ) ) {
+				wp_send_json_error( array( 'message' => $term->get_error_message() ) );
+			}
+			wp_send_json_success( array( 'message' => __( 'Category added successfully.', 'scientific-research-center' ) ) );
+		} elseif ( $act === 'delete' ) {
+			$term_id = absint( $_POST['hier_id'] );
+			wp_delete_term( $term_id, $type );
+			wp_send_json_success( array( 'message' => __( 'Category removed.', 'scientific-research-center' ) ) );
+		} elseif ( $act === 'load' ) {
+			$terms = get_terms( array( 'taxonomy' => $type, 'hide_empty' => false, 'parent' => 0 ) );
+			ob_start();
+			?>
+			<table class="src-user-table">
+				<thead>
+					<tr>
+						<th><?php _e( 'Name', 'scientific-research-center' ); ?></th>
+						<th><?php _e( 'Hierarchy', 'scientific-research-center' ); ?></th>
+						<th><?php _e( 'Actions', 'scientific-research-center' ); ?></th>
+					</tr>
+				</thead>
+				<tbody>
+					<?php if ( empty( $terms ) ) : ?>
+						<tr><td colspan="3"><?php _e( 'No items found.', 'scientific-research-center' ); ?></td></tr>
+					<?php else : ?>
+						<?php foreach ( $terms as $term ) : ?>
+							<tr>
+								<td><strong><?php echo esc_html( $term->name ); ?></strong></td>
+								<td><?php echo esc_html( $type ); ?></td>
+								<td>
+									<button class="src-icon-btn src-danger src-hier-act" data-action="delete" data-id="<?php echo $term->term_id; ?>" data-type="<?php echo $type; ?>"><span class="dashicons dashicons-trash"></span></button>
+								</td>
+							</tr>
+							<?php
+							$children = get_terms( array( 'taxonomy' => $type, 'hide_empty' => false, 'parent' => $term->term_id ) );
+							foreach ( $children as $child ) : ?>
+								<tr>
+									<td>&mdash; <?php echo esc_html( $child->name ); ?></td>
+									<td><?php echo esc_html( $type ); ?></td>
+									<td>
+										<button class="src-icon-btn src-danger src-hier-act" data-action="delete" data-id="<?php echo $child->term_id; ?>" data-type="<?php echo $type; ?>"><span class="dashicons dashicons-trash"></span></button>
+									</td>
+								</tr>
+							<?php endforeach; ?>
+						<?php endforeach; ?>
+					<?php endif; ?>
+				</tbody>
+			</table>
+			<?php
+			$html = ob_get_clean();
+
+			// Also return parent options
+			$parent_options = '<option value="0">' . __( 'None (Root)', 'scientific-research-center' ) . '</option>';
+			$all_terms = get_terms( array( 'taxonomy' => $type, 'hide_empty' => false ) );
+			foreach ( $all_terms as $at ) {
+				$parent_options .= '<option value="' . $at->term_id . '">' . esc_html( $at->name ) . '</option>';
+			}
+
+			wp_send_json_success( array( 'html' => $html, 'parents' => $parent_options ) );
+		}
+	}
+
 	public function handle_ajax_process_submission() {
 		check_ajax_referer( 'src_auth_nonce', 'nonce' );
 		if ( ! current_user_can( 'edit_others_posts' ) ) {
@@ -545,6 +674,38 @@ class SRC_Research {
 		register_taxonomy( 'research_category', 'research_paper', array(
 			'label'        => __( 'Scientific Category', 'scientific-research-center' ),
 			'rewrite'      => array( 'slug' => 'research-category' ),
+			'hierarchical' => true,
+			'show_in_rest' => true,
+		) );
+
+		// Faculty (Level 1)
+		register_taxonomy( 'src_faculty', 'research_paper', array(
+			'label'        => __( 'Faculty / College', 'scientific-research-center' ),
+			'rewrite'      => array( 'slug' => 'faculty' ),
+			'hierarchical' => true,
+			'show_in_rest' => true,
+		) );
+
+		// Specialty (Level 2 - Child of Faculty)
+		register_taxonomy( 'src_specialty', 'research_paper', array(
+			'label'        => __( 'Specialty', 'scientific-research-center' ),
+			'rewrite'      => array( 'slug' => 'specialty' ),
+			'hierarchical' => true,
+			'show_in_rest' => true,
+		) );
+
+		// Sub-specialty (Level 3 - Child of Specialty)
+		register_taxonomy( 'src_sub_specialty', 'research_paper', array(
+			'label'        => __( 'Sub-specialty', 'scientific-research-center' ),
+			'rewrite'      => array( 'slug' => 'sub-specialty' ),
+			'hierarchical' => true,
+			'show_in_rest' => true,
+		) );
+
+		// Registered Institution (Level 4)
+		register_taxonomy( 'src_institution_tax', 'research_paper', array(
+			'label'        => __( 'Registered Institution', 'scientific-research-center' ),
+			'rewrite'      => array( 'slug' => 'institution' ),
 			'hierarchical' => true,
 			'show_in_rest' => true,
 		) );

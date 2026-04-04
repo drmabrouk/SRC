@@ -18,6 +18,11 @@ while ( have_posts() ) :
 	$co_authors = get_post_meta( $post_id, 'src_co_authors', true );
 	$pub_date = get_post_meta( $post_id, 'src_pub_date', true );
 	$pub_id = get_post_meta( $post_id, 'src_pub_id', true );
+
+	// Hierarchical Metadata
+	$faculties = get_the_term_list( $post_id, 'src_faculty', '', ', ' );
+	$specialties = get_the_term_list( $post_id, 'src_specialty', '', ', ' );
+	$institutions = get_the_term_list( $post_id, 'src_institution_tax', '', ', ' );
 	$file_id = get_post_meta( $post_id, 'src_main_file', true );
 	$file_url = $file_id ? wp_get_attachment_url( $file_id ) : '';
 	$file_name = $file_id ? get_the_title( $file_id ) : '';
@@ -41,6 +46,9 @@ while ( have_posts() ) :
 				<header class="src-detail-header">
 					<div class="src-detail-meta-top">
 						<span class="src-badge"><?php echo esc_html( $type ); ?></span>
+						<?php if ( $institutions ) : ?>
+							<span class="src-inst-badge"><?php echo strip_tags( $institutions ); ?></span>
+						<?php endif; ?>
 						<?php if ( $pub_id ) : ?>
 							<span class="src-pub-id"><?php printf( __( 'ID: %s', 'scientific-research-center' ), esc_html( $pub_id ) ); ?></span>
 						<?php endif; ?>
@@ -69,6 +77,20 @@ while ( have_posts() ) :
 						<?php the_content(); ?>
 					</div>
 				</section>
+
+				<?php if ( $faculties || $specialties ) : ?>
+					<section class="src-detail-section">
+						<h3><?php _e( 'Scientific Classification', 'scientific-research-center' ); ?></h3>
+						<div class="src-classification-meta">
+							<?php if ( $faculties ) : ?>
+								<p><strong><?php _e( 'Faculty:', 'scientific-research-center' ); ?></strong> <?php echo $faculties; ?></p>
+							<?php endif; ?>
+							<?php if ( $specialties ) : ?>
+								<p><strong><?php _e( 'Specialty:', 'scientific-research-center' ); ?></strong> <?php echo $specialties; ?></p>
+							<?php endif; ?>
+						</div>
+					</section>
+				<?php endif; ?>
 
 				<section class="src-detail-section">
 					<h3><?php _e( 'Keywords', 'scientific-research-center' ); ?></h3>
