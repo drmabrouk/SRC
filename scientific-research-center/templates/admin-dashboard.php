@@ -81,6 +81,7 @@ $role_name = isset( $role_definitions[ $role ] ) ? $role_definitions[ $role ]['n
 						<div class="src-submenu">
 							<p><?php _e( 'Index Controls', 'scientific-research-center' ); ?></p>
 							<p><?php _e( 'Discovery Settings', 'scientific-research-center' ); ?></p>
+							<p><?php _e( 'Hierarchy Management', 'scientific-research-center' ); ?></p>
 						</div>
 					</li>
 				<?php endif; ?>
@@ -210,11 +211,48 @@ $role_name = isset( $role_definitions[ $role ] ) ? $role_definitions[ $role ]['n
 
 			<div id="src-cp-content-research-engine" class="src-cp-section">
 				<h1><?php _e( 'Research Engine Management', 'scientific-research-center' ); ?></h1>
-				<div class="src-engine-controls card">
-					<h3><?php _e( 'Index Control', 'scientific-research-center' ); ?></h3>
-					<p><?php _e( 'Manage how research is indexed and discovered.', 'scientific-research-center' ); ?></p>
-					<button class="src-submit-btn"><?php _e( 'Rebuild Search Index', 'scientific-research-center' ); ?></button>
-					<button class="src-btn-outline"><?php _e( 'Clear Engine Cache', 'scientific-research-center' ); ?></button>
+
+				<div class="src-engine-layout">
+					<div class="src-engine-controls card">
+						<h3><?php _e( 'Index Control', 'scientific-research-center' ); ?></h3>
+						<p><?php _e( 'Manage how research is indexed and discovered.', 'scientific-research-center' ); ?></p>
+						<button class="src-submit-btn"><?php _e( 'Rebuild Search Index', 'scientific-research-center' ); ?></button>
+						<button class="src-btn-outline"><?php _e( 'Clear Engine Cache', 'scientific-research-center' ); ?></button>
+					</div>
+
+					<div class="src-engine-hierarchy card" style="margin-top: 30px;">
+						<h3><?php _e( 'Scientific Hierarchy Management', 'scientific-research-center' ); ?></h3>
+						<p><?php _e( 'Add, edit, or remove faculties, specialties, and sub-specialties to organize the global research engine.', 'scientific-research-center' ); ?></p>
+
+						<div class="src-hierarchy-editor">
+							<div class="src-field-row">
+								<div class="src-field-group">
+									<select id="src-hier-type">
+										<option value="src_faculty"><?php _e( 'Faculty / College', 'scientific-research-center' ); ?></option>
+										<option value="src_specialty"><?php _e( 'Specialty', 'scientific-research-center' ); ?></option>
+										<option value="src_sub_specialty"><?php _e( 'Sub-specialty', 'scientific-research-center' ); ?></option>
+										<option value="src_institution_tax"><?php _e( 'Registered Institution', 'scientific-research-center' ); ?></option>
+									</select>
+									<label for="src-hier-type" class="select-label"><?php _e( 'Category Type', 'scientific-research-center' ); ?></label>
+								</div>
+								<div class="src-field-group">
+									<input type="text" id="src-hier-name" placeholder=" ">
+									<label for="src-hier-name"><?php _e( 'Name', 'scientific-research-center' ); ?></label>
+								</div>
+								<div class="src-field-group">
+									<select id="src-hier-parent">
+										<option value="0"><?php _e( 'None (Root)', 'scientific-research-center' ); ?></option>
+									</select>
+									<label for="src-hier-parent" class="select-label"><?php _e( 'Parent Category', 'scientific-research-center' ); ?></label>
+								</div>
+							</div>
+							<button class="src-submit-btn" id="src-add-taxonomy-item"><?php _e( 'Add Item', 'scientific-research-center' ); ?></button>
+						</div>
+
+						<div class="src-user-list-container" style="margin-top: 30px;">
+							<div class="src-loading-skeleton"></div>
+						</div>
+					</div>
 				</div>
 			</div>
 		<?php endif; ?>

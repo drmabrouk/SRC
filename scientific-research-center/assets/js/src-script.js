@@ -48,6 +48,8 @@ jQuery(document).ready(function($) {
                 loadSystemUsers(section === 'institution-members');
             } else if (section === 'submissions-management') {
                 loadSubmissions();
+            } else if (section === 'research-engine') {
+                loadTaxonomyEditor();
             }
         }
 
@@ -404,15 +406,77 @@ jQuery(document).ready(function($) {
         });
     });
 
+    // Library Search Hierarchical Logic
+    $(document).on('change', '#lib_faculty', function() {
+        const id = $(this).val();
+        const $spec = $('#lib_specialty');
+        const $sub = $('#lib_sub_specialty');
+
+        if (!id) {
+            $spec.html('<option value="">Specialty</option>').attr('disabled', true);
+            $sub.html('<option value="">Sub-specialty</option>').attr('disabled', true);
+            return;
+        }
+
+        updateChildTax(id, 'src_specialty', 'Specialty', $spec);
+    });
+
+    $(document).on('change', '#lib_specialty', function() {
+        const id = $(this).val();
+        const $sub = $('#lib_sub_specialty');
+
+        if (!id) {
+            $sub.html('<option value="">Sub-specialty</option>').attr('disabled', true);
+            return;
+        }
+
+        updateChildTax(id, 'src_sub_specialty', 'Sub-specialty', $sub);
+    });
+
+    $(document).on('change', '#res_faculty', function() {
+        const id = $(this).val();
+        const $spec = $('#res_specialty');
+
+        if (id == 0) {
+            $spec.html('<option value="0">All Specialties</option>').attr('disabled', true);
+            return;
+        }
+
+        updateChildTax(id, 'src_specialty', 'All Specialties', $spec);
+    });
+
+    function updateChildTax(parentId, targetTax, label, $el) {
+        $.ajax({
+            type: 'POST',
+            url: src_ajax.ajax_url,
+            data: {
+                action: 'src_get_child_taxonomies',
+                nonce: src_ajax.nonce,
+                parent_id: parentId,
+                target_tax: targetTax,
+                label: label
+            },
+            success: function(response) {
+                if (response.success) {
+                    $el.html(response.data).attr('disabled', false);
+                }
+            }
+        });
+    }
+
     // Library Search Redirection
     $(document).on('click', '#lib_search_btn', function() {
         const query = $('#lib_search').val();
-        const specialties = $('#lib_specialty').val() || [];
+        const faculty = $('#lib_faculty').val();
+        const specialty = $('#lib_specialty').val();
+        const subspecialty = $('#lib_sub_specialty').val();
+        const institution = $('#lib_institution').val();
 
         let resultsUrl = src_ajax.site_url + '/research-results/?s=' + encodeURIComponent(query);
-        if (specialties.length) {
-            resultsUrl += '&specialties=' + specialties.join(',');
-        }
+        if (faculty) resultsUrl += '&faculty=' + faculty;
+        if (specialty) resultsUrl += '&specialty=' + specialty;
+        if (subspecialty) resultsUrl += '&subspecialty=' + subspecialty;
+        if (institution) resultsUrl += '&institution=' + institution;
 
         window.location.href = resultsUrl;
     });
@@ -579,6 +643,91 @@ jQuery(document).ready(function($) {
             }
         });
     });
+
+    // Taxonomy Management Handlers
+    $(document).on('change', '#src-hier-type', function() {
+        loadTaxonomyEditor();
+    });
+
+    $(document).on('click', '#src-add-taxonomy-item', function() {
+        const type = $('#src-hier-type').val();
+        const name = $('#src-hier-name').val();
+        const parent = $('#src-hier-parent').val();
+
+        if (!name) return alert('Please enter a name.');
+
+        $.ajax({
+            type: 'POST',
+            url: src_ajax.ajax_url,
+            data: {
+                action: 'src_manage_taxonomy',
+                nonce: src_ajax.nonce,
+                hier_action: 'add',
+                hier_type: type,
+                hier_name: name,
+                hier_parent: parent
+            },
+            success: function(response) {
+                if (response.success) {
+                    $('#src-hier-name').val('');
+                    loadTaxonomyEditor();
+                } else {
+                    alert(response.data.message);
+                }
+            }
+        });
+    });
+
+    $(document).on('click', '.src-hier-act', function() {
+        const $btn = $(this);
+        const action = $btn.data('action');
+        const id = $btn.data('id');
+        const type = $btn.data('type');
+
+        if (action === 'delete' && !confirm('Remove this category?')) return;
+
+        $.ajax({
+            type: 'POST',
+            url: src_ajax.ajax_url,
+            data: {
+                action: 'src_manage_taxonomy',
+                nonce: src_ajax.nonce,
+                hier_action: action,
+                hier_id: id,
+                hier_type: type
+            },
+            success: function(response) {
+                if (response.success) {
+                    loadTaxonomyEditor();
+                }
+            }
+        });
+    });
+
+    function loadTaxonomyEditor() {
+        const $container = $('.src-engine-hierarchy .src-user-list-container');
+        const type = $('#src-hier-type').val() || 'src_faculty';
+
+        $.ajax({
+            type: 'POST',
+            url: src_ajax.ajax_url,
+            data: {
+                action: 'src_manage_taxonomy',
+                nonce: src_ajax.nonce,
+                hier_action: 'load',
+                hier_type: type
+            },
+            beforeSend: function() {
+                $container.html('<div class="src-loading-skeleton"></div>');
+            },
+            success: function(response) {
+                if (response.success) {
+                    $container.html(response.data.html);
+                    $('#src-hier-parent').html(response.data.parents);
+                }
+            }
+        });
+    }
 
     $(document).on('change', '#src-header-avatar-input', function() {
         const file = this.files[0];
