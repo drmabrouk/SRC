@@ -241,6 +241,7 @@ class SRC_Frontend {
 		wp_localize_script( 'src-script', 'src_ajax', array(
 			'ajax_url' => admin_url( 'admin-ajax.php' ),
 			'nonce'    => wp_create_nonce( 'src_auth_nonce' ),
+			'site_url' => home_url( '/' ),
 		) );
 	}
 

@@ -51,6 +51,12 @@ $role_name = isset( $role_definitions[ $role ] ) ? $role_definitions[ $role ]['n
 					<li data-section="users-management">
 						<span class="dashicons dashicons-groups"></span> <?php _e( 'System Users', 'scientific-research-center' ); ?>
 					</li>
+					<li data-section="submissions-management">
+						<span class="dashicons dashicons-media-document"></span> <?php _e( 'Submissions', 'scientific-research-center' ); ?>
+					</li>
+					<li data-section="research-engine">
+						<span class="dashicons dashicons-rest-api"></span> <?php _e( 'Research Engine', 'scientific-research-center' ); ?>
+					</li>
 				<?php endif; ?>
 
 				<?php if ( $role === 'src_institution' ) : ?>
@@ -89,9 +95,27 @@ $role_name = isset( $role_definitions[ $role ] ) ? $role_definitions[ $role ]['n
 					<span class="dashicons dashicons-search"></span>
 				</div>
 
-				<div class="src-user-list-container">
+				<div class="src-user-list-container" id="src-user-list">
 					<!-- AJAX Loaded User Table -->
 					<div class="src-loading-skeleton"></div>
+				</div>
+			</div>
+
+			<div id="src-cp-content-submissions-management" class="src-cp-section">
+				<h1><?php _e( 'Submissions Management', 'scientific-research-center' ); ?></h1>
+				<p><?php _e( 'Review and moderate pending scientific research submissions.', 'scientific-research-center' ); ?></p>
+				<div class="src-user-list-container" id="src-submission-list">
+					<div class="src-loading-skeleton"></div>
+				</div>
+			</div>
+
+			<div id="src-cp-content-research-engine" class="src-cp-section">
+				<h1><?php _e( 'Research Engine Management', 'scientific-research-center' ); ?></h1>
+				<div class="src-engine-controls card">
+					<h3><?php _e( 'Index Control', 'scientific-research-center' ); ?></h3>
+					<p><?php _e( 'Manage how research is indexed and discovered.', 'scientific-research-center' ); ?></p>
+					<button class="src-submit-btn"><?php _e( 'Rebuild Search Index', 'scientific-research-center' ); ?></button>
+					<button class="src-btn-outline"><?php _e( 'Clear Engine Cache', 'scientific-research-center' ); ?></button>
 				</div>
 			</div>
 		<?php endif; ?>

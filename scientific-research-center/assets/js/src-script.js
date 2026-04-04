@@ -1,6 +1,6 @@
 jQuery(document).ready(function($) {
     // Tab & Link Toggling (Auth Form)
-    $('.src-auth-tab, .src-switch-form').on('click', function(e) {
+    $(document).on('click', '.src-auth-tab, .src-switch-form', function(e) {
         if ($(this).hasClass('src-switch-form')) e.preventDefault();
 
         const tab = $(this).data('tab');
@@ -19,7 +19,7 @@ jQuery(document).ready(function($) {
     });
 
     // Control Panel Navigation
-    $('.src-cp-nav li').on('click', function() {
+    $(document).on('click', '.src-cp-nav li', function() {
         const section = $(this).data('section');
         $('.src-cp-nav li').removeClass('active');
         $(this).addClass('active');
@@ -38,7 +38,7 @@ jQuery(document).ready(function($) {
     });
 
     // Mobile Sidebar Toggle
-    $('#src-cp-mobile-toggle').on('click', function() {
+    $(document).on('click', '#src-cp-mobile-toggle', function() {
         $('.src-cp-sidebar').toggleClass('active');
     });
 
@@ -107,7 +107,7 @@ jQuery(document).ready(function($) {
     });
 
     // User Type Selection
-    $('.src-type-box').on('click', function() {
+    $(document).on('click', '.src-type-box', function() {
         $('.src-type-box').removeClass('active');
         $(this).addClass('active');
         const role = $(this).data('role');
@@ -123,14 +123,14 @@ jQuery(document).ready(function($) {
     });
 
     // Forgot Password Toggle
-    $('#src-show-forgot').on('click', function(e) {
+    $(document).on('click', '#src-show-forgot', function(e) {
         e.preventDefault();
         $('#src-login-action').fadeOut(200, function() {
             $('#src-forgot-form').fadeIn(200);
         });
     });
 
-    $('#src-back-to-login').on('click', function() {
+    $(document).on('click', '#src-back-to-login', function() {
         $('#src-forgot-form').fadeOut(200, function() {
             $('#src-login-action').fadeIn(200);
         });
@@ -149,7 +149,7 @@ jQuery(document).ready(function($) {
     });
 
     // Login Submission
-    $('#src-login-action').on('submit', function(e) {
+    $(document).on('submit', '#src-login-action', function(e) {
         e.preventDefault();
         const $form = $(this);
         const $msg = $form.find('.src-form-msg');
@@ -176,7 +176,7 @@ jQuery(document).ready(function($) {
     });
 
     // Forgot Password Submission
-    $('#src-forgot-action').on('submit', function(e) {
+    $(document).on('submit', '#src-forgot-action', function(e) {
         e.preventDefault();
         const $form = $(this);
         const $msg = $form.find('.src-form-msg');
@@ -201,7 +201,7 @@ jQuery(document).ready(function($) {
     });
 
     // Register Submission
-    $('#src-register-action').on('submit', function(e) {
+    $(document).on('submit', '#src-register-action', function(e) {
         e.preventDefault();
         const $form = $(this);
         const $msg = $form.find('.src-form-msg');
@@ -254,7 +254,7 @@ jQuery(document).ready(function($) {
     });
 
     // Profile Completion Submission
-    $('#src-profile-completion-action').on('submit', function(e) {
+    $(document).on('submit', '#src-profile-completion-action', function(e) {
         e.preventDefault();
         const $form = $(this);
         const $msg = $form.find('.src-form-msg');
@@ -281,6 +281,113 @@ jQuery(document).ready(function($) {
                 }
             }
         });
+    });
+
+    // Research Submission
+    $(document).on('submit', '#src-research-submission-action', function(e) {
+        e.preventDefault();
+        const $form = $(this);
+        const $msg = $form.find('.src-form-msg');
+        $msg.text('Submitting research...').css('color', '#333');
+
+        const formData = new FormData(this);
+        formData.append('action', 'src_submit_research');
+        formData.append('nonce', src_ajax.nonce);
+
+        $.ajax({
+            type: 'POST',
+            url: src_ajax.ajax_url,
+            data: formData,
+            contentType: false,
+            processData: false,
+            success: function(response) {
+                if (response.success) {
+                    $msg.text(response.data.message).css('color', 'green');
+                    $form[0].reset();
+                } else {
+                    $msg.text(response.data.message).css('color', 'red');
+                }
+            }
+        });
+    });
+
+    // Library Filtering
+    $(document).on('click', '#lib_filter_btn', function() {
+        const $results = $('#src-library-results');
+
+        $.ajax({
+            type: 'POST',
+            url: src_ajax.ajax_url,
+            data: {
+                action: 'src_filter_research',
+                nonce: src_ajax.nonce,
+                search: $('#lib_search').val(),
+                type: $('#lib_type').val(),
+                sort: $('#lib_sort').val()
+            },
+            beforeSend: function() {
+                $results.css('opacity', '0.5');
+            },
+            success: function(response) {
+                $results.css('opacity', '1');
+                if (response.success) {
+                    $results.html(response.data);
+                }
+            }
+        });
+    });
+
+    // Submission Management Actions
+    $(document).on('click', '.src-sub-act', function() {
+        const $btn = $(this);
+        const action = $btn.data('action');
+        const subId = $btn.data('id');
+
+        if (action === 'view') {
+            window.open(src_ajax.site_url + '?p=' + subId + '&preview=true', '_blank');
+            return;
+        }
+
+        $.ajax({
+            type: 'POST',
+            url: src_ajax.ajax_url,
+            data: {
+                action: 'src_process_submission',
+                nonce: src_ajax.nonce,
+                sub_id: subId,
+                sub_action: action
+            },
+            success: function(response) {
+                if (response.success) {
+                    alert(response.data.message);
+                    loadSubmissions();
+                }
+            }
+        });
+    });
+
+    function loadSubmissions() {
+        const $container = $('#src-submission-list');
+        if (!$container.length) return;
+
+        $.ajax({
+            type: 'POST',
+            url: src_ajax.ajax_url,
+            data: {
+                action: 'src_load_submissions',
+                nonce: src_ajax.nonce
+            },
+            success: function(response) {
+                if (response.success) {
+                    $container.html(response.data);
+                }
+            }
+        });
+    }
+
+    // Load submissions if section active
+    $(document).on('click', '[data-section="submissions-management"]', function() {
+        loadSubmissions();
     });
 
     // Header List Interactions
