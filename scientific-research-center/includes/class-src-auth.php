@@ -104,7 +104,7 @@ class SRC_Auth {
 
 			$stored_token = get_user_meta( $user_id, 'src_email_verification_token', true );
 
-			if ( $token === $stored_token ) {
+			if ( ! empty( $stored_token ) && $token === $stored_token ) {
 				update_user_meta( $user_id, 'src_email_verified', '1' );
 				delete_user_meta( $user_id, 'src_email_verification_token' );
 
@@ -133,9 +133,14 @@ class SRC_Auth {
 		}
 
 		$is_verified = get_user_meta( $user->ID, 'src_email_verified', true );
+		$status = get_user_meta( $user->ID, 'src_user_status', true );
 
 		if ( $is_verified === '0' ) {
 			return new WP_Error( 'src_not_verified', __( 'Your account is not verified. Please check your email.', 'scientific-research-center' ) );
+		}
+
+		if ( $status === 'suspended' ) {
+			return new WP_Error( 'src_suspended', __( 'Your account has been suspended. Please contact support.', 'scientific-research-center' ) );
 		}
 
 		return $user;
