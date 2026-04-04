@@ -355,21 +355,72 @@ body.src-cp-active { overflow-x: hidden; }
 
 /* Library Cards - Academic Style */
 .src-card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; margin-top: 40px; }
-.src-research-card { background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 25px; transition: all 0.4s; position: relative; overflow: hidden; }
-.src-research-card.compact-card { padding: 20px; }
-.src-research-card:hover { transform: translateY(-5px); box-shadow: 0 10px 30px rgba(0,0,0,0.06); border-color: var(--src-black); }
-.src-research-card h3 { font-size: 18px; font-weight: 800; color: #000; margin-bottom: 10px; line-height: 1.4; }
-.src-card-meta.academic-meta { display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px; }
-.src-meta-item { display: flex; align-items: center; gap: 8px; color: #666; font-size: 13px; }
-.src-meta-item .dashicons { font-size: 16px; width: 16px; height: 16px; color: #999; }
-.src-meta-item strong { color: #000; }
-.src-card-excerpt { color: #555; font-size: 14px; line-height: 1.6; margin: 15px 0 20px; }
-.src-badge.small-badge { font-size: 10px; padding: 3px 8px; }
-.small-text { font-size: 11px; color: #aaa; }
+.src-research-card {
+    background: #fff;
+    border: 1px solid #f0f0f0;
+    border-radius: 12px;
+    padding: 20px;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+}
+.src-research-card.compact-card { padding: 15px; }
+.src-research-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 30px rgba(0,0,0,0.06);
+    border-color: #000;
+}
+.src-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+.src-research-card h3 {
+    font-size: 15px;
+    font-weight: 800;
+    color: #000;
+    margin: 0 0 10px;
+    line-height: 1.4;
+    flex-grow: 1;
+    letter-spacing: -0.2px;
+}
+.src-card-meta.academic-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 15px;
+    border-top: 1px solid #f5f5f5;
+    padding-top: 10px;
+}
+.src-meta-item { display: flex; align-items: center; gap: 8px; color: #666; font-size: 11px; font-weight: 600; }
+.src-meta-item .dashicons { font-size: 14px; width: 14px; height: 14px; color: #999; }
+.src-meta-item strong { color: #000; font-weight: 700; }
+.src-card-excerpt {
+    color: #777;
+    font-size: 12px;
+    line-height: 1.6;
+    margin: 0 0 15px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.src-badge.small-badge {
+    font-size: 8px;
+    padding: 3px 8px;
+    letter-spacing: 0.5px;
+    background: #000;
+    color: #fff;
+    text-transform: uppercase;
+    font-weight: 800;
+    border-radius: 4px;
+}
+.small-text { font-size: 10px; color: #bbb; font-weight: 600; }
 
+.src-card-actions { margin-top: auto; display: flex; justify-content: flex-end; }
 .src-view-details-btn {
-    display: inline-block; padding: 8px 20px; font-size: 13px; font-weight: 700; color: #000;
-    border: 1.5px solid #000; border-radius: 6px; text-decoration: none !important; transition: all 0.3s;
+    display: inline-block; padding: 8px 18px; font-size: 11px; font-weight: 800; color: #000;
+    border: 1.5px solid #000; border-radius: 6px; text-decoration: none !important; transition: all 0.2s;
+    text-transform: uppercase; letter-spacing: 0.5px;
 }
 .src-view-details-btn:hover { background: #000; color: #fff; }
 
@@ -464,13 +515,18 @@ body.src-cp-active { overflow-x: hidden; }
 .src-pub-date-label { color: #888; font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 5px; }
 .src-pub-date-label .dashicons { font-size: 16px; width: 16px; height: 16px; }
 
-.src-detail-authors-box { display: flex; gap: 20px; margin-bottom: 35px; border-bottom: 1px solid #eee; padding-bottom: 25px; flex-wrap: wrap; }
-.src-meta-pill { display: flex; align-items: center; gap: 10px; background: #fff; border: 1px solid #eee; padding: 8px 18px; border-radius: 50px; font-size: 15px; color: #333; }
+.src-detail-authors-box { display: flex; gap: 15px; margin-bottom: 35px; border-bottom: 1px solid #eee; padding-bottom: 25px; flex-wrap: wrap; }
+.src-meta-pill { display: flex; align-items: center; gap: 10px; background: #fff; border: 1px solid #eee; padding: 8px 20px; border-radius: 50px; font-size: 14px; color: #333; font-weight: 600; }
 .src-meta-pill .dashicons { color: #000; font-size: 18px; width: 18px; height: 18px; }
+.src-meta-pill.collaborators-pill { background: #fafafa; border-style: dashed; color: #666; }
 
 .src-classification-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-.src-class-item { font-size: 14px; color: #555; background: #fcfcfc; padding: 12px 15px; border-radius: 8px; border: 1px solid #f0f0f0; }
-.src-class-item strong { color: #000; margin-right: 5px; }
+.src-class-item {
+    font-size: 13px; color: #555; background: #fcfcfc; padding: 12px 18px;
+    border-radius: 8px; border: 1px solid #f0f0f0; display: flex; align-items: center; gap: 10px;
+}
+.src-class-item .dashicons { font-size: 18px; width: 18px; height: 18px; color: #000; }
+.src-class-item strong { color: #000; font-weight: 800; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; }
 
 .src-detail-title { font-size: 36px; font-weight: 900; line-height: 1.2; margin-bottom: 30px; color: #000; }
 

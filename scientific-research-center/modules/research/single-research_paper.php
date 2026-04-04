@@ -83,10 +83,10 @@ while ( have_posts() ) :
 								<span><?php echo esc_html( $institution ); ?></span>
 							</div>
 						<?php endif; ?>
-					</div>
 						<?php if ( $co_authors ) : ?>
-							<div class="src-co-authors">
-								<span><?php _e( 'Collaborators:', 'scientific-research-center' ); ?></span> <?php echo esc_html( $co_authors ); ?>
+							<div class="src-meta-pill collaborators-pill">
+								<span class="dashicons dashicons-groups"></span>
+								<span><strong><?php _e( 'Collaborators:', 'scientific-research-center' ); ?></strong> <?php echo esc_html( $co_authors ); ?></span>
 							</div>
 						<?php endif; ?>
 					</div>
@@ -104,16 +104,28 @@ while ( have_posts() ) :
 						<h3><span class="dashicons dashicons-category"></span> <?php _e( 'Scientific Classification', 'scientific-research-center' ); ?></h3>
 						<div class="src-classification-grid">
 							<?php if ( $faculties ) : ?>
-								<div class="src-class-item"><strong><?php _e( 'Faculty:', 'scientific-research-center' ); ?></strong> <?php echo $faculties; ?></div>
+								<div class="src-class-item">
+									<span class="dashicons dashicons-bank"></span>
+									<strong><?php _e( 'Faculty:', 'scientific-research-center' ); ?></strong> <?php echo $faculties; ?>
+								</div>
 							<?php endif; ?>
 							<?php if ( $specialties ) : ?>
-								<div class="src-class-item"><strong><?php _e( 'Specialty:', 'scientific-research-center' ); ?></strong> <?php echo $specialties; ?></div>
+								<div class="src-class-item">
+									<span class="dashicons dashicons-awards"></span>
+									<strong><?php _e( 'Specialty:', 'scientific-research-center' ); ?></strong> <?php echo $specialties; ?>
+								</div>
 							<?php endif; ?>
 							<?php if ( $categories ) : ?>
-								<div class="src-class-item"><strong><?php _e( 'Category:', 'scientific-research-center' ); ?></strong> <?php echo $categories; ?></div>
+								<div class="src-class-item">
+									<span class="dashicons dashicons-category"></span>
+									<strong><?php _e( 'Category:', 'scientific-research-center' ); ?></strong> <?php echo $categories; ?>
+								</div>
 							<?php endif; ?>
 							<?php if ( $institutions_tax ) : ?>
-								<div class="src-class-item"><strong><?php _e( 'Affiliation:', 'scientific-research-center' ); ?></strong> <?php echo $institutions_tax; ?></div>
+								<div class="src-class-item">
+									<span class="dashicons dashicons-building"></span>
+									<strong><?php _e( 'Affiliation:', 'scientific-research-center' ); ?></strong> <?php echo $institutions_tax; ?>
+								</div>
 							<?php endif; ?>
 						</div>
 					</section>
