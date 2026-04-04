@@ -73,15 +73,22 @@ class SRC_Activator {
 
 		// Create Research Library Page
 		$rl_title = 'Research Library';
-		if ( ! isset( get_page_by_title( $rl_title )->ID ) ) {
-			wp_insert_post( array(
+		$rl_page = get_page_by_title( $rl_title );
+		if ( ! isset( $rl_page->ID ) ) {
+			$rl_id = wp_insert_post( array(
 				'post_title'   => $rl_title,
 				'post_content' => '[src_research_library]',
 				'post_status'  => 'publish',
 				'post_author'  => 1,
 				'post_type'    => 'page',
 			) );
+		} else {
+			$rl_id = $rl_page->ID;
 		}
+
+		// Set as Front Page
+		update_option( 'show_on_front', 'page' );
+		update_option( 'page_on_front', $rl_id );
 	}
 
 	/**

@@ -192,23 +192,23 @@ class SRC_Research {
 	public function render_research_library() {
 		ob_start();
 		?>
-		<div class="src-library-container monochromatic">
+		<div class="src-library-container monochromatic home-engine">
 			<div class="src-library-header">
-				<h2><?php _e( 'Research Library', 'scientific-research-center' ); ?></h2>
-				<div class="src-search-engine">
-					<input type="text" id="lib_search" placeholder="<?php _e( 'Search title, keywords, author...', 'scientific-research-center' ); ?>">
-					<div class="src-filters">
+				<h2><?php _e( 'Global Scientific Research Engine', 'scientific-research-center' ); ?></h2>
+				<div class="src-search-engine centered">
+					<input type="text" id="lib_search" placeholder="<?php _e( 'Search for research, papers, or authors...', 'scientific-research-center' ); ?>">
+					<div class="src-filters inline">
 						<select id="lib_type">
-							<option value=""><?php _e( 'All Types', 'scientific-research-center' ); ?></option>
-							<option value="thesis"><?php _e( 'Thesis', 'scientific-research-center' ); ?></option>
-							<option value="paper"><?php _e( 'Paper', 'scientific-research-center' ); ?></option>
-							<option value="study"><?php _e( 'Study', 'scientific-research-center' ); ?></option>
+							<option value=""><?php _e( 'All Research Types', 'scientific-research-center' ); ?></option>
+							<option value="thesis"><?php _e( 'Theses', 'scientific-research-center' ); ?></option>
+							<option value="paper"><?php _e( 'Scientific Papers', 'scientific-research-center' ); ?></option>
+							<option value="study"><?php _e( 'Case Studies', 'scientific-research-center' ); ?></option>
 						</select>
 						<select id="lib_sort">
-							<option value="date"><?php _e( 'Latest', 'scientific-research-center' ); ?></option>
-							<option value="title"><?php _e( 'Alphabetical', 'scientific-research-center' ); ?></option>
+							<option value="date"><?php _e( 'Latest First', 'scientific-research-center' ); ?></option>
+							<option value="title"><?php _e( 'Alphabetical (A-Z)', 'scientific-research-center' ); ?></option>
 						</select>
-						<button id="lib_filter_btn" class="src-submit-btn"><?php _e( 'Search', 'scientific-research-center' ); ?></button>
+						<button id="lib_filter_btn" class="src-submit-btn"><?php _e( 'Search Platform', 'scientific-research-center' ); ?></button>
 					</div>
 				</div>
 			</div>

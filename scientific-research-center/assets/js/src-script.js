@@ -18,11 +18,19 @@ jQuery(document).ready(function($) {
         $('.src-form-msg').text('');
     });
 
-    // Control Panel Navigation
-    $(document).on('click', '.src-cp-nav li', function() {
-        const section = $(this).data('section');
-        $('.src-cp-nav li').removeClass('active');
-        $(this).addClass('active');
+    // Control Panel Navigation (Collapsible)
+    $(document).on('click', '.src-menu-item', function(e) {
+        const $item = $(this);
+        const section = $item.data('section');
+
+        // Toggle submenu if exists
+        if ($item.find('.src-submenu').length) {
+            $item.toggleClass('expanded');
+            $item.find('.src-submenu').slideToggle();
+        }
+
+        $('.src-menu-item').removeClass('active');
+        $item.addClass('active');
 
         $('.src-cp-section').removeClass('active');
         $(`#src-cp-content-${section}`).addClass('active');
@@ -31,7 +39,7 @@ jQuery(document).ready(function($) {
             loadSystemUsers(section === 'institution-members');
         }
 
-        // Close sidebar on mobile after navigation
+        // Close sidebar on mobile
         if ($(window).width() <= 992) {
             $('.src-cp-sidebar').removeClass('active');
         }
