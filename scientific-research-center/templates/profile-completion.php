@@ -35,7 +35,14 @@ if ( ! $user_id ) {
 	</div>
 
 	<form id="src-profile-completion-action" class="src-profile-edit-form" enctype="multipart/form-data">
-		<div class="src-form-section">
+		<div class="src-profile-tabs-nav">
+			<button type="button" class="src-prof-tab-btn active" data-tab="basic"><?php _e( 'Basic Information', 'scientific-research-center' ); ?></button>
+			<button type="button" class="src-prof-tab-btn" data-tab="contact"><?php _e( 'Contact & Location', 'scientific-research-center' ); ?></button>
+			<button type="button" class="src-prof-tab-btn" data-tab="academic"><?php _e( 'Academic Details', 'scientific-research-center' ); ?></button>
+			<button type="button" class="src-prof-tab-btn" data-tab="account"><?php _e( 'Account Settings', 'scientific-research-center' ); ?></button>
+		</div>
+
+		<div class="src-prof-tab-content active" id="src-prof-tab-basic">
 			<h3><span class="dashicons dashicons-admin-users"></span> <?php _e( 'Basic Information', 'scientific-research-center' ); ?></h3>
 			<div class="src-field-row">
 				<div class="src-field-group">
@@ -53,8 +60,9 @@ if ( ! $user_id ) {
 			</div>
 		</div>
 
-		<div class="src-form-section">
-			<h3><span class="dashicons dashicons-location"></span> <?php _e( 'Contact & Location', 'scientific-research-center' ); ?></h3>
+		</div>
+
+		<div class="src-prof-tab-content" id="src-prof-tab-contact">
 			<div class="src-field-row">
 				<div class="src-field-group">
 					<input type="text" name="country" id="prof_country" placeholder=" " value="<?php echo esc_attr( get_user_meta( $user->ID, 'src_country', true ) ); ?>" required>
@@ -75,8 +83,9 @@ if ( ! $user_id ) {
 			</div>
 		</div>
 
-		<div class="src-form-section">
-			<h3><span class="dashicons dashicons-welcome-learn-more"></span> <?php _e( 'Academic Details', 'scientific-research-center' ); ?></h3>
+		</div>
+
+		<div class="src-prof-tab-content" id="src-prof-tab-academic">
 			<div class="src-field-row">
 				<div class="src-field-group">
 					<input type="text" name="institution" id="prof_inst" placeholder=" " value="<?php echo esc_attr( get_user_meta( $user->ID, 'src_institution', true ) ); ?>" required>
@@ -96,7 +105,26 @@ if ( ! $user_id ) {
 			</div>
 		</div>
 
-		<button type="submit" class="src-submit-btn"><?php _e( 'Save Changes', 'scientific-research-center' ); ?></button>
+		<div class="src-prof-tab-content" id="src-prof-tab-account">
+			<div class="src-form-section">
+				<h3><span class="dashicons dashicons-lock"></span> <?php _e( 'Security & Password', 'scientific-research-center' ); ?></h3>
+				<p class="src-hint"><?php _e( 'Leave blank if you do not want to change your password.', 'scientific-research-center' ); ?></p>
+				<div class="src-field-row">
+					<div class="src-field-group">
+						<input type="password" name="new_password" id="prof_pwd" placeholder=" ">
+						<label for="prof_pwd"><?php _e( 'New Password', 'scientific-research-center' ); ?></label>
+					</div>
+					<div class="src-field-group">
+						<input type="password" name="confirm_password" id="prof_pwd_conf" placeholder=" ">
+						<label for="prof_pwd_conf"><?php _e( 'Confirm New Password', 'scientific-research-center' ); ?></label>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div class="src-prof-footer">
+			<button type="submit" class="src-submit-btn"><?php _e( 'Save Profile Changes', 'scientific-research-center' ); ?></button>
+		</div>
 		<div class="src-form-msg"></div>
 	</form>
 </div>

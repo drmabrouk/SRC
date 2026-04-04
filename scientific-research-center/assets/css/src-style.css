@@ -227,7 +227,7 @@ body.src-cp-active { overflow-x: hidden; }
 /* Menu Styles */
 .src-cp-nav ul { list-style: none; padding: 0; margin: 0; }
 .src-cp-nav li.src-menu-item { padding: 0; cursor: pointer; border-left: 5px solid transparent; transition: all 0.3s; margin: 0; }
-.src-menu-toggle { padding: 18px 25px; display: flex; align-items: center; gap: 12px; color: #888; font-weight: 700; }
+.src-menu-toggle { padding: 18px 25px; display: flex; align-items: center; gap: 12px; color: #888; font-weight: 700; text-decoration: none; }
 .src-menu-item:hover .src-menu-toggle { background: #f5f5f5; color: #000; }
 .src-menu-item.active { background: #f0f0f0; border-left-color: var(--src-black); }
 .src-menu-item.active .src-menu-toggle { color: var(--src-black); }
@@ -259,7 +259,14 @@ body.src-cp-active { overflow-x: hidden; }
 .src-phone-input-group input { flex: 1; }
 
 /* Profile Completion / Edit Suite */
-.src-profile-completion-container { max-width: 800px; margin: 40px auto; padding: 50px; background: #fff; border: 1px solid #e0e0e0; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.05); }
+.src-profile-completion-container { max-width: 900px; margin: 40px auto; padding: 50px; background: #fff; border: 1px solid #e0e0e0; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.05); }
+.src-profile-tabs-nav { display: flex; gap: 10px; margin-bottom: 40px; border-bottom: 2px solid #eee; padding-bottom: 15px; }
+.src-prof-tab-btn { background: none; border: none; padding: 10px 20px; font-weight: 700; color: #999; cursor: pointer; border-radius: 8px; transition: all 0.3s; }
+.src-prof-tab-btn:hover { background: #f9f9f9; color: #000; }
+.src-prof-tab-btn.active { background: #000; color: #fff; }
+.src-prof-tab-content { display: none; }
+.src-prof-tab-content.active { display: block; animation: fadeIn 0.4s; }
+.src-prof-footer { margin-top: 50px; border-top: 1px solid #eee; padding-top: 30px; text-align: right; }
 .src-profile-header { display: flex; align-items: center; gap: 30px; margin-bottom: 50px; padding-bottom: 30px; border-bottom: 1px solid #eee; }
 .src-profile-avatar-wrapper { position: relative; width: 100px; height: 100px; cursor: pointer; }
 .src-profile-avatar { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 3px solid #000; }
@@ -286,9 +293,8 @@ body.src-cp-active { overflow-x: hidden; }
 /* Home Search Engine - Centralized */
 .src-library-container.home-engine { max-width: 1200px; margin: 60px auto; text-align: center; }
 .src-home-headline { font-size: 48px; font-weight: 900; margin-bottom: 5px; color: #000; letter-spacing: -1px; }
-.src-live-counter { margin-bottom: 25px; display: flex; flex-direction: column; align-items: center; }
-.src-count-number { font-size: 28px; font-weight: 900; color: #000; background: #f5f5f5; padding: 5px 20px; border-radius: 50px; border: 1px solid #eee; display: inline-block; animation: pulseCounter 2s infinite ease-in-out; }
-.src-count-label { font-size: 11px; font-weight: 800; color: #aaa; text-transform: uppercase; margin-top: 5px; }
+.src-inline-counter { font-weight: 900; color: #000; padding: 2px 8px; background: #f0f0f0; border-radius: 4px; display: inline-block; animation: src-pulse-small 2s infinite ease-in-out; }
+@keyframes src-pulse-small { 0% { transform: scale(1); } 50% { transform: scale(1.05); color: #444; } 100% { transform: scale(1); } }
 
 @keyframes pulseCounter {
     0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0,0,0,0.05); }
@@ -318,6 +324,10 @@ body.src-cp-active { overflow-x: hidden; }
 .src-carousel-grid { display: flex; overflow-x: auto; gap: 30px; padding: 20px 0 40px; scroll-behavior: smooth; -ms-overflow-style: none; scrollbar-width: none; }
 .src-carousel-grid::-webkit-scrollbar { display: none; }
 .src-carousel-grid .src-research-card { min-width: 380px; flex-shrink: 0; box-shadow: 0 10px 30px rgba(0,0,0,0.04); }
+
+/* Modular Layouts */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
+@media (max-width: 992px) { .grid-2 { grid-template-columns: 1fr; } }
 
 /* Search Results Page Layout */
 .src-results-page { padding-bottom: 80px; }
@@ -502,3 +512,6 @@ body.src-cp-active { overflow-x: hidden; }
 .src-fav-toggle:hover { transform: scale(1.2); color: #888; }
 .src-fav-toggle.active { color: #ff4d4d; }
 .src-fav-toggle .dashicons { font-size: 20px; width: 20px; height: 20px; }
+
+.spin { animation: src-spin 2s infinite linear; }
+@keyframes src-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }

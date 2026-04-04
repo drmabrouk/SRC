@@ -30,6 +30,7 @@ class SRC_Frontend {
 		add_action( 'wp_ajax_src_get_notifications', array( $this, 'handle_ajax_get_notifications' ) );
 		add_action( 'wp_ajax_src_mark_notifications_read', array( $this, 'handle_ajax_mark_notifications_read' ) );
 		add_action( 'wp_ajax_src_toggle_favorite', array( $this, 'handle_ajax_toggle_favorite' ) );
+		add_action( 'wp_ajax_src_system_refresh', array( $this, 'handle_ajax_system_refresh' ) );
 	}
 
 	/**
@@ -337,7 +338,7 @@ class SRC_Frontend {
 		?>
 		<div class="src-header-list-container">
 			<!-- Profile Pill -->
-			<div class="src-header-pill">
+			<div class="src-header-pill src-dropdown-trigger-area">
 				<div class="src-pill-avatar" id="src-trigger-upload">
 					<img src="<?php echo esc_url( $profile_picture_url ); ?>" alt="Avatar">
 					<input type="file" id="src-header-avatar-input" style="display:none;" accept="image/*">
@@ -366,8 +367,14 @@ class SRC_Frontend {
 						<?php endif; ?>
 						<li><a href="#" id="src-trigger-upload-link"><span class="dashicons dashicons-camera"></span> <?php _e( 'Upload Profile Picture', 'scientific-research-center' ); ?></a></li>
 						<li><a href="#"><span class="dashicons dashicons-shield"></span> <?php _e( 'Privacy & Use Policies', 'scientific-research-center' ); ?></a></li>
-						<li><a href="#"><span class="dashicons dashicons-update"></span> <?php _e( 'Comprehensive Update', 'scientific-research-center' ); ?></a></li>
-						<li class="src-logout-item"><a href="<?php echo esc_url( wp_logout_url( home_url() ) ); ?>" class="src-logout-link"><?php _e( 'Secure Logout', 'scientific-research-center' ); ?></a></li>
+						<?php if ( current_user_can( 'manage_options' ) ) : ?>
+							<li><a href="#" id="src-system-refresh"><span class="dashicons dashicons-update"></span> <?php _e( 'System Refresh', 'scientific-research-center' ); ?></a></li>
+						<?php endif; ?>
+						<li class="src-logout-item">
+							<a href="<?php echo esc_url( wp_logout_url( home_url() ) ); ?>" class="src-logout-link">
+								<span class="dashicons dashicons-exit"></span> <?php _e( 'Secure Logout', 'scientific-research-center' ); ?>
+							</a>
+						</li>
 					</ul>
 				</div>
 			</div>
@@ -429,6 +436,19 @@ class SRC_Frontend {
 
 		$notifications = get_user_meta( $user_id, 'src_notifications', true ) ?: array();
 		wp_send_json_success( $notifications );
+	}
+
+	public function handle_ajax_system_refresh() {
+		check_ajax_referer( 'src_auth_nonce', 'nonce' );
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error();
+		}
+
+		global $wpdb;
+		$wpdb->query( "DELETE FROM $wpdb->options WHERE option_name LIKE '_transient_%'" );
+		flush_rewrite_rules();
+
+		wp_send_json_success( array( 'message' => __( 'System components updated and cache cleared.', 'scientific-research-center' ) ) );
 	}
 
 	public function handle_ajax_toggle_favorite() {
