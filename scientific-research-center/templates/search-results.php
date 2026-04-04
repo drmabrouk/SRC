@@ -1,0 +1,156 @@
+<?php
+/**
+ * Research Search Results Template
+ * Advanced filtering and results display.
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+get_header();
+
+$search_query = isset( $_GET['s'] ) ? sanitize_text_field( $_GET['s'] ) : '';
+$specialties = isset( $_GET['specialties'] ) ? sanitize_text_field( $_GET['specialties'] ) : '';
+$type_filter = isset( $_GET['type'] ) ? sanitize_text_field( $_GET['type'] ) : '';
+$sort_by = isset( $_GET['sort'] ) ? sanitize_text_field( $_GET['sort'] ) : 'relevance';
+
+// Keyword highlighting helper
+function src_highlight_keywords( $text, $query ) {
+	if ( empty( $query ) ) return $text;
+	$words = explode( ' ', $query );
+	foreach ( $words as $word ) {
+		$word = preg_quote( $word, '/' );
+		$text = preg_replace( "/($word)/i", '<mark class="src-highlight">$1</mark>', $text );
+	}
+	return $text;
+}
+?>
+
+<div class="src-results-page monochromatic">
+	<div class="src-results-header">
+		<div class="src-container">
+			<h1><?php printf( __( 'Search Results for: "%s"', 'scientific-research-center' ), esc_html( $search_query ) ); ?></h1>
+			<p><?php _e( 'Refine your discovery with advanced filters.', 'scientific-research-center' ); ?></p>
+		</div>
+	</div>
+
+	<div class="src-results-layout src-container">
+		<!-- Left Sidebar Filters -->
+		<aside class="src-results-sidebar">
+			<form id="src-advanced-filters" method="GET" action="<?php echo esc_url( home_url( '/research-results/' ) ); ?>">
+				<input type="hidden" name="s" value="<?php echo esc_attr( $search_query ); ?>">
+
+				<div class="src-filter-group collapsible expanded">
+					<h3 class="src-filter-toggle"><?php _e( 'Research Type', 'scientific-research-center' ); ?> <span class="dashicons dashicons-arrow-down-alt2"></span></h3>
+					<div class="src-filter-content">
+						<label><input type="radio" name="type" value="" <?php checked( $type_filter, '' ); ?>> <?php _e( 'All Types', 'scientific-research-center' ); ?></label>
+						<label><input type="radio" name="type" value="thesis" <?php checked( $type_filter, 'thesis' ); ?>> <?php _e( 'Theses', 'scientific-research-center' ); ?></label>
+						<label><input type="radio" name="type" value="paper" <?php checked( $type_filter, 'paper' ); ?>> <?php _e( 'Scientific Papers', 'scientific-research-center' ); ?></label>
+						<label><input type="radio" name="type" value="study" <?php checked( $type_filter, 'study' ); ?>> <?php _e( 'Case Studies', 'scientific-research-center' ); ?></label>
+					</div>
+				</div>
+
+				<div class="src-filter-group collapsible expanded">
+					<h3 class="src-filter-toggle"><?php _e( 'Sort Results', 'scientific-research-center' ); ?> <span class="dashicons dashicons-arrow-down-alt2"></span></h3>
+					<div class="src-filter-content">
+						<select name="sort" class="src-filter-select">
+							<option value="relevance" <?php selected( $sort_by, 'relevance' ); ?>><?php _e( 'Relevance', 'scientific-research-center' ); ?></option>
+							<option value="date_desc" <?php selected( $sort_by, 'date_desc' ); ?>><?php _e( 'Latest First', 'scientific-research-center' ); ?></option>
+							<option value="date_asc" <?php selected( $sort_by, 'date_asc' ); ?>><?php _e( 'Oldest First', 'scientific-research-center' ); ?></option>
+							<option value="title_asc" <?php selected( $sort_by, 'title_asc' ); ?>><?php _e( 'Title (A-Z)', 'scientific-research-center' ); ?></option>
+						</select>
+					</div>
+				</div>
+
+				<button type="submit" class="src-submit-btn full-width"><?php _e( 'Apply Filters', 'scientific-research-center' ); ?></button>
+			</form>
+		</aside>
+
+		<!-- Main Results Content -->
+		<main class="src-results-main">
+			<div class="src-results-grid">
+				<?php
+				$args = array(
+					'post_type'      => 'research_paper',
+					'post_status'    => 'publish',
+					's'              => $search_query,
+					'posts_per_page' => 10,
+					'paged'          => max( 1, get_query_var( 'paged' ) ),
+				);
+
+				// Apply Sorting
+				switch ( $sort_by ) {
+					case 'date_desc': $args['orderby'] = 'date'; $args['order'] = 'DESC'; break;
+					case 'date_asc':  $args['orderby'] = 'date'; $args['order'] = 'ASC'; break;
+					case 'title_asc': $args['orderby'] = 'title'; $args['order'] = 'ASC'; break;
+				}
+
+				// Apply Type Filter
+				if ( $type_filter ) {
+					$args['tax_query'] = array(
+						array(
+							'taxonomy' => 'research_type',
+							'field'    => 'slug',
+							'terms'    => $type_filter,
+						),
+					);
+				}
+
+				$query = new WP_Query( $args );
+
+				if ( $query->have_posts() ) :
+					while ( $query->have_posts() ) : $query->the_post();
+						$author_id = get_the_author_meta( 'ID' );
+						$institution = get_user_meta( $author_id, 'src_institution', true );
+						$type = strip_tags( get_the_term_list( get_the_ID(), 'research_type', '', ', ' ) );
+						?>
+						<div class="src-research-card slide-entry card">
+							<div class="src-card-header">
+								<span class="src-badge"><?php echo esc_html( $type ); ?></span>
+								<span class="src-date"><?php echo get_the_date(); ?></span>
+							</div>
+							<h3><?php echo src_highlight_keywords( get_the_title(), $search_query ); ?></h3>
+							<div class="src-card-meta">
+								<strong><?php the_author(); ?></strong>
+								<?php if ( $institution ) : ?>
+									<span> @ <?php echo esc_html( $institution ); ?></span>
+								<?php endif; ?>
+							</div>
+							<div class="src-card-excerpt">
+								<?php echo src_highlight_keywords( wp_trim_words( get_the_content(), 25 ), $search_query ); ?>
+							</div>
+							<div class="src-card-actions">
+								<a href="<?php the_permalink(); ?>" class="src-submit-btn"><?php _e( 'View Research Details', 'scientific-research-center' ); ?></a>
+							</div>
+						</div>
+						<?php
+					endwhile;
+
+					// Pagination
+					echo '<div class="src-pagination">';
+					echo paginate_links( array(
+						'base'      => str_replace( 999999999, '%#%', esc_url( get_pagenum_link( 999999999 ) ) ),
+						'format'    => '?paged=%#%',
+						'current'   => max( 1, get_query_var( 'paged' ) ),
+						'total'     => $query->max_num_pages,
+						'prev_text' => '<span class="dashicons dashicons-arrow-left-alt2"></span>',
+						'next_text' => '<span class="dashicons dashicons-arrow-right-alt2"></span>',
+					) );
+					echo '</div>';
+
+					wp_reset_postdata();
+				else :
+					echo '<div class="src-no-results">';
+					echo '<h3>' . __( 'No research found matching your criteria.', 'scientific-research-center' ) . '</h3>';
+					echo '<p>' . __( 'Try broadening your search or using different filters.', 'scientific-research-center' ) . '</p>';
+					echo '</div>';
+				endif;
+				?>
+			</div>
+		</main>
+	</div>
+</div>
+
+<?php
+get_footer();

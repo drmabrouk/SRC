@@ -27,6 +27,8 @@ class SRC_Frontend {
 		add_action( 'wp_ajax_src_load_system_users', array( $this, 'handle_ajax_load_system_users' ) );
 		add_action( 'wp_ajax_src_user_action', array( $this, 'handle_ajax_user_action' ) );
 		add_action( 'wp_ajax_src_upload_avatar', array( $this, 'handle_ajax_upload_avatar' ) );
+		add_action( 'wp_ajax_src_get_notifications', array( $this, 'handle_ajax_get_notifications' ) );
+		add_action( 'wp_ajax_src_mark_notifications_read', array( $this, 'handle_ajax_mark_notifications_read' ) );
 	}
 
 	/**
@@ -40,11 +42,20 @@ class SRC_Frontend {
 			wp_send_json_error( array( 'message' => __( 'You must be logged in to complete your profile.', 'scientific-research-center' ) ) );
 		}
 
-		$meta_fields = array( 'country', 'mobile', 'alt_email', 'gender', 'academic_degree' );
+		$meta_fields = array( 'country', 'mobile', 'alt_email', 'gender', 'academic_degree', 'institution', 'country_code' );
 		foreach ( $meta_fields as $field ) {
 			if ( isset( $_POST[ $field ] ) ) {
 				update_user_meta( $user_id, 'src_' . $field, sanitize_text_field( $_POST[ $field ] ) );
 			}
+		}
+
+		// Update core user data
+		if ( isset( $_POST['first_name'] ) || isset( $_POST['last_name'] ) || isset( $_POST['user_email'] ) ) {
+			$user_data = array( 'ID' => $user_id );
+			if ( isset( $_POST['first_name'] ) ) $user_data['first_name'] = sanitize_text_field( $_POST['first_name'] );
+			if ( isset( $_POST['last_name'] ) ) $user_data['last_name'] = sanitize_text_field( $_POST['last_name'] );
+			if ( isset( $_POST['user_email'] ) ) $user_data['user_email'] = sanitize_email( $_POST['user_email'] );
+			wp_update_user( $user_data );
 		}
 
 		// Handle Profile Picture
@@ -267,6 +278,10 @@ class SRC_Frontend {
 			if ( $slug === 'profile-completion' ) {
 				return SRC_PLUGIN_DIR . 'templates/profile-completion.php';
 			}
+
+			if ( $slug === 'research-results' ) {
+				return SRC_PLUGIN_DIR . 'templates/search-results.php';
+			}
 		}
 
 		// Handle Single Research Paper
@@ -289,16 +304,26 @@ class SRC_Frontend {
 		}
 
 		$current_user = wp_get_current_user();
+		$user_id = $current_user->ID;
 		$role = ! empty( $current_user->roles ) ? $current_user->roles[0] : '';
 		$role_slug = str_replace( 'src_', '', $role );
 		if ( $role === 'administrator' ) $role_slug = 'administrator';
 
-		$profile_picture_id = get_user_meta( $current_user->ID, 'src_profile_picture', true );
-		$profile_picture_url = $profile_picture_id ? wp_get_attachment_url( $profile_picture_id ) : get_avatar_url( $current_user->ID );
+		$profile_picture_id = get_user_meta( $user_id, 'src_profile_picture', true );
+		$profile_picture_url = $profile_picture_id ? wp_get_attachment_url( $profile_picture_id ) : get_avatar_url( $user_id );
 
 		$account_link = ( in_array( $role, array( 'src_administrator', 'administrator', 'src_supervisor' ) ) )
 			? home_url( '/' . $role_slug . '-dashboard/' )
-			: home_url( '/' . $role_slug . '-dashboard/' ); // Or specific profile link
+			: home_url( '/' . $role_slug . '-dashboard/' );
+
+		// Get unread notifications
+		$notifications = get_user_meta( $user_id, 'src_notifications', true ) ?: array();
+		$unread_count = 0;
+		foreach ( $notifications as $noti ) {
+			if ( ! isset( $noti['read'] ) || ! $noti['read'] ) {
+				$unread_count++;
+			}
+		}
 
 		ob_start();
 		?>
@@ -341,16 +366,31 @@ class SRC_Frontend {
 
 			<!-- Action Icons -->
 			<div class="src-header-actions">
-				<div class="src-header-icon-circle has-badge" id="src-noti-trigger">
+				<div class="src-header-icon-circle <?php echo $unread_count > 0 ? 'has-badge' : ''; ?>" id="src-noti-trigger">
 					<span class="dashicons dashicons-bell"></span>
-					<span class="src-icon-badge">1</span>
+					<?php if ( $unread_count > 0 ) : ?>
+						<span class="src-icon-badge"><?php echo $unread_count; ?></span>
+					<?php endif; ?>
 
 					<!-- Notifications Dropdown -->
 					<div class="src-header-dropdown src-noti-dropdown">
 						<div class="src-noti-header"><?php _e( 'Notifications', 'scientific-research-center' ); ?></div>
 						<div class="src-noti-list">
-							<div class="src-noti-item"><?php _e( 'Welcome to Scientific Research Center!', 'scientific-research-center' ); ?></div>
-							<div class="src-noti-item"><?php _e( 'Please complete your profile to access all features.', 'scientific-research-center' ); ?></div>
+							<?php if ( empty( $notifications ) ) : ?>
+								<div class="src-noti-item empty"><?php _e( 'No notifications', 'scientific-research-center' ); ?></div>
+							<?php else : ?>
+								<?php
+								// Show last 10 notifications
+								$notis_to_show = array_slice( array_reverse( $notifications ), 0, 10 );
+								foreach ( $notis_to_show as $noti ) :
+									$is_unread = ! isset( $noti['read'] ) || ! $noti['read'];
+									?>
+									<div class="src-noti-item <?php echo $is_unread ? 'unread' : ''; ?>" data-id="<?php echo esc_attr( $noti['id'] ); ?>" data-url="<?php echo esc_url( $noti['url'] ); ?>">
+										<p><?php echo esc_html( $noti['message'] ); ?></p>
+										<small><?php echo esc_html( human_time_diff( $noti['time'], current_time( 'timestamp' ) ) ); ?> <?php _e( 'ago', 'scientific-research-center' ); ?></small>
+									</div>
+								<?php endforeach; ?>
+							<?php endif; ?>
 						</div>
 					</div>
 				</div>
@@ -358,6 +398,28 @@ class SRC_Frontend {
 		</div>
 		<?php
 		return ob_get_clean();
+	}
+
+	public function handle_ajax_get_notifications() {
+		check_ajax_referer( 'src_auth_nonce', 'nonce' );
+		$user_id = get_current_user_id();
+		if ( ! $user_id ) wp_send_json_error();
+
+		$notifications = get_user_meta( $user_id, 'src_notifications', true ) ?: array();
+		wp_send_json_success( $notifications );
+	}
+
+	public function handle_ajax_mark_notifications_read() {
+		check_ajax_referer( 'src_auth_nonce', 'nonce' );
+		$user_id = get_current_user_id();
+		if ( ! $user_id ) wp_send_json_error();
+
+		$notifications = get_user_meta( $user_id, 'src_notifications', true ) ?: array();
+		foreach ( $notifications as &$noti ) {
+			$noti['read'] = true;
+		}
+		update_user_meta( $user_id, 'src_notifications', $notifications );
+		wp_send_json_success();
 	}
 
 	/**

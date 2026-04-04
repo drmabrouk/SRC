@@ -261,7 +261,38 @@ class SRC_Research {
 			}
 		}
 
+		// Add Notification for User
+		$this->add_notification( $user_id, array(
+			'message' => __( 'Your research submission was received successfully and is pending review.', 'scientific-research-center' ),
+			'url'     => home_url( '/research-library/' ), // Should ideally be to a user's my-submissions page
+		) );
+
+		// Add Notification for Admins/Reviewers
+		$admin_users = get_users( array( 'role__in' => array( 'administrator', 'src_administrator', 'src_supervisor' ) ) );
+		foreach ( $admin_users as $admin ) {
+			$this->add_notification( $admin->ID, array(
+				'message' => sprintf( __( 'New research submission: %s', 'scientific-research-center' ), $title ),
+				'url'     => home_url( '/administrator-dashboard/' ), // Should point to submissions management
+			) );
+		}
+
 		wp_send_json_success( array( 'message' => __( 'Research submitted successfully! It is now pending review.', 'scientific-research-center' ) ) );
+	}
+
+	/**
+	 * Helper to add a notification to a user
+	 */
+	private function add_notification( $user_id, $data ) {
+		$notifications = get_user_meta( $user_id, 'src_notifications', true ) ?: array();
+		$new_noti = array(
+			'id'      => uniqid(),
+			'message' => $data['message'],
+			'url'     => $data['url'],
+			'time'    => current_time( 'timestamp' ),
+			'read'    => false,
+		);
+		$notifications[] = $new_noti;
+		update_user_meta( $user_id, 'src_notifications', $notifications );
 	}
 
 	/**
@@ -272,27 +303,36 @@ class SRC_Research {
 		?>
 		<div class="src-library-container monochromatic home-engine">
 			<div class="src-library-header">
-				<h2><?php _e( 'Global Scientific Research Engine', 'scientific-research-center' ); ?></h2>
+				<h1 class="src-home-headline"><?php _e( 'Explore Global Research', 'scientific-research-center' ); ?></h1>
+				<p class="src-home-subheadline"><?php _e( 'Access thousands of scientific papers, theses, and case studies.', 'scientific-research-center' ); ?></p>
+
 				<div class="src-search-engine centered">
-					<input type="text" id="lib_search" placeholder="<?php _e( 'Search for research, papers, or authors...', 'scientific-research-center' ); ?>">
+					<div class="src-search-input-wrapper">
+						<input type="text" id="lib_search" placeholder="<?php _e( 'Search research, papers, authors...', 'scientific-research-center' ); ?>">
+						<span class="dashicons dashicons-search"></span>
+					</div>
 					<div class="src-filters inline">
-						<select id="lib_type">
-							<option value=""><?php _e( 'All Research Types', 'scientific-research-center' ); ?></option>
-							<option value="thesis"><?php _e( 'Theses', 'scientific-research-center' ); ?></option>
-							<option value="paper"><?php _e( 'Scientific Papers', 'scientific-research-center' ); ?></option>
-							<option value="study"><?php _e( 'Case Studies', 'scientific-research-center' ); ?></option>
-						</select>
-						<select id="lib_sort">
-							<option value="date"><?php _e( 'Latest First', 'scientific-research-center' ); ?></option>
-							<option value="title"><?php _e( 'Alphabetical (A-Z)', 'scientific-research-center' ); ?></option>
-						</select>
-						<button id="lib_filter_btn" class="src-submit-btn"><?php _e( 'Search Platform', 'scientific-research-center' ); ?></button>
+						<div class="src-multi-select-wrapper">
+							<select id="lib_specialty" multiple class="src-multi-select">
+								<option value="medicine"><?php _e( 'Medicine', 'scientific-research-center' ); ?></option>
+								<option value="physics"><?php _e( 'Physics', 'scientific-research-center' ); ?></option>
+								<option value="engineering"><?php _e( 'Engineering', 'scientific-research-center' ); ?></option>
+								<option value="biology"><?php _e( 'Biology', 'scientific-research-center' ); ?></option>
+								<option value="ai"><?php _e( 'Artificial Intelligence', 'scientific-research-center' ); ?></option>
+							</select>
+							<label for="lib_specialty"><?php _e( 'Select Specialties', 'scientific-research-center' ); ?></label>
+						</div>
+
+						<button id="lib_search_btn" class="src-submit-btn"><?php _e( 'Start Discovery', 'scientific-research-center' ); ?></button>
 					</div>
 				</div>
 			</div>
 
-			<div id="src-library-results" class="src-card-grid">
-				<?php echo $this->get_research_cards(); ?>
+			<div class="src-results-section">
+				<h3 class="src-section-label"><?php _e( 'Featured Research', 'scientific-research-center' ); ?></h3>
+				<div id="src-library-results" class="src-carousel-grid">
+					<?php echo $this->get_research_cards(); ?>
+				</div>
 			</div>
 		</div>
 		<?php

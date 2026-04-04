@@ -16,57 +16,90 @@ if ( ! $user_id ) {
 ?>
 
 <div class="src-profile-completion-container monochromatic compact">
-	<div class="src-welcome-msg">
-		<h2><?php _e( 'Complete Your Profile', 'scientific-research-center' ); ?></h2>
-		<p><?php _e( 'Please provide additional details to finalize your account.', 'scientific-research-center' ); ?></p>
+	<?php
+	$user = wp_get_current_user();
+	$profile_pic_id = get_user_meta( $user->ID, 'src_profile_picture', true );
+	$profile_pic_url = $profile_pic_id ? wp_get_attachment_url( $profile_pic_id ) : get_avatar_url( $user->ID );
+	?>
+
+	<div class="src-profile-header">
+		<div class="src-profile-avatar-wrapper" id="src-trigger-profile-upload">
+			<img src="<?php echo esc_url( $profile_pic_url ); ?>" alt="Profile" class="src-profile-avatar">
+			<div class="src-avatar-overlay"><span class="dashicons dashicons-camera"></span></div>
+			<input type="file" name="profile_picture" id="prof_picture_input" style="display:none;" accept="image/*">
+		</div>
+		<div class="src-profile-title">
+			<h2><?php echo esc_html( $user->display_name ); ?></h2>
+			<p><?php _e( 'Edit Your Professional Profile', 'scientific-research-center' ); ?></p>
+		</div>
 	</div>
 
-	<form id="src-profile-completion-action" enctype="multipart/form-data">
-		<div class="src-field-row">
-			<div class="src-field-group">
-				<input type="text" name="country" id="prof_country" placeholder=" " required>
-				<label for="prof_country"><?php _e( 'Country', 'scientific-research-center' ); ?></label>
+	<form id="src-profile-completion-action" class="src-profile-edit-form" enctype="multipart/form-data">
+		<div class="src-form-section">
+			<h3><span class="dashicons dashicons-admin-users"></span> <?php _e( 'Basic Information', 'scientific-research-center' ); ?></h3>
+			<div class="src-field-row">
+				<div class="src-field-group">
+					<input type="text" name="first_name" id="prof_fn" placeholder=" " value="<?php echo esc_attr( $user->first_name ); ?>" required>
+					<label for="prof_fn"><?php _e( 'First Name', 'scientific-research-center' ); ?></label>
+				</div>
+				<div class="src-field-group">
+					<input type="text" name="last_name" id="prof_ln" placeholder=" " value="<?php echo esc_attr( $user->last_name ); ?>" required>
+					<label for="prof_ln"><?php _e( 'Last Name', 'scientific-research-center' ); ?></label>
+				</div>
 			</div>
 			<div class="src-field-group">
-				<input type="text" name="mobile" id="prof_mobile" placeholder=" " required>
-				<label for="prof_mobile"><?php _e( 'Mobile Number', 'scientific-research-center' ); ?></label>
+				<input type="email" name="user_email" id="prof_email" placeholder=" " value="<?php echo esc_attr( $user->user_email ); ?>" required>
+				<label for="prof_email"><?php _e( 'Professional Email', 'scientific-research-center' ); ?></label>
 			</div>
 		</div>
 
-		<div class="src-field-group">
-			<input type="email" name="alt_email" id="prof_alt_email" placeholder=" ">
-			<label for="prof_alt_email"><?php _e( 'Alternate Email (Optional)', 'scientific-research-center' ); ?></label>
+		<div class="src-form-section">
+			<h3><span class="dashicons dashicons-location"></span> <?php _e( 'Contact & Location', 'scientific-research-center' ); ?></h3>
+			<div class="src-field-row">
+				<div class="src-field-group">
+					<input type="text" name="country" id="prof_country" placeholder=" " value="<?php echo esc_attr( get_user_meta( $user->ID, 'src_country', true ) ); ?>" required>
+					<label for="prof_country"><?php _e( 'Country', 'scientific-research-center' ); ?></label>
+				</div>
+				<div class="src-field-group src-phone-input-group">
+					<div class="src-country-code-wrapper">
+						<select name="country_code" id="prof_code" class="src-code-select">
+							<option value="+1">🇺🇸 +1</option>
+							<option value="+44">🇬🇧 +44</option>
+							<option value="+966">🇸🇦 +966</option>
+							<option value="+971">🇦🇪 +971</option>
+						</select>
+					</div>
+					<input type="text" name="mobile" id="prof_mobile" placeholder=" " value="<?php echo esc_attr( get_user_meta( $user->ID, 'src_mobile', true ) ); ?>" required>
+					<label for="prof_mobile"><?php _e( 'Phone Number', 'scientific-research-center' ); ?></label>
+				</div>
+			</div>
 		</div>
 
-		<div class="src-field-row">
+		<div class="src-form-section">
+			<h3><span class="dashicons dashicons-welcome-learn-more"></span> <?php _e( 'Academic Details', 'scientific-research-center' ); ?></h3>
+			<div class="src-field-row">
+				<div class="src-field-group">
+					<input type="text" name="institution" id="prof_inst" placeholder=" " value="<?php echo esc_attr( get_user_meta( $user->ID, 'src_institution', true ) ); ?>" required>
+					<label for="prof_inst"><?php _e( 'Institution', 'scientific-research-center' ); ?></label>
+				</div>
+				<div class="src-field-group">
+					<input type="text" name="academic_degree" id="prof_degree" placeholder=" " value="<?php echo esc_attr( get_user_meta( $user->ID, 'src_academic_degree', true ) ); ?>" required>
+					<label for="prof_degree"><?php _e( 'Academic Degree', 'scientific-research-center' ); ?></label>
+				</div>
+			</div>
 			<div class="src-field-group">
 				<select name="gender" id="prof_gender" required>
-					<option value="male"><?php _e( 'Male', 'scientific-research-center' ); ?></option>
-					<option value="female"><?php _e( 'Female', 'scientific-research-center' ); ?></option>
-					<option value="other"><?php _e( 'Other', 'scientific-research-center' ); ?></option>
+					<option value="male" <?php selected( get_user_meta( $user->ID, 'src_gender', true ), 'male' ); ?>><?php _e( 'Male', 'scientific-research-center' ); ?></option>
+					<option value="female" <?php selected( get_user_meta( $user->ID, 'src_gender', true ), 'female' ); ?>><?php _e( 'Female', 'scientific-research-center' ); ?></option>
 				</select>
 				<label for="prof_gender" class="select-label"><?php _e( 'Gender', 'scientific-research-center' ); ?></label>
 			</div>
-			<div class="src-field-group">
-				<input type="text" name="academic_degree" id="prof_degree" placeholder=" " required>
-				<label for="prof_degree"><?php _e( 'Academic Degree', 'scientific-research-center' ); ?></label>
-			</div>
 		</div>
 
-		<div class="src-field-group">
-			<input type="file" name="profile_picture" id="prof_picture" accept="image/*">
-			<label for="prof_picture" class="file-label"><?php _e( 'Profile Picture', 'scientific-research-center' ); ?></label>
-		</div>
-
-		<button type="submit" class="src-submit-btn"><?php _e( 'Complete Profile', 'scientific-research-center' ); ?></button>
+		<button type="submit" class="src-submit-btn"><?php _e( 'Save Changes', 'scientific-research-center' ); ?></button>
 		<div class="src-form-msg"></div>
 	</form>
 </div>
-
-<style>
-.src-profile-completion-container { max-width: 600px; margin: 40px auto; padding: 30px; background: #fff; border: 1px solid #e0e0e0; border-radius: 12px; }
-.file-label { top: -10px !important; font-size: 12px !important; color: #000 !important; }
-</style>
 
 <?php
 get_footer();
