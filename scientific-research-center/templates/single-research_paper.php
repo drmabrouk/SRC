@@ -17,6 +17,7 @@ while ( have_posts() ) :
 	$institution = get_user_meta( $author_id, 'src_institution', true );
 	$co_authors = get_post_meta( $post_id, 'src_co_authors', true );
 	$pub_date = get_post_meta( $post_id, 'src_pub_date', true );
+	$pub_id = get_post_meta( $post_id, 'src_pub_id', true );
 	$file_id = get_post_meta( $post_id, 'src_main_file', true );
 	$file_url = $file_id ? wp_get_attachment_url( $file_id ) : '';
 	$file_name = $file_id ? get_the_title( $file_id ) : '';
@@ -40,6 +41,9 @@ while ( have_posts() ) :
 				<header class="src-detail-header">
 					<div class="src-detail-meta-top">
 						<span class="src-badge"><?php echo esc_html( $type ); ?></span>
+						<?php if ( $pub_id ) : ?>
+							<span class="src-pub-id"><?php printf( __( 'ID: %s', 'scientific-research-center' ), esc_html( $pub_id ) ); ?></span>
+						<?php endif; ?>
 						<span class="src-pub-date"><?php printf( __( 'Published: %s', 'scientific-research-center' ), esc_html( $pub_date ?: get_the_date() ) ); ?></span>
 					</div>
 					<h1 class="src-detail-title"><?php the_title(); ?></h1>

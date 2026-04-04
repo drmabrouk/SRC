@@ -13,6 +13,9 @@ class SRC_Research {
 	public function __construct() {
 		add_action( 'init', array( $this, 'register_research_cpt' ) );
 		add_action( 'init', array( $this, 'register_research_taxonomies' ) );
+		add_action( 'init', array( $this, 'add_pub_rewrite_rules' ) );
+		add_filter( 'query_vars', array( $this, 'add_pub_query_vars' ) );
+		add_action( 'template_redirect', array( $this, 'handle_pub_id_redirect' ) );
 		add_shortcode( 'src_submit_research', array( $this, 'render_submission_form' ) );
 		add_shortcode( 'src_research_library', array( $this, 'render_research_library' ) );
 		add_action( 'wp_ajax_src_submit_research', array( $this, 'handle_ajax_submission' ) );
@@ -434,6 +437,13 @@ class SRC_Research {
 		$action = sanitize_text_field( $_POST['sub_action'] );
 
 		if ( $action === 'approve' ) {
+			// Generate Unique Publication ID if not exists
+			$pub_id = get_post_meta( $post_id, 'src_pub_id', true );
+			if ( ! $pub_id ) {
+				$pub_id = 'PUB-' . strtoupper( wp_generate_password( 8, false ) );
+				update_post_meta( $post_id, 'src_pub_id', $pub_id );
+			}
+
 			wp_update_post( array(
 				'ID'          => $post_id,
 				'post_status' => 'publish',
@@ -538,5 +548,31 @@ class SRC_Research {
 			'hierarchical' => true,
 			'show_in_rest' => true,
 		) );
+	}
+
+	public function add_pub_rewrite_rules() {
+		add_rewrite_rule( '^research/([^/]+)/?$', 'index.php?src_pub_id=$matches[1]', 'top' );
+	}
+
+	public function add_pub_query_vars( $vars ) {
+		$vars[] = 'src_pub_id';
+		return $vars;
+	}
+
+	public function handle_pub_id_redirect() {
+		$pub_id = get_query_var( 'src_pub_id' );
+		if ( $pub_id ) {
+			$posts = get_posts( array(
+				'post_type'  => 'research_paper',
+				'meta_key'   => 'src_pub_id',
+				'meta_value' => $pub_id,
+				'limit'      => 1
+			) );
+
+			if ( ! empty( $posts ) ) {
+				wp_safe_redirect( get_permalink( $posts[0]->ID ) );
+				exit;
+			}
+		}
 	}
 }

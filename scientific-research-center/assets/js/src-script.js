@@ -71,10 +71,20 @@ jQuery(document).ready(function($) {
         }, 500);
     });
 
+    $(document).on('change', '#src-user-role-filter, #src-user-sort', function() {
+        loadSystemUsers();
+    });
+
     // AJAX Load Users
     function loadSystemUsers(isInstitution = false) {
-        const $container = $('.src-user-list-container');
+        const $container = $('#src-user-list');
+        if (isInstitution) {
+            // handle institution members if needed differently
+        }
         const search = $('#src-user-search').val() || '';
+        const roleFilter = $('#src-user-role-filter').val() || '';
+        const sortVal = $('#src-user-sort').val() || 'display_name-ASC';
+        const [orderby, order] = sortVal.split('-');
 
         $.ajax({
             type: 'POST',
@@ -83,6 +93,9 @@ jQuery(document).ready(function($) {
                 action: 'src_load_system_users',
                 nonce: src_ajax.nonce,
                 search: search,
+                role_filter: roleFilter,
+                orderby: orderby,
+                order: order,
                 institution_filter: isInstitution ? 'current' : ''
             },
             beforeSend: function() {
@@ -503,7 +516,9 @@ jQuery(document).ready(function($) {
                     nonce: src_ajax.nonce
                 },
                 success: function() {
-                    $('.src-icon-badge').fadeOut();
+                    $('.src-icon-badge').fadeOut(300, function() {
+                        $(this).remove();
+                    });
                     $('.src-header-icon-circle').removeClass('has-badge');
                     $('.src-noti-item').removeClass('unread');
                 }
@@ -513,7 +528,11 @@ jQuery(document).ready(function($) {
 
     $(document).on('click', '.src-noti-item', function() {
         const url = $(this).data('url');
-        if (url) window.location.href = url;
+        if (url) {
+            window.location.href = url;
+        } else {
+            $(this).fadeOut();
+        }
     });
 
     $(document).on('click', function() {

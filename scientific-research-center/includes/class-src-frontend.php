@@ -88,10 +88,14 @@ class SRC_Frontend {
 		$search = isset( $_POST['search'] ) ? sanitize_text_field( $_POST['search'] ) : '';
 		$filter_role = isset( $_POST['role_filter'] ) ? sanitize_text_field( $_POST['role_filter'] ) : '';
 		$institution_filter = isset( $_POST['institution_filter'] ) ? sanitize_text_field( $_POST['institution_filter'] ) : '';
+		$orderby = isset( $_POST['orderby'] ) ? sanitize_text_field( $_POST['orderby'] ) : 'display_name';
+		$order = isset( $_POST['order'] ) ? sanitize_text_field( $_POST['order'] ) : 'ASC';
 
 		$args = array(
 			'search'         => $search ? '*' . $search . '*' : '',
 			'search_columns' => array( 'user_login', 'user_email', 'display_name' ),
+			'orderby'        => $orderby,
+			'order'          => $order,
 		);
 
 		if ( $filter_role ) {
@@ -344,11 +348,11 @@ class SRC_Frontend {
 
 				<!-- Dropdown Menu -->
 				<div class="src-header-dropdown">
-					<div class="src-dropdown-header">
-						<img src="<?php echo esc_url( $profile_picture_url ); ?>" alt="Avatar">
-						<div class="src-dropdown-user">
+					<div class="src-dropdown-header compact-profile">
+						<img src="<?php echo esc_url( $profile_picture_url ); ?>" alt="Avatar" class="left-align-avatar">
+						<div class="src-dropdown-user stacked-info">
 							<strong><?php echo esc_html( $current_user->display_name ); ?></strong>
-							<span><?php echo esc_html( $current_user->user_email ); ?></span>
+							<span class="src-email-below"><?php echo esc_html( $current_user->user_email ); ?></span>
 						</div>
 					</div>
 					<ul class="src-dropdown-links">

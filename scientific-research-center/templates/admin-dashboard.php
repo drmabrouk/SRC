@@ -103,15 +103,45 @@ $role_name = isset( $role_definitions[ $role ] ) ? $role_definitions[ $role ]['n
 	</aside>
 
 	<!-- Right Main Column -->
-	<main class="src-cp-main">
+	<main class="src-cp-main tight-layout">
 		<div id="src-cp-content-dashboard" class="src-cp-section active">
 			<h1><?php printf( __( '%s Control Panel', 'scientific-research-center' ), $role_name ); ?></h1>
 			<p><?php _e( 'Welcome to your professional workspace.', 'scientific-research-center' ); ?></p>
 
+			<div class="src-dashboard-metrics">
+				<?php
+				$total_users = count_users()['total_users'];
+				$research_counts = wp_count_posts( 'research_paper' );
+				$pending_research = $research_counts->pending;
+				$approved_research = $research_counts->publish;
+				?>
+				<div class="src-metric-card">
+					<div class="src-metric-icon"><span class="dashicons dashicons-admin-users"></span></div>
+					<div class="src-metric-data">
+						<h3><?php echo number_format( $total_users ); ?></h3>
+						<span><?php _e( 'Total Platform Users', 'scientific-research-center' ); ?></span>
+					</div>
+				</div>
+				<div class="src-metric-card">
+					<div class="src-metric-icon"><span class="dashicons dashicons-upload"></span></div>
+					<div class="src-metric-data">
+						<h3><?php echo number_format( $pending_research + $approved_research ); ?></h3>
+						<span><?php _e( 'Research Submissions', 'scientific-research-center' ); ?></span>
+					</div>
+				</div>
+				<div class="src-metric-card highlight">
+					<div class="src-metric-icon"><span class="dashicons dashicons-yes-alt"></span></div>
+					<div class="src-metric-data">
+						<h3><?php echo number_format( $approved_research ); ?></h3>
+						<span><?php _e( 'Approved & Published', 'scientific-research-center' ); ?></span>
+					</div>
+				</div>
+			</div>
+
 			<div class="src-dashboard-cards">
 				<div class="src-card">
-					<h3><?php _e( 'Recent Activity', 'scientific-research-center' ); ?></h3>
-					<p><?php _e( 'No recent activity found.', 'scientific-research-center' ); ?></p>
+					<h3><?php _e( 'System Activity Overview', 'scientific-research-center' ); ?></h3>
+					<p><?php _e( 'Your platform metrics are up-to-date.', 'scientific-research-center' ); ?></p>
 				</div>
 			</div>
 		</div>
@@ -120,9 +150,27 @@ $role_name = isset( $role_definitions[ $role ] ) ? $role_definitions[ $role ]['n
 			<div id="src-cp-content-users-management" class="src-cp-section">
 				<h1><?php _e( 'System Users Management', 'scientific-research-center' ); ?></h1>
 
-				<div class="src-search-bar">
-					<input type="text" id="src-user-search" placeholder="<?php _e( 'Search by name, email, role...', 'scientific-research-center' ); ?>">
-					<span class="dashicons dashicons-search"></span>
+				<div class="src-search-filters-bar">
+					<div class="src-search-bar compact">
+						<input type="text" id="src-user-search" placeholder="<?php _e( 'Search by name, email, role...', 'scientific-research-center' ); ?>">
+						<span class="dashicons dashicons-search"></span>
+					</div>
+					<div class="src-search-dropdowns">
+						<select id="src-user-role-filter">
+							<option value=""><?php _e( 'All Roles', 'scientific-research-center' ); ?></option>
+							<?php
+							$roles = SRC_Roles::get_roles_definition();
+							foreach ( $roles as $slug => $data ) {
+								echo '<option value="' . esc_attr( $slug ) . '">' . esc_html( $data['name'] ) . '</option>';
+							}
+							?>
+						</select>
+						<select id="src-user-sort">
+							<option value="display_name-ASC"><?php _e( 'Name (A-Z)', 'scientific-research-center' ); ?></option>
+							<option value="display_name-DESC"><?php _e( 'Name (Z-A)', 'scientific-research-center' ); ?></option>
+							<option value="user_registered-DESC"><?php _e( 'Newest First', 'scientific-research-center' ); ?></option>
+						</select>
+					</div>
 				</div>
 
 				<div class="src-user-list-container" id="src-user-list">
@@ -186,6 +234,25 @@ $role_name = isset( $role_definitions[ $role ] ) ? $role_definitions[ $role ]['n
 		<div id="src-cp-content-settings" class="src-cp-section">
 			<h1><?php _e( 'Account Settings', 'scientific-research-center' ); ?></h1>
 			<p><?php _e( 'Manage your preferences and security settings.', 'scientific-research-center' ); ?></p>
+
+			<div class="src-settings-tabs">
+				<div class="src-card">
+					<h3><?php _e( 'Platform Customization', 'scientific-research-center' ); ?></h3>
+					<div class="src-field-group">
+						<input type="text" name="custom_label_research" id="set_label_res" placeholder=" " value="<?php echo esc_attr( get_option( 'src_label_research', 'Research' ) ); ?>">
+						<label for="set_label_res"><?php _e( 'Research Field Label', 'scientific-research-center' ); ?></label>
+					</div>
+					<div class="src-field-group">
+						<select id="set_theme_font">
+							<option value="system"><?php _e( 'System Default', 'scientific-research-center' ); ?></option>
+							<option value="serif"><?php _e( 'Academic Serif', 'scientific-research-center' ); ?></option>
+							<option value="mono"><?php _e( 'Monospace', 'scientific-research-center' ); ?></option>
+						</select>
+						<label for="set_theme_font" class="select-label"><?php _e( 'Platform Font Style', 'scientific-research-center' ); ?></label>
+					</div>
+					<button class="src-submit-btn"><?php _e( 'Save Preferences', 'scientific-research-center' ); ?></button>
+				</div>
+			</div>
 		</div>
 	</main>
 </div>
