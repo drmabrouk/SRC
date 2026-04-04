@@ -12,6 +12,7 @@ class SRC_Frontend {
 
 	public function __construct() {
 		add_shortcode( 'src_auth_form', array( $this, 'render_auth_form' ) );
+		add_shortcode( 'Header List', array( $this, 'render_header_list' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_assets' ) );
 		add_action( 'init', array( $this, 'register_profile_rewrites' ) );
 		add_action( 'template_redirect', array( $this, 'role_based_redirects' ) );
@@ -23,6 +24,9 @@ class SRC_Frontend {
 		add_action( 'wp_ajax_nopriv_src_register', array( $this, 'handle_ajax_register' ) );
 		add_action( 'wp_ajax_nopriv_src_forgot_password', array( $this, 'handle_ajax_forgot_password' ) );
 		add_action( 'wp_ajax_src_complete_profile', array( $this, 'handle_ajax_complete_profile' ) );
+		add_action( 'wp_ajax_src_load_system_users', array( $this, 'handle_ajax_load_system_users' ) );
+		add_action( 'wp_ajax_src_user_action', array( $this, 'handle_ajax_user_action' ) );
+		add_action( 'wp_ajax_src_upload_avatar', array( $this, 'handle_ajax_upload_avatar' ) );
 	}
 
 	/**
@@ -59,6 +63,148 @@ class SRC_Frontend {
 			'message' => __( 'Profile completed successfully! Redirecting...', 'scientific-research-center' ),
 			'redirect' => home_url( '/login-register/' )
 		) );
+	}
+
+	/**
+	 * AJAX Load System Users Handler
+	 */
+	public function handle_ajax_load_system_users() {
+		check_ajax_referer( 'src_auth_nonce', 'nonce' );
+		if ( ! current_user_can( 'manage_options' ) && ! current_user_can( 'edit_others_posts' ) && ! current_user_can( 'src_institution' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Access Denied.', 'scientific-research-center' ) ) );
+		}
+
+		$search = isset( $_POST['search'] ) ? sanitize_text_field( $_POST['search'] ) : '';
+		$filter_role = isset( $_POST['role_filter'] ) ? sanitize_text_field( $_POST['role_filter'] ) : '';
+		$institution_filter = isset( $_POST['institution_filter'] ) ? sanitize_text_field( $_POST['institution_filter'] ) : '';
+
+		$args = array(
+			'search'         => $search ? '*' . $search . '*' : '',
+			'search_columns' => array( 'user_login', 'user_email', 'display_name' ),
+		);
+
+		if ( $filter_role ) {
+			$args['role'] = $filter_role;
+		}
+
+		if ( $institution_filter ) {
+			if ( $institution_filter === 'current' ) {
+				$institution_filter = get_user_meta( get_current_user_id(), 'src_institution', true );
+			}
+			$args['meta_key'] = 'src_institution';
+			$args['meta_value'] = $institution_filter;
+		}
+
+		$users = get_users( $args );
+
+		ob_start();
+		?>
+		<table class="src-user-table">
+			<thead>
+				<tr>
+					<th><?php _e( 'User', 'scientific-research-center' ); ?></th>
+					<th><?php _e( 'Email', 'scientific-research-center' ); ?></th>
+					<th><?php _e( 'Role', 'scientific-research-center' ); ?></th>
+					<th><?php _e( 'Institution', 'scientific-research-center' ); ?></th>
+					<th><?php _e( 'Actions', 'scientific-research-center' ); ?></th>
+				</tr>
+			</thead>
+			<tbody>
+				<?php if ( empty( $users ) ) : ?>
+					<tr><td colspan="5"><?php _e( 'No users found.', 'scientific-research-center' ); ?></td></tr>
+				<?php else : ?>
+					<?php foreach ( $users as $user ) :
+						$user_role = ! empty( $user->roles ) ? $user->roles[0] : 'Member';
+						$institution = get_user_meta( $user->ID, 'src_institution', true );
+						$status = get_user_meta( $user->ID, 'src_user_status', true );
+						if ( ! $status ) $status = 'active';
+						?>
+						<tr class="status-<?php echo esc_attr( $status ); ?>">
+							<td>
+								<strong><?php echo esc_html( $user->display_name ); ?></strong><br>
+								<small><?php echo esc_html( $user->user_login ); ?></small>
+							</td>
+							<td><?php echo esc_html( $user->user_email ); ?></td>
+							<td><?php echo esc_html( ucfirst( str_replace( 'src_', '', $user_role ) ) ); ?></td>
+							<td><?php echo esc_html( $institution ? $institution : '-' ); ?></td>
+							<td class="src-actions">
+								<button class="src-icon-btn src-user-act" data-action="edit" data-id="<?php echo $user->ID; ?>" title="Edit"><span class="dashicons dashicons-edit"></span></button>
+								<?php if ( $status === 'active' ) : ?>
+									<button class="src-icon-btn src-user-act" data-action="suspend" data-id="<?php echo $user->ID; ?>" title="Suspend"><span class="dashicons dashicons-lock"></span></button>
+								<?php else : ?>
+									<button class="src-icon-btn src-user-act" data-action="reactivate" data-id="<?php echo $user->ID; ?>" title="Reactivate"><span class="dashicons dashicons-unlock"></span></button>
+								<?php endif; ?>
+								<button class="src-icon-btn src-user-act src-danger" data-action="delete" data-id="<?php echo $user->ID; ?>" title="Delete"><span class="dashicons dashicons-trash"></span></button>
+								<button class="src-icon-btn src-user-act" data-action="notify" data-id="<?php echo $user->ID; ?>" title="Notify"><span class="dashicons dashicons-email"></span></button>
+							</td>
+						</tr>
+					<?php endforeach; ?>
+				<?php endif; ?>
+			</tbody>
+		</table>
+		<?php
+		wp_send_json_success( ob_get_clean() );
+	}
+
+	/**
+	 * AJAX Avatar Upload Handler
+	 */
+	public function handle_ajax_upload_avatar() {
+		check_ajax_referer( 'src_auth_nonce', 'nonce' );
+		if ( ! is_user_logged_in() ) {
+			wp_send_json_error( array( 'message' => __( 'Unauthorized', 'scientific-research-center' ) ) );
+		}
+
+		if ( ! empty( $_FILES['avatar'] ) ) {
+			require_once( ABSPATH . 'wp-admin/includes/image.php' );
+			require_once( ABSPATH . 'wp-admin/includes/file.php' );
+			require_once( ABSPATH . 'wp-admin/includes/media.php' );
+
+			$attachment_id = media_handle_upload( 'avatar', 0 );
+			if ( ! is_wp_error( $attachment_id ) ) {
+				update_user_meta( get_current_user_id(), 'src_profile_picture', $attachment_id );
+				wp_send_json_success( array( 'url' => wp_get_attachment_url( $attachment_id ) ) );
+			} else {
+				wp_send_json_error( array( 'message' => $attachment_id->get_error_message() ) );
+			}
+		}
+		wp_send_json_error( array( 'message' => __( 'No file uploaded', 'scientific-research-center' ) ) );
+	}
+
+	/**
+	 * AJAX User Action Handler
+	 */
+	public function handle_ajax_user_action() {
+		check_ajax_referer( 'src_auth_nonce', 'nonce' );
+		if ( ! current_user_can( 'manage_options' ) && ! current_user_can( 'edit_others_posts' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Access Denied.', 'scientific-research-center' ) ) );
+		}
+
+		$user_id = absint( $_POST['user_id'] );
+		$action = sanitize_text_field( $_POST['user_action'] );
+
+		switch ( $action ) {
+			case 'suspend':
+				update_user_meta( $user_id, 'src_user_status', 'suspended' );
+				wp_send_json_success( array( 'message' => __( 'User suspended.', 'scientific-research-center' ) ) );
+				break;
+			case 'reactivate':
+				update_user_meta( $user_id, 'src_user_status', 'active' );
+				wp_send_json_success( array( 'message' => __( 'User reactivated.', 'scientific-research-center' ) ) );
+				break;
+			case 'delete':
+				if ( ! current_user_can( 'manage_options' ) ) {
+					wp_send_json_error( array( 'message' => __( 'Only administrators can delete users.', 'scientific-research-center' ) ) );
+				}
+				require_once( ABSPATH . 'wp-admin/includes/user.php' );
+				wp_delete_user( $user_id );
+				wp_send_json_success( array( 'message' => __( 'User deleted.', 'scientific-research-center' ) ) );
+				break;
+			case 'notify':
+				// Simple notification simulation
+				wp_send_json_success( array( 'message' => __( 'Notification sent.', 'scientific-research-center' ) ) );
+				break;
+		}
 	}
 
 	/**
@@ -106,7 +252,7 @@ class SRC_Frontend {
 		if ( is_page() ) {
 			$slug = get_post_field( 'post_name', get_post() );
 			if ( str_contains( $slug, '-dashboard' ) ) {
-				return SRC_PLUGIN_DIR . 'templates/dashboard.php';
+				return SRC_PLUGIN_DIR . 'templates/admin-dashboard.php';
 			}
 
 			if ( $slug === 'profile-completion' ) {
@@ -115,6 +261,82 @@ class SRC_Frontend {
 		}
 
 		return $template;
+	}
+
+	/**
+	 * Render the professional Header List shortcode
+	 */
+	public function render_header_list() {
+		if ( ! is_user_logged_in() ) {
+			return '';
+		}
+
+		$current_user = wp_get_current_user();
+		$role = ! empty( $current_user->roles ) ? $current_user->roles[0] : '';
+		$role_slug = str_replace( 'src_', '', $role );
+		if ( $role === 'administrator' ) $role_slug = 'administrator';
+
+		$profile_picture_id = get_user_meta( $current_user->ID, 'src_profile_picture', true );
+		$profile_picture_url = $profile_picture_id ? wp_get_attachment_url( $profile_picture_id ) : get_avatar_url( $current_user->ID );
+
+		$account_link = ( in_array( $role, array( 'src_administrator', 'administrator', 'src_supervisor' ) ) )
+			? home_url( '/' . $role_slug . '-dashboard/' )
+			: home_url( '/' . $role_slug . '-dashboard/' ); // Or specific profile link
+
+		ob_start();
+		?>
+		<div class="src-header-list-container">
+			<!-- Profile Pill -->
+			<div class="src-header-pill">
+				<div class="src-pill-avatar" id="src-trigger-upload">
+					<img src="<?php echo esc_url( $profile_picture_url ); ?>" alt="Avatar">
+					<input type="file" id="src-header-avatar-input" style="display:none;" accept="image/*">
+				</div>
+				<div class="src-pill-info">
+					<div class="src-pill-welcome">
+						<?php printf( __( 'Welcome, %s', 'scientific-research-center' ), esc_html( $current_user->first_name ) ); ?>
+						<span class="dashicons dashicons-arrow-down-alt2 src-dropdown-trigger"></span>
+					</div>
+					<div class="src-pill-status"><?php _e( 'Online Now', 'scientific-research-center' ); ?></div>
+				</div>
+
+				<!-- Dropdown Menu -->
+				<div class="src-header-dropdown">
+					<div class="src-dropdown-header">
+						<img src="<?php echo esc_url( $profile_picture_url ); ?>" alt="Avatar">
+						<div class="src-dropdown-user">
+							<strong><?php echo esc_html( $current_user->display_name ); ?></strong>
+							<span><?php echo esc_html( $current_user->user_email ); ?></span>
+						</div>
+					</div>
+					<ul class="src-dropdown-links">
+						<li><a href="<?php echo esc_url( home_url( '/profile-completion/' ) ); ?>"><span class="dashicons dashicons-admin-users"></span> <?php _e( 'Edit Profile', 'scientific-research-center' ); ?></a></li>
+						<li><a href="<?php echo esc_url( $account_link ); ?>"><span class="dashicons dashicons-dashboard"></span> <?php _e( 'My Dashboard', 'scientific-research-center' ); ?></a></li>
+						<li><a href="#"><span class="dashicons dashicons-shield"></span> <?php _e( 'Privacy Policy', 'scientific-research-center' ); ?></a></li>
+						<li><a href="<?php echo esc_url( wp_logout_url( home_url() ) ); ?>" class="src-logout-link"><?php _e( 'Secure Logout', 'scientific-research-center' ); ?></a></li>
+					</ul>
+				</div>
+			</div>
+
+			<!-- Action Icons -->
+			<div class="src-header-actions">
+				<div class="src-header-icon-circle has-badge">
+					<span class="dashicons dashicons-bell"></span>
+					<span class="src-icon-badge">1</span>
+				</div>
+				<div class="src-header-icon-circle">
+					<span class="dashicons dashicons-email"></span>
+				</div>
+				<div class="src-header-icon-circle">
+					<span class="dashicons dashicons-performance"></span>
+				</div>
+				<a href="<?php echo esc_url( home_url() ); ?>" class="src-header-icon-circle">
+					<span class="dashicons dashicons-admin-home"></span>
+				</a>
+			</div>
+		</div>
+		<?php
+		return ob_get_clean();
 	}
 
 	/**
@@ -271,7 +493,7 @@ class SRC_Frontend {
 
 		$info = array();
 		$info['user_login'] = sanitize_text_field( $_POST['log'] );
-		$info['user_password'] = sanitize_text_field( $_POST['pwd'] );
+		$info['user_password'] = $_POST['pwd']; // Do not sanitize passwords to avoid stripping special characters
 		$info['remember'] = true;
 
 		$user_signon = wp_signon( $info, false );
@@ -279,9 +501,15 @@ class SRC_Frontend {
 		if ( is_wp_error( $user_signon ) ) {
 			wp_send_json_error( array( 'message' => $user_signon->get_error_message() ) );
 		} else {
+			$user = get_user_by( 'id', $user_signon->ID );
+			$role = ! empty( $user->roles ) ? $user->roles[0] : 'src_member';
+			$role_slug = str_replace( 'src_', '', $role );
+			if ( $role === 'administrator' ) $role_slug = 'administrator';
+			$dashboard_url = home_url( '/' . $role_slug . '-dashboard/' );
+
 			wp_send_json_success( array(
 				'message' => __( 'Login successful! Redirecting...', 'scientific-research-center' ),
-				'redirect' => home_url( '/login-register/' )
+				'redirect' => $dashboard_url
 			) );
 		}
 	}

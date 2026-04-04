@@ -1,5 +1,5 @@
 jQuery(document).ready(function($) {
-    // Tab & Link Toggling
+    // Tab & Link Toggling (Auth Form)
     $('.src-auth-tab, .src-switch-form').on('click', function(e) {
         if ($(this).hasClass('src-switch-form')) e.preventDefault();
 
@@ -16,6 +16,84 @@ jQuery(document).ready(function($) {
 
         // Reset messages
         $('.src-form-msg').text('');
+    });
+
+    // Control Panel Navigation
+    $('.src-cp-nav li').on('click', function() {
+        const section = $(this).data('section');
+        $('.src-cp-nav li').removeClass('active');
+        $(this).addClass('active');
+
+        $('.src-cp-section').removeClass('active');
+        $(`#src-cp-content-${section}`).addClass('active');
+
+        if (section === 'users-management' || section === 'institution-members') {
+            loadSystemUsers(section === 'institution-members');
+        }
+    });
+
+    // User Search Handler
+    let searchTimeout;
+    $(document).on('keyup', '#src-user-search', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            loadSystemUsers();
+        }, 500);
+    });
+
+    // AJAX Load Users
+    function loadSystemUsers(isInstitution = false) {
+        const $container = $('.src-user-list-container');
+        const search = $('#src-user-search').val() || '';
+
+        $.ajax({
+            type: 'POST',
+            url: src_ajax.ajax_url,
+            data: {
+                action: 'src_load_system_users',
+                nonce: src_ajax.nonce,
+                search: search,
+                institution_filter: isInstitution ? 'current' : ''
+            },
+            beforeSend: function() {
+                $container.html('<div class="src-loading-skeleton"></div>');
+            },
+            success: function(response) {
+                if (response.success) {
+                    $container.html(response.data);
+                } else {
+                    $container.html(`<p style="color:red;">${response.data.message}</p>`);
+                }
+            }
+        });
+    }
+
+    // User Actions (Edit, Delete, Suspend, Notify)
+    $(document).on('click', '.src-user-act', function() {
+        const $btn = $(this);
+        const action = $btn.data('action');
+        const userId = $btn.data('id');
+
+        if (action === 'delete' && !confirm('Are you sure you want to delete this user?')) return;
+
+        $.ajax({
+            type: 'POST',
+            url: src_ajax.ajax_url,
+            data: {
+                action: 'src_user_action',
+                nonce: src_ajax.nonce,
+                user_id: userId,
+                user_action: action
+            },
+            success: function(response) {
+                if (response.success) {
+                    alert(response.data.message);
+                    loadSystemUsers($('.src-cp-nav li.active').data('section') === 'institution-members');
+                } else {
+                    alert(response.data.message);
+                }
+            }
+        });
     });
 
     // User Type Selection
@@ -190,6 +268,47 @@ jQuery(document).ready(function($) {
                     }, 1500);
                 } else {
                     $msg.text(response.data.message).css('color', 'red');
+                }
+            }
+        });
+    });
+
+    // Header List Interactions
+    $(document).on('click', '.src-pill-welcome', function(e) {
+        e.stopPropagation();
+        $('.src-header-dropdown').toggleClass('active');
+    });
+
+    $(document).on('click', function() {
+        $('.src-header-dropdown').removeClass('active');
+    });
+
+    // Avatar Upload Trigger
+    $(document).on('click', '#src-trigger-upload img', function(e) {
+        e.stopPropagation();
+        $('#src-header-avatar-input').click();
+    });
+
+    $(document).on('change', '#src-header-avatar-input', function() {
+        const file = this.files[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('action', 'src_upload_avatar');
+        formData.append('nonce', src_ajax.nonce);
+        formData.append('avatar', file);
+
+        $.ajax({
+            type: 'POST',
+            url: src_ajax.ajax_url,
+            data: formData,
+            contentType: false,
+            processData: false,
+            success: function(response) {
+                if (response.success) {
+                    $('.src-pill-avatar img, .src-dropdown-header img').attr('src', response.data.url);
+                } else {
+                    alert(response.data.message);
                 }
             }
         });
