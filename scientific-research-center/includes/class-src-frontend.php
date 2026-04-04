@@ -269,6 +269,14 @@ class SRC_Frontend {
 			}
 		}
 
+		// Handle Single Research Paper
+		if ( is_singular( 'research_paper' ) ) {
+			$single_template = SRC_PLUGIN_DIR . 'templates/single-research_paper.php';
+			if ( file_exists( $single_template ) ) {
+				return $single_template;
+			}
+		}
+
 		return $template;
 	}
 
