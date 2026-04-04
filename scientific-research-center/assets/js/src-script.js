@@ -391,30 +391,27 @@ jQuery(document).ready(function($) {
         });
     });
 
-    // Library Filtering
-    $(document).on('click', '#lib_filter_btn', function() {
-        const $results = $('#src-library-results');
+    // Library Search Redirection
+    $(document).on('click', '#lib_search_btn', function() {
+        const query = $('#lib_search').val();
+        const specialties = $('#lib_specialty').val() || [];
 
-        $.ajax({
-            type: 'POST',
-            url: src_ajax.ajax_url,
-            data: {
-                action: 'src_filter_research',
-                nonce: src_ajax.nonce,
-                search: $('#lib_search').val(),
-                type: $('#lib_type').val(),
-                sort: $('#lib_sort').val()
-            },
-            beforeSend: function() {
-                $results.css('opacity', '0.5');
-            },
-            success: function(response) {
-                $results.css('opacity', '1');
-                if (response.success) {
-                    $results.html(response.data);
-                }
-            }
-        });
+        let resultsUrl = src_ajax.site_url + '/research-results/?s=' + encodeURIComponent(query);
+        if (specialties.length) {
+            resultsUrl += '&specialties=' + specialties.join(',');
+        }
+
+        window.location.href = resultsUrl;
+    });
+
+    // Horizontal Carousel Scroll (Simulation)
+    $(document).on('wheel', '.src-carousel-grid', function(e) {
+        if (e.originalEvent.deltaY > 0) {
+            $(this).scrollLeft($(this).scrollLeft() + 200);
+        } else {
+            $(this).scrollLeft($(this).scrollLeft() - 200);
+        }
+        e.preventDefault();
     });
 
     // Submission Filtering Logic
@@ -493,7 +490,30 @@ jQuery(document).ready(function($) {
     $(document).on('click', '#src-noti-trigger', function(e) {
         e.stopPropagation();
         $('.src-header-dropdown').not('.src-noti-dropdown').removeClass('active');
-        $('.src-noti-dropdown').toggleClass('active');
+        const $dropdown = $('.src-noti-dropdown');
+        $dropdown.toggleClass('active');
+
+        if ($dropdown.hasClass('active')) {
+            // Mark as read
+            $.ajax({
+                type: 'POST',
+                url: src_ajax.ajax_url,
+                data: {
+                    action: 'src_mark_notifications_read',
+                    nonce: src_ajax.nonce
+                },
+                success: function() {
+                    $('.src-icon-badge').fadeOut();
+                    $('.src-header-icon-circle').removeClass('has-badge');
+                    $('.src-noti-item').removeClass('unread');
+                }
+            });
+        }
+    });
+
+    $(document).on('click', '.src-noti-item', function() {
+        const url = $(this).data('url');
+        if (url) window.location.href = url;
     });
 
     $(document).on('click', function() {
@@ -507,11 +527,16 @@ jQuery(document).ready(function($) {
         $('#src-header-avatar-input').click();
     });
 
-    $(document).on('click', '#src-trigger-dashboard-upload img', function() {
-        $('#src-dashboard-avatar-input').click();
+    $(document).on('click', '#src-trigger-dashboard-upload img, #src-trigger-profile-upload', function() {
+        const $input = $(this).find('input[type="file"]');
+        if ($input.length) {
+            $input.click();
+        } else {
+            $('#src-dashboard-avatar-input').click();
+        }
     });
 
-    $(document).on('change', '#src-dashboard-avatar-input', function() {
+    $(document).on('change', '#src-dashboard-avatar-input, #prof_picture_input', function() {
         const file = this.files[0];
         if (!file) return;
 
@@ -528,7 +553,7 @@ jQuery(document).ready(function($) {
             processData: false,
             success: function(response) {
                 if (response.success) {
-                    $('.src-cp-avatar img, .src-pill-avatar img').attr('src', response.data.url);
+                    $('.src-cp-avatar img, .src-pill-avatar img, .src-profile-avatar').attr('src', response.data.url);
                 } else {
                     alert(response.data.message);
                 }
