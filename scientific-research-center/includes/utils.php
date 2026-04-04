@@ -13,12 +13,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 function get_utils_institutions() {
 	global $wpdb;
 
-	$results = $wpdb->get_col( "
+	$results = $wpdb->get_col( $wpdb->prepare( "
 		SELECT DISTINCT meta_value
 		FROM {$wpdb->usermeta}
-		WHERE meta_key = 'src_institution'
+		WHERE meta_key = %s
 		AND meta_value != ''
-	" );
+	", 'src_institution' ) );
 
 	if ( empty( $results ) ) {
 		return array( 'Healthedia Research Center', 'Global Science Institute' );

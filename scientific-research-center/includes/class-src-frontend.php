@@ -332,19 +332,19 @@ class SRC_Frontend {
 
 			<!-- Action Icons -->
 			<div class="src-header-actions">
-				<div class="src-header-icon-circle has-badge">
+				<div class="src-header-icon-circle has-badge" id="src-noti-trigger">
 					<span class="dashicons dashicons-bell"></span>
 					<span class="src-icon-badge">1</span>
+
+					<!-- Notifications Dropdown -->
+					<div class="src-header-dropdown src-noti-dropdown">
+						<div class="src-noti-header"><?php _e( 'Notifications', 'scientific-research-center' ); ?></div>
+						<div class="src-noti-list">
+							<div class="src-noti-item"><?php _e( 'Welcome to Scientific Research Center!', 'scientific-research-center' ); ?></div>
+							<div class="src-noti-item"><?php _e( 'Please complete your profile to access all features.', 'scientific-research-center' ); ?></div>
+						</div>
+					</div>
 				</div>
-				<div class="src-header-icon-circle">
-					<span class="dashicons dashicons-email"></span>
-				</div>
-				<div class="src-header-icon-circle">
-					<span class="dashicons dashicons-performance"></span>
-				</div>
-				<a href="<?php echo esc_url( home_url() ); ?>" class="src-header-icon-circle">
-					<span class="dashicons dashicons-admin-home"></span>
-				</a>
 			</div>
 		</div>
 		<?php
