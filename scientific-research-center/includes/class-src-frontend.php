@@ -51,6 +51,15 @@ class SRC_Frontend {
 			}
 		}
 
+		// Update Password if provided
+		if ( ! empty( $_POST['new_password'] ) && ! empty( $_POST['confirm_password'] ) ) {
+			if ( $_POST['new_password'] === $_POST['confirm_password'] ) {
+				wp_set_password( $_POST['new_password'], $user_id );
+			} else {
+				wp_send_json_error( array( 'message' => __( 'Passwords do not match.', 'scientific-research-center' ) ) );
+			}
+		}
+
 		// Update core user data
 		if ( isset( $_POST['first_name'] ) || isset( $_POST['last_name'] ) || isset( $_POST['user_email'] ) ) {
 			$user_data = array( 'ID' => $user_id );
@@ -253,8 +262,14 @@ class SRC_Frontend {
 	 */
 	public function enqueue_assets() {
 		wp_enqueue_style( 'dashicons' );
-		wp_enqueue_style( 'src-style', SRC_PLUGIN_URL . 'assets/css/src-style.css', array(), SRC_VERSION );
-		wp_enqueue_script( 'src-script', SRC_PLUGIN_URL . 'assets/js/src-script.js', array( 'jquery' ), SRC_VERSION, true );
+
+		// Map asset paths to modular structure
+		$css_path = 'modules/control-panel/style.css';
+		$js_path = 'modules/control-panel/script.js';
+
+		wp_enqueue_style( 'src-style', SRC_PLUGIN_URL . $css_path, array(), SRC_VERSION );
+		wp_enqueue_script( 'src-script', SRC_PLUGIN_URL . $js_path, array( 'jquery' ), SRC_VERSION, true );
+
 		wp_localize_script( 'src-script', 'src_ajax', array(
 			'ajax_url' => admin_url( 'admin-ajax.php' ),
 			'nonce'    => wp_create_nonce( 'src_auth_nonce' ),
@@ -278,21 +293,21 @@ class SRC_Frontend {
 		if ( is_page() ) {
 			$slug = get_post_field( 'post_name', get_post() );
 			if ( str_contains( $slug, '-dashboard' ) ) {
-				return SRC_PLUGIN_DIR . 'templates/admin-dashboard.php';
+				return SRC_PLUGIN_DIR . 'modules/control-panel/admin-dashboard.php';
 			}
 
 			if ( $slug === 'profile-completion' ) {
-				return SRC_PLUGIN_DIR . 'templates/profile-completion.php';
+				return SRC_PLUGIN_DIR . 'modules/profile/profile-completion.php';
 			}
 
 			if ( $slug === 'research-results' ) {
-				return SRC_PLUGIN_DIR . 'templates/search-results.php';
+				return SRC_PLUGIN_DIR . 'modules/search/search-results.php';
 			}
 		}
 
 		// Handle Single Research Paper
 		if ( is_singular( 'research_paper' ) ) {
-			$single_template = SRC_PLUGIN_DIR . 'templates/single-research_paper.php';
+			$single_template = SRC_PLUGIN_DIR . 'modules/research/single-research_paper.php';
 			if ( file_exists( $single_template ) ) {
 				return $single_template;
 			}

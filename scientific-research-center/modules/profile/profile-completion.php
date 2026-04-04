@@ -42,6 +42,7 @@ if ( ! $user_id ) {
 			<button type="button" class="src-prof-tab-btn" data-tab="account"><?php _e( 'Account Settings', 'scientific-research-center' ); ?></button>
 		</div>
 
+		<!-- Basic Info Tab -->
 		<div class="src-prof-tab-content active" id="src-prof-tab-basic">
 			<h3><span class="dashicons dashicons-admin-users"></span> <?php _e( 'Basic Information', 'scientific-research-center' ); ?></h3>
 			<div class="src-field-row">
@@ -60,9 +61,9 @@ if ( ! $user_id ) {
 			</div>
 		</div>
 
-		</div>
-
+		<!-- Contact Tab -->
 		<div class="src-prof-tab-content" id="src-prof-tab-contact">
+			<h3><span class="dashicons dashicons-location"></span> <?php _e( 'Contact & Location', 'scientific-research-center' ); ?></h3>
 			<div class="src-field-row">
 				<div class="src-field-group">
 					<input type="text" name="country" id="prof_country" placeholder=" " value="<?php echo esc_attr( get_user_meta( $user->ID, 'src_country', true ) ); ?>" required>
@@ -71,10 +72,13 @@ if ( ! $user_id ) {
 				<div class="src-field-group src-phone-input-group">
 					<div class="src-country-code-wrapper">
 						<select name="country_code" id="prof_code" class="src-code-select">
-							<option value="+1">🇺🇸 +1</option>
-							<option value="+44">🇬🇧 +44</option>
-							<option value="+966">🇸🇦 +966</option>
-							<option value="+971">🇦🇪 +971</option>
+							<?php
+							$current_code = get_user_meta( $user->ID, 'src_country_code', true ) ?: '+1';
+							$codes = array( '+1' => '🇺🇸 +1', '+44' => '🇬🇧 +44', '+966' => '🇸🇦 +966', '+971' => '🇦🇪 +971' );
+							foreach ( $codes as $code => $label ) {
+								echo '<option value="' . esc_attr( $code ) . '" ' . selected( $current_code, $code, false ) . '>' . esc_html( $label ) . '</option>';
+							}
+							?>
 						</select>
 					</div>
 					<input type="text" name="mobile" id="prof_mobile" placeholder=" " value="<?php echo esc_attr( get_user_meta( $user->ID, 'src_mobile', true ) ); ?>" required>
@@ -83,9 +87,9 @@ if ( ! $user_id ) {
 			</div>
 		</div>
 
-		</div>
-
+		<!-- Academic Tab -->
 		<div class="src-prof-tab-content" id="src-prof-tab-academic">
+			<h3><span class="dashicons dashicons-welcome-learn-more"></span> <?php _e( 'Academic Details', 'scientific-research-center' ); ?></h3>
 			<div class="src-field-row">
 				<div class="src-field-group">
 					<input type="text" name="institution" id="prof_inst" placeholder=" " value="<?php echo esc_attr( get_user_meta( $user->ID, 'src_institution', true ) ); ?>" required>
@@ -105,6 +109,7 @@ if ( ! $user_id ) {
 			</div>
 		</div>
 
+		<!-- Account Tab -->
 		<div class="src-prof-tab-content" id="src-prof-tab-account">
 			<div class="src-form-section">
 				<h3><span class="dashicons dashicons-lock"></span> <?php _e( 'Security & Password', 'scientific-research-center' ); ?></h3>

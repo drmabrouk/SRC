@@ -13,6 +13,7 @@ class SRC_Research {
 	public function __construct() {
 		add_action( 'init', array( $this, 'register_research_cpt' ) );
 		add_action( 'init', array( $this, 'register_research_taxonomies' ) );
+		add_action( 'wp_head', array( $this, 'add_research_seo_meta' ) );
 		add_action( 'init', array( $this, 'add_pub_rewrite_rules' ) );
 		add_filter( 'query_vars', array( $this, 'add_pub_query_vars' ) );
 		add_action( 'template_redirect', array( $this, 'handle_pub_id_redirect' ) );
@@ -727,6 +728,15 @@ class SRC_Research {
 	public function add_pub_query_vars( $vars ) {
 		$vars[] = 'src_pub_id';
 		return $vars;
+	}
+
+	public function add_research_seo_meta() {
+		if ( is_singular( 'research_paper' ) ) {
+			$post = get_queried_object();
+			$abstract = wp_trim_words( $post->post_content, 30 );
+			echo '<meta name="description" content="' . esc_attr( $abstract ) . '">' . "\n";
+			echo '<meta name="keywords" content="' . esc_attr( strip_tags( get_the_term_list( $post->ID, 'src_specialty', '', ', ' ) ) ) . '">' . "\n";
+		}
 	}
 
 	public function handle_pub_id_redirect() {

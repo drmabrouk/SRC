@@ -18,6 +18,10 @@ class SRC_User_Management {
 		if ( isset( $_POST['src_import_users'] ) ) {
 			$this->import_users();
 		}
+
+		if ( isset( $_POST['src_export_research'] ) ) {
+			$this->export_research();
+		}
 	}
 
 	/**
@@ -95,5 +99,38 @@ class SRC_User_Management {
 				exit;
 			}
 		}
+	}
+
+	/**
+	 * Export Research Submissions to JSON
+	 */
+	public function export_research() {
+		check_admin_referer( 'src_user_export', 'src_export_nonce' );
+
+		$posts = get_posts( array( 'post_type' => 'research_paper', 'numberposts' => -1, 'post_status' => 'any' ) );
+		$research_data = array();
+
+		foreach ( $posts as $post ) {
+			$research_data[] = array(
+				'title'   => $post->post_title,
+				'content' => $post->post_content,
+				'status'  => $post->post_status,
+				'meta'    => get_post_meta( $post->ID ),
+				'terms'   => array(
+					'research_type'     => wp_get_post_terms( $post->ID, 'research_type', array( 'fields' => 'slugs' ) ),
+					'src_faculty'       => wp_get_post_terms( $post->ID, 'src_faculty', array( 'fields' => 'slugs' ) ),
+					'src_specialty'     => wp_get_post_terms( $post->ID, 'src_specialty', array( 'fields' => 'slugs' ) ),
+					'src_institution_tax' => wp_get_post_terms( $post->ID, 'src_institution_tax', array( 'fields' => 'slugs' ) ),
+				)
+			);
+		}
+
+		$json_data = wp_json_encode( $research_data );
+		$filename = 'src_research_export_' . date( 'Y-m-d_H-i' ) . '.json';
+
+		header( 'Content-Type: application/json' );
+		header( 'Content-Disposition: attachment; filename=' . $filename );
+		echo $json_data;
+		exit;
 	}
 }

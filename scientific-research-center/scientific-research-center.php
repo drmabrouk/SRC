@@ -20,17 +20,19 @@ define( 'SRC_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'SRC_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'SRC_VERSION', '1.0.0' );
 
-// Include core files
+// Include Core Utilities
 require_once SRC_PLUGIN_DIR . 'includes/utils.php';
 require_once SRC_PLUGIN_DIR . 'includes/class-src-activator.php';
 require_once SRC_PLUGIN_DIR . 'includes/class-src-deactivator.php';
 require_once SRC_PLUGIN_DIR . 'includes/class-src-roles.php';
-require_once SRC_PLUGIN_DIR . 'includes/class-src-auth.php';
-require_once SRC_PLUGIN_DIR . 'includes/class-src-admin.php';
-require_once SRC_PLUGIN_DIR . 'includes/class-src-user-management.php';
-require_once SRC_PLUGIN_DIR . 'includes/class-src-frontend.php';
 require_once SRC_PLUGIN_DIR . 'includes/class-src-emails.php';
-require_once SRC_PLUGIN_DIR . 'includes/class-src-research.php';
+require_once SRC_PLUGIN_DIR . 'includes/class-src-frontend.php';
+
+// Include Modular Modules
+require_once SRC_PLUGIN_DIR . 'modules/auth/class-src-auth.php';
+require_once SRC_PLUGIN_DIR . 'modules/research/class-src-research.php';
+require_once SRC_PLUGIN_DIR . 'modules/control-panel/class-src-admin.php';
+require_once SRC_PLUGIN_DIR . 'modules/control-panel/class-src-user-management.php';
 
 /**
  * Main Plugin Class
