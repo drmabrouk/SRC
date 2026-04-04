@@ -291,12 +291,70 @@ jQuery(document).ready(function($) {
         });
     });
 
-    // Research Submission
+    // Research Submission Wizard
+    let currentWizardStep = 1;
+
+    $(document).on('click', '.src-wizard-next', function() {
+        const $currentStepContent = $(`.src-wizard-step-content[data-step="${currentWizardStep}"]`);
+        let valid = true;
+
+        // Simple Validation for required fields in current step
+        $currentStepContent.find('[required]').each(function() {
+            if (!$(this).val() || ($(this).attr('type') === 'checkbox' && !$(this).is(':checked'))) {
+                $(this).addClass('src-error');
+                valid = false;
+            } else {
+                $(this).removeClass('src-error');
+            }
+        });
+
+        if (!valid) return;
+
+        if (currentWizardStep < 4) {
+            currentWizardStep++;
+            updateWizardUI();
+        }
+    });
+
+    $(document).on('click', '.src-wizard-prev', function() {
+        if (currentWizardStep > 1) {
+            currentWizardStep--;
+            updateWizardUI();
+        }
+    });
+
+    function updateWizardUI() {
+        $('.src-wizard-step-content').removeClass('active');
+        $(`.src-wizard-step-content[data-step="${currentWizardStep}"]`).addClass('active');
+
+        $('.src-step').removeClass('active completed');
+        $('.src-step').each(function() {
+            const stepNum = parseInt($(this).data('step'));
+            if (stepNum < currentWizardStep) $(this).addClass('completed');
+            if (stepNum === currentWizardStep) $(this).addClass('active');
+        });
+
+        if (currentWizardStep === 1) {
+            $('.src-wizard-prev').hide();
+            $('.src-wizard-next').show();
+            $('.src-wizard-submit').hide();
+        } else if (currentWizardStep === 4) {
+            $('.src-wizard-prev').show();
+            $('.src-wizard-next').hide();
+            $('.src-wizard-submit').show();
+        } else {
+            $('.src-wizard-prev').show();
+            $('.src-wizard-next').show();
+            $('.src-wizard-submit').hide();
+        }
+    }
+
+    // Research Submission Submission
     $(document).on('submit', '#src-research-submission-action', function(e) {
         e.preventDefault();
         const $form = $(this);
         const $msg = $form.find('.src-form-msg');
-        $msg.text('Submitting research...').css('color', '#333');
+        $msg.text('Submitting research for review...').css('color', '#333');
 
         const formData = new FormData(this);
         formData.append('action', 'src_submit_research');
@@ -312,6 +370,8 @@ jQuery(document).ready(function($) {
                 if (response.success) {
                     $msg.text(response.data.message).css('color', 'green');
                     $form[0].reset();
+                    currentWizardStep = 1;
+                    updateWizardUI();
                 } else {
                     $msg.text(response.data.message).css('color', 'red');
                 }

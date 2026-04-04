@@ -64,7 +64,7 @@ class SRC_Research {
 	 */
 	public function render_submission_form() {
 		if ( ! is_user_logged_in() ) {
-			return sprintf( '<p>%s <a href="%s">%s</a></p>',
+			return sprintf( '<div class="src-auth-container monochromatic compact"><p>%s <a href="%s">%s</a></p></div>',
 				__( 'Please login to submit research.', 'scientific-research-center' ),
 				home_url( '/login-register/' ),
 				__( 'Login here', 'scientific-research-center' )
@@ -76,60 +76,102 @@ class SRC_Research {
 
 		ob_start();
 		?>
-		<div class="src-submission-container monochromatic">
-			<div class="src-welcome-msg">
+		<div class="src-submission-wizard monochromatic">
+			<div class="src-wizard-header">
 				<h2><?php _e( 'Submit Research', 'scientific-research-center' ); ?></h2>
 				<p><?php _e( 'Share your scientific work with the global research community.', 'scientific-research-center' ); ?></p>
+
+				<div class="src-wizard-steps">
+					<div class="src-step active" data-step="1"><span>1</span><p><?php _e( 'Basic Info', 'scientific-research-center' ); ?></p></div>
+					<div class="src-step" data-step="2"><span>2</span><p><?php _e( 'Authors', 'scientific-research-center' ); ?></p></div>
+					<div class="src-step" data-step="3"><span>3</span><p><?php _e( 'Files', 'scientific-research-center' ); ?></p></div>
+					<div class="src-step" data-step="4"><span>4</span><p><?php _e( 'Keywords', 'scientific-research-center' ); ?></p></div>
+				</div>
 			</div>
 
-			<form id="src-research-submission-action" enctype="multipart/form-data">
-				<div class="src-field-group">
-					<input type="text" name="title" id="res_title" placeholder=" " required>
-					<label for="res_title"><?php _e( 'Research Title', 'scientific-research-center' ); ?></label>
-				</div>
+			<form id="src-research-submission-action" class="src-wizard-form" enctype="multipart/form-data">
+				<!-- Step 1: Basic Info -->
+				<div class="src-wizard-step-content active" data-step="1">
+					<div class="src-field-group">
+						<input type="text" name="title" id="res_title" placeholder=" " required>
+						<label for="res_title"><?php _e( 'Research Title', 'scientific-research-center' ); ?></label>
+					</div>
 
-				<div class="src-field-group">
-					<textarea name="abstract" id="res_abstract" placeholder=" " required style="height:120px;"></textarea>
-					<label for="res_abstract"><?php _e( 'Abstract', 'scientific-research-center' ); ?></label>
-				</div>
+					<div class="src-field-group">
+						<textarea name="abstract" id="res_abstract" placeholder=" " required style="height:150px;"></textarea>
+						<label for="res_abstract"><?php _e( 'Abstract', 'scientific-research-center' ); ?></label>
+					</div>
 
-				<div class="src-field-row">
 					<div class="src-field-group">
 						<select name="type" id="res_type" required>
 							<option value="thesis"><?php _e( 'Thesis', 'scientific-research-center' ); ?></option>
-							<option value="paper"><?php _e( 'Paper', 'scientific-research-center' ); ?></option>
-							<option value="study"><?php _e( 'Study', 'scientific-research-center' ); ?></option>
+							<option value="paper"><?php _e( 'Scientific Paper', 'scientific-research-center' ); ?></option>
+							<option value="study"><?php _e( 'Case Study', 'scientific-research-center' ); ?></option>
 						</select>
 						<label for="res_type" class="select-label"><?php _e( 'Research Type', 'scientific-research-center' ); ?></label>
 					</div>
+				</div>
+
+				<!-- Step 2: Authors & Institutions -->
+				<div class="src-wizard-step-content" data-step="2">
+					<div class="src-field-row">
+						<div class="src-field-group">
+							<input type="text" name="author_display" value="<?php echo esc_attr( $user->display_name ); ?>" disabled>
+							<label><?php _e( 'Primary Author', 'scientific-research-center' ); ?></label>
+						</div>
+						<div class="src-field-group">
+							<input type="text" name="institution_display" value="<?php echo esc_attr( $institution ); ?>" disabled>
+							<label><?php _e( 'Affiliated Institution', 'scientific-research-center' ); ?></label>
+						</div>
+					</div>
+					<div class="src-field-group">
+						<input type="text" name="co_authors" id="res_coauthors" placeholder=" ">
+						<label for="res_coauthors"><?php _e( 'Co-Authors (Optional, comma separated)', 'scientific-research-center' ); ?></label>
+					</div>
+					<div class="src-field-group">
+						<input type="text" name="publication_date" id="res_date" placeholder=" " value="<?php echo date('Y-m-d'); ?>">
+						<label for="res_date"><?php _e( 'Original Publication Date', 'scientific-research-center' ); ?></label>
+					</div>
+				</div>
+
+				<!-- Step 3: Files -->
+				<div class="src-wizard-step-content" data-step="3">
+					<div class="src-upload-zone" id="src-main-file-zone">
+						<div class="src-upload-icon"><span class="dashicons dashicons-cloud-upload"></span></div>
+						<p><?php _e( 'Drag and drop your primary research file here', 'scientific-research-center' ); ?></p>
+						<span><?php _e( 'Supported formats: PDF, DOCX (Max 10MB)', 'scientific-research-center' ); ?></span>
+						<input type="file" name="research_file" id="res_file" accept=".pdf,.docx" required>
+					</div>
+
+					<div class="src-field-group" style="margin-top: 30px;">
+						<input type="file" name="supporting_files[]" id="res_supporting" multiple>
+						<label for="res_supporting" class="file-label"><?php _e( 'Supporting Files (Optional)', 'scientific-research-center' ); ?></label>
+					</div>
+				</div>
+
+				<!-- Step 4: Keywords & Submit -->
+				<div class="src-wizard-step-content" data-step="4">
 					<div class="src-field-group">
 						<input type="text" name="keywords" id="res_keywords" placeholder=" ">
-						<label for="res_keywords"><?php _e( 'Keywords (Comma separated)', 'scientific-research-center' ); ?></label>
-					</div>
-				</div>
-
-				<div class="src-field-row">
-					<div class="src-field-group">
-						<input type="text" value="<?php echo esc_attr( $user->display_name ); ?>" disabled>
-						<label><?php _e( 'Author Name', 'scientific-research-center' ); ?></label>
+						<label for="res_keywords"><?php _e( 'Keywords (e.g. Quantum, Physics, Biology)', 'scientific-research-center' ); ?></label>
 					</div>
 					<div class="src-field-group">
-						<input type="text" value="<?php echo esc_attr( $institution ); ?>" disabled>
-						<label><?php _e( 'Institution', 'scientific-research-center' ); ?></label>
+						<textarea name="supplementary" id="res_supp" placeholder=" " style="height:100px;"></textarea>
+						<label for="res_supp"><?php _e( 'Supplementary Information / Notes to Reviewer', 'scientific-research-center' ); ?></label>
+					</div>
+
+					<div class="src-confirmation-box">
+						<input type="checkbox" id="res_confirm" required>
+						<label for="res_confirm"><?php _e( 'I confirm that this work is original and I have the right to publish it.', 'scientific-research-center' ); ?></label>
 					</div>
 				</div>
 
-				<div class="src-field-group">
-					<input type="file" name="research_file" id="res_file" accept=".pdf,.doc,.docx" required>
-					<label for="res_file" class="file-label"><?php _e( 'Full Research File (PDF/DOCX)', 'scientific-research-center' ); ?></label>
+				<div class="src-wizard-footer">
+					<button type="button" class="src-btn-outline src-wizard-prev" style="display:none;"><?php _e( 'Previous', 'scientific-research-center' ); ?></button>
+					<button type="button" class="src-submit-btn src-wizard-next"><?php _e( 'Continue', 'scientific-research-center' ); ?></button>
+					<button type="submit" class="src-submit-btn src-wizard-submit" style="display:none;"><?php _e( 'Submit Research', 'scientific-research-center' ); ?></button>
 				</div>
 
-				<div class="src-field-group">
-					<input type="file" name="supporting_files[]" id="res_supporting" multiple>
-					<label for="res_supporting" class="file-label"><?php _e( 'Supporting Files (Optional)', 'scientific-research-center' ); ?></label>
-				</div>
-
-				<button type="submit" class="src-submit-btn"><?php _e( 'Submit for Review', 'scientific-research-center' ); ?></button>
 				<div class="src-form-msg"></div>
 			</form>
 		</div>
@@ -152,6 +194,9 @@ class SRC_Research {
 		$abstract = wp_kses_post( $_POST['abstract'] );
 		$type = sanitize_text_field( $_POST['type'] );
 		$keywords = sanitize_text_field( $_POST['keywords'] );
+		$co_authors = sanitize_text_field( $_POST['co_authors'] );
+		$publication_date = sanitize_text_field( $_POST['publication_date'] );
+		$supplementary = wp_kses_post( $_POST['supplementary'] );
 
 		$post_id = wp_insert_post( array(
 			'post_title'   => $title,
@@ -165,21 +210,54 @@ class SRC_Research {
 			wp_send_json_error( array( 'message' => $post_id->get_error_message() ) );
 		}
 
+		// Handle Metadata
+		update_post_meta( $post_id, 'src_co_authors', $co_authors );
+		update_post_meta( $post_id, 'src_pub_date', $publication_date );
+		update_post_meta( $post_id, 'src_supplementary', $supplementary );
+
 		// Handle Taxonomies
 		wp_set_object_terms( $post_id, $type, 'research_type' );
 		if ( ! empty( $keywords ) ) {
-			wp_set_object_terms( $post_id, explode( ',', $keywords ), 'post_tag' );
+			$tag_ids = array();
+			$tags = explode( ',', $keywords );
+			foreach ( $tags as $tag ) {
+				$tag = trim( $tag );
+				if ( ! empty( $tag ) ) {
+					$tag_ids[] = $tag;
+				}
+			}
+			wp_set_object_terms( $post_id, $tag_ids, 'post_tag' );
 		}
 
-		// Handle Main File
-		if ( ! empty( $_FILES['research_file'] ) ) {
-			require_once( ABSPATH . 'wp-admin/includes/image.php' );
-			require_once( ABSPATH . 'wp-admin/includes/file.php' );
-			require_once( ABSPATH . 'wp-admin/includes/media.php' );
+		// Handle Files
+		require_once( ABSPATH . 'wp-admin/includes/image.php' );
+		require_once( ABSPATH . 'wp-admin/includes/file.php' );
+		require_once( ABSPATH . 'wp-admin/includes/media.php' );
 
+		if ( ! empty( $_FILES['research_file'] ) ) {
 			$file_id = media_handle_upload( 'research_file', $post_id );
 			if ( ! is_wp_error( $file_id ) ) {
 				update_post_meta( $post_id, 'src_main_file', $file_id );
+			}
+		}
+
+		if ( ! empty( $_FILES['supporting_files'] ) ) {
+			$files = $_FILES['supporting_files'];
+			foreach ( $files['name'] as $key => $value ) {
+				if ( $files['name'][ $key ] ) {
+					$file = array(
+						'name'     => $files['name'][ $key ],
+						'type'     => $files['type'][ $key ],
+						'tmp_name' => $files['tmp_name'][ $key ],
+						'error'    => $files['error'][ $key ],
+						'size'     => $files['size'][ $key ],
+					);
+					$_FILES['supporting_file_item'] = $file;
+					$attachment_id = media_handle_upload( 'supporting_file_item', $post_id );
+					if ( ! is_wp_error( $attachment_id ) ) {
+						add_post_meta( $post_id, 'src_supporting_file', $attachment_id );
+					}
+				}
 			}
 		}
 
