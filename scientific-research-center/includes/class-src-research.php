@@ -624,15 +624,27 @@ class SRC_Research {
 
 		if ( $query->have_posts() ) :
 			while ( $query->have_posts() ) : $query->the_post();
+				$post_id = get_the_ID();
 				$author_id = get_the_author_meta( 'ID' );
 				$institution = get_user_meta( $author_id, 'src_institution', true );
-				$file_id = get_post_meta( get_the_ID(), 'src_main_file', true );
+				$file_id = get_post_meta( $post_id, 'src_main_file', true );
 				$file_url = $file_id ? wp_get_attachment_url( $file_id ) : '#';
+
+				$user_id = get_current_user_id();
+				$favorites = get_user_meta( $user_id, 'src_favorites', true ) ?: array();
+				$is_fav = in_array( $post_id, $favorites );
 				?>
-				<div class="src-research-card card">
+				<div class="src-research-card card" data-id="<?php echo $post_id; ?>">
 					<div class="src-card-header">
 						<span class="src-badge"><?php echo esc_html( strip_tags( get_the_term_list( get_the_ID(), 'research_type', '', ', ' ) ) ); ?></span>
-						<span class="src-date"><?php echo get_the_date(); ?></span>
+						<div class="src-card-top-actions">
+							<span class="src-date"><?php echo get_the_date(); ?></span>
+							<?php if ( is_user_logged_in() ) : ?>
+								<button class="src-fav-toggle <?php echo $is_fav ? 'active' : ''; ?>" title="<?php _e( 'Add to Favorites', 'scientific-research-center' ); ?>">
+									<span class="dashicons <?php echo $is_fav ? 'dashicons-heart' : 'dashicons-heart'; ?>"></span>
+								</button>
+							<?php endif; ?>
+						</div>
 					</div>
 					<h3><?php the_title(); ?></h3>
 					<div class="src-card-meta">

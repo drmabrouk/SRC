@@ -29,6 +29,7 @@ class SRC_Frontend {
 		add_action( 'wp_ajax_src_upload_avatar', array( $this, 'handle_ajax_upload_avatar' ) );
 		add_action( 'wp_ajax_src_get_notifications', array( $this, 'handle_ajax_get_notifications' ) );
 		add_action( 'wp_ajax_src_mark_notifications_read', array( $this, 'handle_ajax_mark_notifications_read' ) );
+		add_action( 'wp_ajax_src_toggle_favorite', array( $this, 'handle_ajax_toggle_favorite' ) );
 	}
 
 	/**
@@ -329,6 +330,9 @@ class SRC_Frontend {
 			}
 		}
 
+		$favorites = get_user_meta( $user_id, 'src_favorites', true ) ?: array();
+		$fav_count = count( $favorites );
+
 		ob_start();
 		?>
 		<div class="src-header-list-container">
@@ -370,10 +374,24 @@ class SRC_Frontend {
 
 			<!-- Action Icons -->
 			<div class="src-header-actions">
-				<div class="src-header-icon-circle <?php echo $unread_count > 0 ? 'has-badge' : ''; ?>" id="src-noti-trigger">
+				<!-- Upload Research -->
+				<a href="<?php echo esc_url( home_url( '/submit-research/' ) ); ?>" class="src-header-icon-circle" title="<?php _e( 'Submit Research', 'scientific-research-center' ); ?>">
+					<span class="dashicons dashicons-upload"></span>
+				</a>
+
+				<!-- Favorites -->
+				<?php if ( in_array( $role, array( 'src_researcher', 'src_reviewer', 'src_member' ) ) ) : ?>
+					<a href="<?php echo esc_url( home_url( '/' . $role_slug . '-dashboard/?section=favorites' ) ); ?>" class="src-header-icon-circle <?php echo $fav_count > 0 ? 'has-badge' : ''; ?>" id="src-fav-header-icon" title="<?php _e( 'My Favorites', 'scientific-research-center' ); ?>">
+						<span class="dashicons dashicons-heart"></span>
+						<span class="src-icon-badge fav-badge" <?php echo $fav_count === 0 ? 'style="display:none;"' : ''; ?>><?php echo $fav_count; ?></span>
+					</a>
+				<?php endif; ?>
+
+				<!-- Notifications -->
+				<div class="src-header-icon-circle <?php echo $unread_count > 0 ? 'has-badge' : ''; ?>" id="src-noti-trigger" title="<?php _e( 'Notifications', 'scientific-research-center' ); ?>">
 					<span class="dashicons dashicons-bell"></span>
 					<?php if ( $unread_count > 0 ) : ?>
-						<span class="src-icon-badge"><?php echo $unread_count; ?></span>
+						<span class="src-icon-badge noti-badge"><?php echo $unread_count; ?></span>
 					<?php endif; ?>
 
 					<!-- Notifications Dropdown -->
@@ -411,6 +429,26 @@ class SRC_Frontend {
 
 		$notifications = get_user_meta( $user_id, 'src_notifications', true ) ?: array();
 		wp_send_json_success( $notifications );
+	}
+
+	public function handle_ajax_toggle_favorite() {
+		check_ajax_referer( 'src_auth_nonce', 'nonce' );
+		$user_id = get_current_user_id();
+		if ( ! $user_id ) wp_send_json_error( array( 'message' => __( 'Unauthorized', 'scientific-research-center' ) ) );
+
+		$post_id = absint( $_POST['post_id'] );
+		$favorites = get_user_meta( $user_id, 'src_favorites', true ) ?: array();
+
+		if ( ( $key = array_search( $post_id, $favorites ) ) !== false ) {
+			unset( $favorites[$key] );
+			$status = 'removed';
+		} else {
+			$favorites[] = $post_id;
+			$status = 'added';
+		}
+
+		update_user_meta( $user_id, 'src_favorites', array_values( $favorites ) );
+		wp_send_json_success( array( 'status' => $status, 'count' => count( $favorites ) ) );
 	}
 
 	public function handle_ajax_mark_notifications_read() {

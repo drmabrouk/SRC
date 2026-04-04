@@ -94,6 +94,14 @@ $role_name = isset( $role_definitions[ $role ] ) ? $role_definitions[ $role ]['n
 					</li>
 				<?php endif; ?>
 
+				<?php if ( in_array( $role, array( 'src_researcher', 'src_reviewer', 'src_member' ) ) ) : ?>
+					<li class="src-menu-item" data-section="favorites">
+						<div class="src-menu-toggle">
+							<span class="dashicons dashicons-heart"></span> <?php _e( 'My Favorites', 'scientific-research-center' ); ?>
+						</div>
+					</li>
+				<?php endif; ?>
+
 				<li class="src-menu-item" data-section="settings">
 					<div class="src-menu-toggle">
 						<span class="dashicons dashicons-admin-settings"></span> <?php _e( 'Settings', 'scientific-research-center' ); ?>
@@ -265,6 +273,49 @@ $role_name = isset( $role_definitions[ $role ] ) ? $role_definitions[ $role ]['n
 				<div class="src-user-list-container">
 					<!-- AJAX Loaded Institution Member Table -->
 					<div class="src-loading-skeleton"></div>
+				</div>
+			</div>
+		<?php endif; ?>
+
+		<?php if ( in_array( $role, array( 'src_researcher', 'src_reviewer', 'src_member' ) ) ) : ?>
+			<div id="src-cp-content-favorites" class="src-cp-section">
+				<h1><?php _e( 'My Saved Research', 'scientific-research-center' ); ?></h1>
+				<p><?php _e( 'Quick access to scientific contributions you have marked as favorites.', 'scientific-research-center' ); ?></p>
+
+				<div class="src-card-grid" style="margin-top: 30px;">
+					<?php
+					$fav_ids = get_user_meta( get_current_user_id(), 'src_favorites', true ) ?: array();
+					if ( empty( $fav_ids ) ) {
+						echo '<p>' . __( 'You have not saved any research yet.', 'scientific-research-center' ) . '</p>';
+					} else {
+						$fav_query = new WP_Query( array(
+							'post_type' => 'research_paper',
+							'post__in'  => $fav_ids,
+							'orderby'   => 'post__in'
+						) );
+
+						if ( $fav_query->have_posts() ) {
+							while ( $fav_query->have_posts() ) {
+								$fav_query->the_post();
+								$post_id = get_the_ID();
+								$type = strip_tags( get_the_term_list( $post_id, 'research_type', '', ', ' ) );
+								?>
+								<div class="src-research-card card" data-id="<?php echo $post_id; ?>">
+									<div class="src-card-header">
+										<span class="src-badge"><?php echo esc_html( $type ); ?></span>
+										<button class="src-fav-toggle active"><span class="dashicons dashicons-heart"></span></button>
+									</div>
+									<h3><?php the_title(); ?></h3>
+									<div class="src-card-actions">
+										<a href="<?php the_permalink(); ?>" class="src-submit-btn"><?php _e( 'View Details', 'scientific-research-center' ); ?></a>
+									</div>
+								</div>
+								<?php
+							}
+							wp_reset_postdata();
+						}
+					}
+					?>
 				</div>
 			</div>
 		<?php endif; ?>

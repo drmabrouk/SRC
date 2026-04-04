@@ -18,6 +18,13 @@ jQuery(document).ready(function($) {
         $('.src-form-msg').text('');
     });
 
+    // Handle specific section from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const targetSection = urlParams.get('section');
+    if (targetSection) {
+        $(`.src-menu-item[data-section="${targetSection}"]`).trigger('click');
+    }
+
     // Control Panel Navigation (Collapsible)
     $(document).on('click', '.src-menu-item', function(e) {
         const $item = $(this);
@@ -728,6 +735,45 @@ jQuery(document).ready(function($) {
             }
         });
     }
+
+    // Favorites Toggling
+    $(document).on('click', '.src-fav-toggle', function(e) {
+        e.preventDefault();
+        const $btn = $(this);
+        const postId = $btn.closest('.src-research-card').data('id');
+
+        $.ajax({
+            type: 'POST',
+            url: src_ajax.ajax_url,
+            data: {
+                action: 'src_toggle_favorite',
+                nonce: src_ajax.nonce,
+                post_id: postId
+            },
+            success: function(response) {
+                if (response.success) {
+                    $btn.toggleClass('active');
+
+                    // Update Header Badge
+                    const $headerIcon = $('#src-fav-header-icon');
+                    const $badge = $('.fav-badge');
+
+                    if (response.data.count > 0) {
+                        $headerIcon.addClass('has-badge');
+                        $badge.text(response.data.count).show();
+                    } else {
+                        $headerIcon.removeClass('has-badge');
+                        $badge.hide();
+                    }
+
+                    // If we are in the favorites section, maybe remove the card
+                    if ($('#src-cp-content-favorites').hasClass('active') && response.data.status === 'removed') {
+                        $btn.closest('.src-research-card').fadeOut();
+                    }
+                }
+            }
+        });
+    });
 
     $(document).on('change', '#src-header-avatar-input', function() {
         const file = this.files[0];
