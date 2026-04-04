@@ -272,4 +272,45 @@ jQuery(document).ready(function($) {
             }
         });
     });
+
+    // Header List Interactions
+    $(document).on('click', '.src-pill-welcome', function(e) {
+        e.stopPropagation();
+        $('.src-header-dropdown').toggleClass('active');
+    });
+
+    $(document).on('click', function() {
+        $('.src-header-dropdown').removeClass('active');
+    });
+
+    // Avatar Upload Trigger
+    $(document).on('click', '#src-trigger-upload img', function(e) {
+        e.stopPropagation();
+        $('#src-header-avatar-input').click();
+    });
+
+    $(document).on('change', '#src-header-avatar-input', function() {
+        const file = this.files[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('action', 'src_upload_avatar');
+        formData.append('nonce', src_ajax.nonce);
+        formData.append('avatar', file);
+
+        $.ajax({
+            type: 'POST',
+            url: src_ajax.ajax_url,
+            data: formData,
+            contentType: false,
+            processData: false,
+            success: function(response) {
+                if (response.success) {
+                    $('.src-pill-avatar img, .src-dropdown-header img').attr('src', response.data.url);
+                } else {
+                    alert(response.data.message);
+                }
+            }
+        });
+    });
 });

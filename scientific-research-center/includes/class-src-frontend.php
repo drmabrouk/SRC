@@ -12,6 +12,7 @@ class SRC_Frontend {
 
 	public function __construct() {
 		add_shortcode( 'src_auth_form', array( $this, 'render_auth_form' ) );
+		add_shortcode( 'Header List', array( $this, 'render_header_list' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_assets' ) );
 		add_action( 'init', array( $this, 'register_profile_rewrites' ) );
 		add_action( 'template_redirect', array( $this, 'role_based_redirects' ) );
@@ -25,6 +26,7 @@ class SRC_Frontend {
 		add_action( 'wp_ajax_src_complete_profile', array( $this, 'handle_ajax_complete_profile' ) );
 		add_action( 'wp_ajax_src_load_system_users', array( $this, 'handle_ajax_load_system_users' ) );
 		add_action( 'wp_ajax_src_user_action', array( $this, 'handle_ajax_user_action' ) );
+		add_action( 'wp_ajax_src_upload_avatar', array( $this, 'handle_ajax_upload_avatar' ) );
 	}
 
 	/**
@@ -145,6 +147,31 @@ class SRC_Frontend {
 	}
 
 	/**
+	 * AJAX Avatar Upload Handler
+	 */
+	public function handle_ajax_upload_avatar() {
+		check_ajax_referer( 'src_auth_nonce', 'nonce' );
+		if ( ! is_user_logged_in() ) {
+			wp_send_json_error( array( 'message' => __( 'Unauthorized', 'scientific-research-center' ) ) );
+		}
+
+		if ( ! empty( $_FILES['avatar'] ) ) {
+			require_once( ABSPATH . 'wp-admin/includes/image.php' );
+			require_once( ABSPATH . 'wp-admin/includes/file.php' );
+			require_once( ABSPATH . 'wp-admin/includes/media.php' );
+
+			$attachment_id = media_handle_upload( 'avatar', 0 );
+			if ( ! is_wp_error( $attachment_id ) ) {
+				update_user_meta( get_current_user_id(), 'src_profile_picture', $attachment_id );
+				wp_send_json_success( array( 'url' => wp_get_attachment_url( $attachment_id ) ) );
+			} else {
+				wp_send_json_error( array( 'message' => $attachment_id->get_error_message() ) );
+			}
+		}
+		wp_send_json_error( array( 'message' => __( 'No file uploaded', 'scientific-research-center' ) ) );
+	}
+
+	/**
 	 * AJAX User Action Handler
 	 */
 	public function handle_ajax_user_action() {
@@ -234,6 +261,82 @@ class SRC_Frontend {
 		}
 
 		return $template;
+	}
+
+	/**
+	 * Render the professional Header List shortcode
+	 */
+	public function render_header_list() {
+		if ( ! is_user_logged_in() ) {
+			return '';
+		}
+
+		$current_user = wp_get_current_user();
+		$role = ! empty( $current_user->roles ) ? $current_user->roles[0] : '';
+		$role_slug = str_replace( 'src_', '', $role );
+		if ( $role === 'administrator' ) $role_slug = 'administrator';
+
+		$profile_picture_id = get_user_meta( $current_user->ID, 'src_profile_picture', true );
+		$profile_picture_url = $profile_picture_id ? wp_get_attachment_url( $profile_picture_id ) : get_avatar_url( $current_user->ID );
+
+		$account_link = ( in_array( $role, array( 'src_administrator', 'administrator', 'src_supervisor' ) ) )
+			? home_url( '/' . $role_slug . '-dashboard/' )
+			: home_url( '/' . $role_slug . '-dashboard/' ); // Or specific profile link
+
+		ob_start();
+		?>
+		<div class="src-header-list-container">
+			<!-- Profile Pill -->
+			<div class="src-header-pill">
+				<div class="src-pill-avatar" id="src-trigger-upload">
+					<img src="<?php echo esc_url( $profile_picture_url ); ?>" alt="Avatar">
+					<input type="file" id="src-header-avatar-input" style="display:none;" accept="image/*">
+				</div>
+				<div class="src-pill-info">
+					<div class="src-pill-welcome">
+						<?php printf( __( 'Welcome, %s', 'scientific-research-center' ), esc_html( $current_user->first_name ) ); ?>
+						<span class="dashicons dashicons-arrow-down-alt2 src-dropdown-trigger"></span>
+					</div>
+					<div class="src-pill-status"><?php _e( 'Online Now', 'scientific-research-center' ); ?></div>
+				</div>
+
+				<!-- Dropdown Menu -->
+				<div class="src-header-dropdown">
+					<div class="src-dropdown-header">
+						<img src="<?php echo esc_url( $profile_picture_url ); ?>" alt="Avatar">
+						<div class="src-dropdown-user">
+							<strong><?php echo esc_html( $current_user->display_name ); ?></strong>
+							<span><?php echo esc_html( $current_user->user_email ); ?></span>
+						</div>
+					</div>
+					<ul class="src-dropdown-links">
+						<li><a href="<?php echo esc_url( home_url( '/profile-completion/' ) ); ?>"><span class="dashicons dashicons-admin-users"></span> <?php _e( 'Edit Profile', 'scientific-research-center' ); ?></a></li>
+						<li><a href="<?php echo esc_url( $account_link ); ?>"><span class="dashicons dashicons-dashboard"></span> <?php _e( 'My Dashboard', 'scientific-research-center' ); ?></a></li>
+						<li><a href="#"><span class="dashicons dashicons-shield"></span> <?php _e( 'Privacy Policy', 'scientific-research-center' ); ?></a></li>
+						<li><a href="<?php echo esc_url( wp_logout_url( home_url() ) ); ?>" class="src-logout-link"><?php _e( 'Secure Logout', 'scientific-research-center' ); ?></a></li>
+					</ul>
+				</div>
+			</div>
+
+			<!-- Action Icons -->
+			<div class="src-header-actions">
+				<div class="src-header-icon-circle has-badge">
+					<span class="dashicons dashicons-bell"></span>
+					<span class="src-icon-badge">1</span>
+				</div>
+				<div class="src-header-icon-circle">
+					<span class="dashicons dashicons-email"></span>
+				</div>
+				<div class="src-header-icon-circle">
+					<span class="dashicons dashicons-performance"></span>
+				</div>
+				<a href="<?php echo esc_url( home_url() ); ?>" class="src-header-icon-circle">
+					<span class="dashicons dashicons-admin-home"></span>
+				</a>
+			</div>
+		</div>
+		<?php
+		return ob_get_clean();
 	}
 
 	/**
@@ -390,7 +493,7 @@ class SRC_Frontend {
 
 		$info = array();
 		$info['user_login'] = sanitize_text_field( $_POST['log'] );
-		$info['user_password'] = sanitize_text_field( $_POST['pwd'] );
+		$info['user_password'] = $_POST['pwd']; // Do not sanitize passwords to avoid stripping special characters
 		$info['remember'] = true;
 
 		$user_signon = wp_signon( $info, false );
