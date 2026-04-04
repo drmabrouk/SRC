@@ -30,6 +30,7 @@ require_once SRC_PLUGIN_DIR . 'includes/class-src-admin.php';
 require_once SRC_PLUGIN_DIR . 'includes/class-src-user-management.php';
 require_once SRC_PLUGIN_DIR . 'includes/class-src-frontend.php';
 require_once SRC_PLUGIN_DIR . 'includes/class-src-emails.php';
+require_once SRC_PLUGIN_DIR . 'includes/class-src-research.php';
 
 /**
  * Main Plugin Class
@@ -48,6 +49,7 @@ class Scientific_Research_Center {
 		new SRC_User_Management();
 		new SRC_Frontend();
 		new SRC_Emails();
+		new SRC_Research();
 	}
 
 	public static function activate() {

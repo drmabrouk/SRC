@@ -58,6 +58,30 @@ class SRC_Activator {
 				'post_type'    => 'page',
 			) );
 		}
+
+		// Create Submit Research Page
+		$sr_title = 'Submit Research';
+		if ( ! isset( get_page_by_title( $sr_title )->ID ) ) {
+			wp_insert_post( array(
+				'post_title'   => $sr_title,
+				'post_content' => '[src_submit_research]',
+				'post_status'  => 'publish',
+				'post_author'  => 1,
+				'post_type'    => 'page',
+			) );
+		}
+
+		// Create Research Library Page
+		$rl_title = 'Research Library';
+		if ( ! isset( get_page_by_title( $rl_title )->ID ) ) {
+			wp_insert_post( array(
+				'post_title'   => $rl_title,
+				'post_content' => '[src_research_library]',
+				'post_status'  => 'publish',
+				'post_author'  => 1,
+				'post_type'    => 'page',
+			) );
+		}
 	}
 
 	/**
