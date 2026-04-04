@@ -460,7 +460,7 @@ jQuery(document).ready(function($) {
 
     // Search Button Redirection (Always to Results Page)
     $(document).on('click', '#lib_search_btn', function() {
-        const query = $('#lib_search').val();
+        const query = $('#lib_search').val() || '';
         const faculty = $('#lib_faculty').val();
         const specialty = $('#lib_specialty').val();
         const subspecialty = $('#lib_sub_specialty').val();
