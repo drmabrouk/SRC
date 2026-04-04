@@ -12,7 +12,7 @@ class SRC_Frontend {
 
 	public function __construct() {
 		add_shortcode( 'src_auth_form', array( $this, 'render_auth_form' ) );
-		add_shortcode( 'Header List', array( $this, 'render_header_list' ) );
+		add_shortcode( 'Header', array( $this, 'render_header_list' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_assets' ) );
 		add_action( 'init', array( $this, 'register_profile_rewrites' ) );
 		add_action( 'template_redirect', array( $this, 'role_based_redirects' ) );
@@ -87,7 +87,15 @@ class SRC_Frontend {
 			$args['role'] = $filter_role;
 		}
 
-		if ( $institution_filter ) {
+		// Security: Strictly scope access for Institution role
+		if ( current_user_can( 'src_institution' ) && ! current_user_can( 'manage_options' ) ) {
+			$institution_filter = get_user_meta( get_current_user_id(), 'src_institution', true );
+			if ( empty( $institution_filter ) ) {
+				wp_send_json_error( array( 'message' => __( 'No institution linked to your account.', 'scientific-research-center' ) ) );
+			}
+			$args['meta_key'] = 'src_institution';
+			$args['meta_value'] = $institution_filter;
+		} elseif ( $institution_filter ) {
 			if ( $institution_filter === 'current' ) {
 				$institution_filter = get_user_meta( get_current_user_id(), 'src_institution', true );
 			}
@@ -310,10 +318,14 @@ class SRC_Frontend {
 						</div>
 					</div>
 					<ul class="src-dropdown-links">
-						<li><a href="<?php echo esc_url( home_url( '/profile-completion/' ) ); ?>"><span class="dashicons dashicons-admin-users"></span> <?php _e( 'Edit Profile', 'scientific-research-center' ); ?></a></li>
-						<li><a href="<?php echo esc_url( $account_link ); ?>"><span class="dashicons dashicons-dashboard"></span> <?php _e( 'My Dashboard', 'scientific-research-center' ); ?></a></li>
-						<li><a href="#"><span class="dashicons dashicons-shield"></span> <?php _e( 'Privacy Policy', 'scientific-research-center' ); ?></a></li>
-						<li><a href="<?php echo esc_url( wp_logout_url( home_url() ) ); ?>" class="src-logout-link"><?php _e( 'Secure Logout', 'scientific-research-center' ); ?></a></li>
+						<li><a href="<?php echo esc_url( home_url( '/profile-completion/' ) ); ?>"><span class="dashicons dashicons-admin-users"></span> <?php _e( 'Edit Account Data', 'scientific-research-center' ); ?></a></li>
+						<?php if ( in_array( $role, array( 'src_administrator', 'administrator', 'src_supervisor' ) ) ) : ?>
+							<li><a href="<?php echo esc_url( $account_link ); ?>"><span class="dashicons dashicons-admin-generic"></span> <?php _e( 'Advanced System Settings', 'scientific-research-center' ); ?></a></li>
+						<?php endif; ?>
+						<li><a href="#" id="src-trigger-upload-link"><span class="dashicons dashicons-camera"></span> <?php _e( 'Upload Profile Picture', 'scientific-research-center' ); ?></a></li>
+						<li><a href="#"><span class="dashicons dashicons-shield"></span> <?php _e( 'Privacy & Use Policies', 'scientific-research-center' ); ?></a></li>
+						<li><a href="#"><span class="dashicons dashicons-update"></span> <?php _e( 'Comprehensive Update', 'scientific-research-center' ); ?></a></li>
+						<li class="src-logout-item"><a href="<?php echo esc_url( wp_logout_url( home_url() ) ); ?>" class="src-logout-link"><?php _e( 'Secure Logout', 'scientific-research-center' ); ?></a></li>
 					</ul>
 				</div>
 			</div>
@@ -565,6 +577,16 @@ class SRC_Frontend {
 	public function role_based_redirects() {
 		$current_post = get_post();
 		$current_slug = $current_post ? $current_post->post_name : '';
+
+		if ( is_user_logged_in() ) {
+			$user = wp_get_current_user();
+			$status = get_user_meta( $user->ID, 'src_user_status', true );
+			if ( $status === 'suspended' ) {
+				wp_logout();
+				wp_safe_redirect( add_query_arg( 'src_msg', 'suspended', home_url( '/login-register/' ) ) );
+				exit;
+			}
+		}
 
 		if ( is_page( 'login-register' ) && is_user_logged_in() ) {
 			$user = wp_get_current_user();

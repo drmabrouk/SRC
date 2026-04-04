@@ -284,7 +284,8 @@ jQuery(document).ready(function($) {
     });
 
     // Avatar Upload Trigger
-    $(document).on('click', '#src-trigger-upload img', function(e) {
+    $(document).on('click', '#src-trigger-upload img, #src-trigger-upload-link', function(e) {
+        e.preventDefault();
         e.stopPropagation();
         $('#src-header-avatar-input').click();
     });
