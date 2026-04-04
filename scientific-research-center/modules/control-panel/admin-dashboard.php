@@ -147,6 +147,7 @@ $current_section = isset( $_GET['section'] ) ? sanitize_text_field( $_GET['secti
 			<?php if ( $current_section === 'users-management' ) : ?>
 			<div id="src-cp-content-users-management" class="src-cp-section active">
 				<h1><?php _e( 'System Users Management', 'scientific-research-center' ); ?></h1>
+				<p><?php _e( 'Manage, filter, and monitor all platform users and their respective roles.', 'scientific-research-center' ); ?></p>
 
 				<div class="src-search-filters-bar">
 					<div class="src-search-bar compact">
@@ -181,6 +182,7 @@ $current_section = isset( $_GET['section'] ) ? sanitize_text_field( $_GET['secti
 			<?php if ( $current_section === 'submissions-management' ) : ?>
 			<div id="src-cp-content-submissions-management" class="src-cp-section active">
 				<h1><?php _e( 'Submissions Management', 'scientific-research-center' ); ?></h1>
+				<p><?php _e( 'Review and process scientific research submissions from the global community.', 'scientific-research-center' ); ?></p>
 
 				<div class="src-submission-search-container">
 					<div class="src-search-bar compact">
@@ -212,6 +214,7 @@ $current_section = isset( $_GET['section'] ) ? sanitize_text_field( $_GET['secti
 			<?php if ( $current_section === 'research-engine' ) : ?>
 			<div id="src-cp-content-research-engine" class="src-cp-section active">
 				<h1><?php _e( 'Research Engine Management', 'scientific-research-center' ); ?></h1>
+				<p><?php _e( 'Configure the core discovery engine, indexing rules, and scientific taxonomy hierarchy.', 'scientific-research-center' ); ?></p>
 
 				<div class="src-engine-layout grid-2">
 					<div class="src-engine-controls card">
@@ -221,7 +224,7 @@ $current_section = isset( $_GET['section'] ) ? sanitize_text_field( $_GET['secti
 						<button class="src-btn-outline"><?php _e( 'Clear Engine Cache', 'scientific-research-center' ); ?></button>
 					</div>
 
-					<div class="src-engine-hierarchy card" style="margin-top: 30px;">
+					<div class="src-engine-hierarchy card">
 						<h3><?php _e( 'Scientific Hierarchy Management', 'scientific-research-center' ); ?></h3>
 						<p><?php _e( 'Add, edit, or remove faculties, specialties, and sub-specialties to organize the global research engine.', 'scientific-research-center' ); ?></p>
 
@@ -250,7 +253,7 @@ $current_section = isset( $_GET['section'] ) ? sanitize_text_field( $_GET['secti
 							<button class="src-submit-btn" id="src-add-taxonomy-item"><?php _e( 'Add Item', 'scientific-research-center' ); ?></button>
 						</div>
 
-						<div class="src-user-list-container" style="margin-top: 30px;">
+						<div class="src-user-list-container">
 							<div class="src-loading-skeleton"></div>
 						</div>
 					</div>
@@ -279,7 +282,7 @@ $current_section = isset( $_GET['section'] ) ? sanitize_text_field( $_GET['secti
 				<h1><?php _e( 'My Saved Research', 'scientific-research-center' ); ?></h1>
 				<p><?php _e( 'Quick access to scientific contributions you have marked as favorites.', 'scientific-research-center' ); ?></p>
 
-				<div class="src-card-grid" style="margin-top: 30px;">
+				<div class="src-card-grid">
 					<?php
 					$fav_ids = get_user_meta( get_current_user_id(), 'src_favorites', true ) ?: array();
 					if ( empty( $fav_ids ) ) {
@@ -369,7 +372,7 @@ $current_section = isset( $_GET['section'] ) ? sanitize_text_field( $_GET['secti
 				</div>
 			</div>
 
-			<div class="src-settings-footer" style="margin-top: 30px; text-align: right;">
+			<div class="src-settings-footer">
 				<button class="src-submit-btn"><?php _e( 'Update System Preferences', 'scientific-research-center' ); ?></button>
 			</div>
 		</div>
