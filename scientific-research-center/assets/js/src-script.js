@@ -276,7 +276,14 @@ jQuery(document).ready(function($) {
     // Header List Interactions
     $(document).on('click', '.src-pill-welcome', function(e) {
         e.stopPropagation();
-        $('.src-header-dropdown').toggleClass('active');
+        $('.src-noti-dropdown').removeClass('active');
+        $('.src-header-dropdown').not('.src-noti-dropdown').toggleClass('active');
+    });
+
+    $(document).on('click', '#src-noti-trigger', function(e) {
+        e.stopPropagation();
+        $('.src-header-dropdown').not('.src-noti-dropdown').removeClass('active');
+        $('.src-noti-dropdown').toggleClass('active');
     });
 
     $(document).on('click', function() {
