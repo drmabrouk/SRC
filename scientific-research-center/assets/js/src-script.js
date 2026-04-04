@@ -30,6 +30,16 @@ jQuery(document).ready(function($) {
         if (section === 'users-management' || section === 'institution-members') {
             loadSystemUsers(section === 'institution-members');
         }
+
+        // Close sidebar on mobile after navigation
+        if ($(window).width() <= 992) {
+            $('.src-cp-sidebar').removeClass('active');
+        }
+    });
+
+    // Mobile Sidebar Toggle
+    $('#src-cp-mobile-toggle').on('click', function() {
+        $('.src-cp-sidebar').toggleClass('active');
     });
 
     // User Search Handler

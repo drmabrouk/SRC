@@ -20,9 +20,14 @@ $role_definitions = SRC_Roles::get_roles_definition();
 $role_name = isset( $role_definitions[ $role ] ) ? $role_definitions[ $role ]['name'] : ucfirst( str_replace( 'src_', '', $role ) );
 ?>
 
-<div class="src-control-panel monochromatic">
+<div class="src-control-panel monochromatic full-width-layout">
+	<!-- Mobile Toggle -->
+	<button id="src-cp-mobile-toggle" class="src-mobile-only">
+		<span class="dashicons dashicons-menu"></span>
+	</button>
+
 	<!-- Left Sidebar -->
-	<aside class="src-cp-sidebar">
+	<aside class="src-cp-sidebar fixed-sidebar">
 		<div class="src-cp-profile">
 			<div class="src-cp-avatar">
 				<img src="<?php echo esc_url( $profile_picture_url ); ?>" alt="<?php echo esc_attr( $full_name ); ?>">
@@ -109,34 +114,6 @@ $role_name = isset( $role_definitions[ $role ] ) ? $role_definitions[ $role ]['n
 		</div>
 	</main>
 </div>
-
-<style>
-.src-control-panel { display: flex; min-height: 80vh; margin: 20px; background: #fff; border: 1px solid #eee; border-radius: 12px; overflow: hidden; box-shadow: 0 5px 20px rgba(0,0,0,0.05); }
-.src-cp-sidebar { width: 280px; background: #f9f9f9; border-right: 1px solid #eee; padding: 30px 0; }
-.src-cp-main { flex: 1; padding: 40px; background: #fff; }
-
-.src-cp-profile { padding: 0 25px 30px; border-bottom: 1px solid #eee; margin-bottom: 20px; position: relative; display: flex; align-items: center; gap: 15px; }
-.src-cp-avatar img { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid #000; }
-.src-cp-user-info h4 { margin: 0; font-size: 16px; font-weight: 700; color: #000; }
-.src-cp-role { font-size: 12px; color: #666; font-weight: 600; text-transform: uppercase; }
-.src-cp-edit-btn { position: absolute; right: 20px; top: 0; color: #999; transition: color 0.3s; }
-.src-cp-edit-btn:hover { color: #000; }
-
-.src-cp-nav ul { list-style: none; padding: 0; margin: 0; }
-.src-cp-nav li { padding: 15px 25px; cursor: pointer; color: #666; font-weight: 600; transition: all 0.3s; border-left: 4px solid transparent; display: flex; align-items: center; gap: 10px; }
-.src-cp-nav li:hover { background: #eee; color: #000; }
-.src-cp-nav li.active { background: #eee; color: #000; border-left-color: #000; }
-
-.src-cp-section { display: none; }
-.src-cp-section.active { display: block; animation: fadeIn 0.4s ease-in-out; }
-
-.src-search-bar { position: relative; margin-bottom: 30px; }
-.src-search-bar input { width: 100%; padding: 12px 15px 12px 40px; border: 1px solid #ccc; border-radius: 10px; outline: none; }
-.src-search-bar .dashicons-search { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #999; }
-
-.src-loading-skeleton { width: 100%; height: 200px; background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: skeleton 1.5s infinite; border-radius: 10px; }
-@keyframes skeleton { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-</style>
 
 <?php
 get_footer();

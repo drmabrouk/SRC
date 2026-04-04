@@ -60,10 +60,8 @@ class SRC_User_Management {
 			$users = json_decode( $json_data, true );
 
 			if ( json_last_error() !== JSON_ERROR_NONE ) {
-				add_action( 'admin_notices', function() {
-					echo '<div class="error"><p>' . __( 'Invalid JSON file provided.', 'scientific-research-center' ) . '</p></div>';
-				} );
-				return;
+				wp_safe_redirect( add_query_arg( 'src_error', urlencode( __( 'Invalid JSON file provided.', 'scientific-research-center' ) ), menu_page_url( 'src-users', false ) ) );
+				exit;
 			}
 
 			if ( is_array( $users ) ) {
@@ -93,9 +91,8 @@ class SRC_User_Management {
 						}
 					}
 				}
-				add_action( 'admin_notices', function() use ($imported_count) {
-					printf( '<div class="updated"><p>' . __( '%d users imported successfully!', 'scientific-research-center' ) . '</p></div>', $imported_count );
-				} );
+				wp_safe_redirect( add_query_arg( 'src_imported', $imported_count, menu_page_url( 'src-users', false ) ) );
+				exit;
 			}
 		}
 	}
