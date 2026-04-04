@@ -22,7 +22,8 @@ while ( have_posts() ) :
 	// Hierarchical Metadata
 	$faculties = get_the_term_list( $post_id, 'src_faculty', '', ', ' );
 	$specialties = get_the_term_list( $post_id, 'src_specialty', '', ', ' );
-	$institutions = get_the_term_list( $post_id, 'src_institution_tax', '', ', ' );
+	$institutions_tax = get_the_term_list( $post_id, 'src_institution_tax', '', ', ' );
+	$categories = get_the_term_list( $post_id, 'research_category', '', ', ' );
 	$file_id = get_post_meta( $post_id, 'src_main_file', true );
 	$file_url = $file_id ? wp_get_attachment_url( $file_id ) : '';
 	$file_name = $file_id ? get_the_title( $file_id ) : '';
@@ -45,24 +46,26 @@ while ( have_posts() ) :
 			<article class="src-detail-card card">
 				<header class="src-detail-header">
 					<div class="src-detail-meta-top">
-						<span class="src-badge"><?php echo esc_html( $type ); ?></span>
-						<?php if ( $institutions ) : ?>
-							<span class="src-inst-badge"><?php echo strip_tags( $institutions ); ?></span>
-						<?php endif; ?>
+						<span class="src-badge small-badge"><?php echo esc_html( $type ); ?></span>
 						<?php if ( $pub_id ) : ?>
-							<span class="src-pub-id"><?php printf( __( 'ID: %s', 'scientific-research-center' ), esc_html( $pub_id ) ); ?></span>
+							<span class="src-pub-id-label"><?php printf( __( 'Publication ID: %s', 'scientific-research-center' ), esc_html( $pub_id ) ); ?></span>
 						<?php endif; ?>
-						<span class="src-pub-date"><?php printf( __( 'Published: %s', 'scientific-research-center' ), esc_html( $pub_date ?: get_the_date() ) ); ?></span>
+						<span class="src-pub-date-label"><span class="dashicons dashicons-calendar-alt"></span> <?php echo esc_html( $pub_date ?: get_the_date() ); ?></span>
 					</div>
 					<h1 class="src-detail-title"><?php the_title(); ?></h1>
 
-					<div class="src-detail-authors">
-						<div class="src-primary-author">
+					<div class="src-detail-authors-box">
+						<div class="src-meta-pill">
+							<span class="dashicons dashicons-admin-users"></span>
 							<strong><?php the_author(); ?></strong>
-							<?php if ( $institution ) : ?>
-								<span class="src-institution"> @ <?php echo esc_html( $institution ); ?></span>
-							<?php endif; ?>
 						</div>
+						<?php if ( $institution ) : ?>
+							<div class="src-meta-pill">
+								<span class="dashicons dashicons-welcome-learn-more"></span>
+								<span><?php echo esc_html( $institution ); ?></span>
+							</div>
+						<?php endif; ?>
+					</div>
 						<?php if ( $co_authors ) : ?>
 							<div class="src-co-authors">
 								<span><?php _e( 'Collaborators:', 'scientific-research-center' ); ?></span> <?php echo esc_html( $co_authors ); ?>
@@ -78,15 +81,21 @@ while ( have_posts() ) :
 					</div>
 				</section>
 
-				<?php if ( $faculties || $specialties ) : ?>
-					<section class="src-detail-section">
-						<h3><?php _e( 'Scientific Classification', 'scientific-research-center' ); ?></h3>
-						<div class="src-classification-meta">
+				<?php if ( $faculties || $specialties || $categories || $institutions_tax ) : ?>
+					<section class="src-detail-section classification-section">
+						<h3><span class="dashicons dashicons-category"></span> <?php _e( 'Scientific Classification', 'scientific-research-center' ); ?></h3>
+						<div class="src-classification-grid">
 							<?php if ( $faculties ) : ?>
-								<p><strong><?php _e( 'Faculty:', 'scientific-research-center' ); ?></strong> <?php echo $faculties; ?></p>
+								<div class="src-class-item"><strong><?php _e( 'Faculty:', 'scientific-research-center' ); ?></strong> <?php echo $faculties; ?></div>
 							<?php endif; ?>
 							<?php if ( $specialties ) : ?>
-								<p><strong><?php _e( 'Specialty:', 'scientific-research-center' ); ?></strong> <?php echo $specialties; ?></p>
+								<div class="src-class-item"><strong><?php _e( 'Specialty:', 'scientific-research-center' ); ?></strong> <?php echo $specialties; ?></div>
+							<?php endif; ?>
+							<?php if ( $categories ) : ?>
+								<div class="src-class-item"><strong><?php _e( 'Category:', 'scientific-research-center' ); ?></strong> <?php echo $categories; ?></div>
+							<?php endif; ?>
+							<?php if ( $institutions_tax ) : ?>
+								<div class="src-class-item"><strong><?php _e( 'Affiliation:', 'scientific-research-center' ); ?></strong> <?php echo $institutions_tax; ?></div>
 							<?php endif; ?>
 						</div>
 					</section>

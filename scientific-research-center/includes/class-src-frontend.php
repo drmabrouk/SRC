@@ -361,14 +361,13 @@ class SRC_Frontend {
 						</div>
 					</div>
 					<ul class="src-dropdown-links">
-						<li><a href="<?php echo esc_url( home_url( '/profile-completion/' ) ); ?>"><span class="dashicons dashicons-admin-users"></span> <?php _e( 'Edit Account Data', 'scientific-research-center' ); ?></a></li>
+						<li><a href="<?php echo esc_url( home_url( '/profile-completion/' ) ); ?>"><span class="dashicons dashicons-admin-users"></span> <?php _e( 'Edit Account / Profile Data', 'scientific-research-center' ); ?></a></li>
 						<?php if ( in_array( $role, array( 'src_administrator', 'administrator', 'src_supervisor' ) ) ) : ?>
-							<li><a href="<?php echo esc_url( $account_link ); ?>"><span class="dashicons dashicons-admin-generic"></span> <?php _e( 'Advanced System Settings', 'scientific-research-center' ); ?></a></li>
+							<li><a href="<?php echo esc_url( $account_link . '?section=settings' ); ?>"><span class="dashicons dashicons-admin-generic"></span> <?php _e( 'System Settings', 'scientific-research-center' ); ?></a></li>
 						<?php endif; ?>
-						<li><a href="#" id="src-trigger-upload-link"><span class="dashicons dashicons-camera"></span> <?php _e( 'Upload Profile Picture', 'scientific-research-center' ); ?></a></li>
-						<li><a href="#"><span class="dashicons dashicons-shield"></span> <?php _e( 'Privacy & Use Policies', 'scientific-research-center' ); ?></a></li>
+						<li><a href="#"><span class="dashicons dashicons-shield"></span> <?php _e( 'Privacy & Terms Policies', 'scientific-research-center' ); ?></a></li>
 						<?php if ( current_user_can( 'manage_options' ) ) : ?>
-							<li><a href="#" id="src-system-refresh"><span class="dashicons dashicons-update"></span> <?php _e( 'System Refresh', 'scientific-research-center' ); ?></a></li>
+							<li><a href="#" id="src-system-refresh"><span class="dashicons dashicons-update"></span> <?php _e( 'Full System Refresh', 'scientific-research-center' ); ?></a></li>
 						<?php endif; ?>
 						<li class="src-logout-item">
 							<a href="<?php echo esc_url( wp_logout_url( home_url() ) ); ?>" class="src-logout-link">

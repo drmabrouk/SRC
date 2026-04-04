@@ -165,11 +165,11 @@ function src_highlight_keywords( $text, $query ) {
 						$favorites = get_user_meta( $user_id, 'src_favorites', true ) ?: array();
 						$is_fav = in_array( $post_id, $favorites );
 						?>
-						<div class="src-research-card slide-entry card" data-id="<?php echo $post_id; ?>">
+						<div class="src-research-card slide-entry card compact-card" data-id="<?php echo $post_id; ?>">
 							<div class="src-card-header">
-								<span class="src-badge"><?php echo esc_html( $type ); ?></span>
+								<span class="src-badge small-badge"><?php echo esc_html( $type ); ?></span>
 								<div class="src-card-top-actions">
-									<span class="src-date"><?php echo get_the_date(); ?></span>
+									<span class="src-date small-text"><?php echo get_the_date(); ?></span>
 									<?php if ( is_user_logged_in() ) : ?>
 										<button class="src-fav-toggle <?php echo $is_fav ? 'active' : ''; ?>" title="<?php _e( 'Add to Favorites', 'scientific-research-center' ); ?>">
 											<span class="dashicons <?php echo $is_fav ? 'dashicons-heart' : 'dashicons-heart'; ?>"></span>
@@ -178,17 +178,17 @@ function src_highlight_keywords( $text, $query ) {
 								</div>
 							</div>
 							<h3><?php echo src_highlight_keywords( get_the_title(), $search_query ); ?></h3>
-							<div class="src-card-meta">
-								<strong><?php the_author(); ?></strong>
+							<div class="src-card-meta academic-meta">
+								<div class="src-meta-item"><span class="dashicons dashicons-admin-users"></span> <strong><?php the_author(); ?></strong></div>
 								<?php if ( $institution ) : ?>
-									<span> @ <?php echo esc_html( $institution ); ?></span>
+									<div class="src-meta-item"><span class="dashicons dashicons-welcome-learn-more"></span> <span><?php echo esc_html( $institution ); ?></span></div>
 								<?php endif; ?>
 							</div>
 							<div class="src-card-excerpt">
-								<?php echo src_highlight_keywords( wp_trim_words( get_the_content(), 25 ), $search_query ); ?>
+								<?php echo src_highlight_keywords( wp_trim_words( get_the_content(), 20 ), $search_query ); ?>
 							</div>
 							<div class="src-card-actions">
-								<a href="<?php the_permalink(); ?>" class="src-submit-btn"><?php _e( 'View Research Details', 'scientific-research-center' ); ?></a>
+								<a href="<?php the_permalink(); ?>" class="src-view-details-btn"><?php _e( 'View Details', 'scientific-research-center' ); ?></a>
 							</div>
 						</div>
 						<?php

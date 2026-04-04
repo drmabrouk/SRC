@@ -634,11 +634,11 @@ class SRC_Research {
 				$favorites = get_user_meta( $user_id, 'src_favorites', true ) ?: array();
 				$is_fav = in_array( $post_id, $favorites );
 				?>
-				<div class="src-research-card card" data-id="<?php echo $post_id; ?>">
+				<div class="src-research-card card compact-card" data-id="<?php echo $post_id; ?>">
 					<div class="src-card-header">
-						<span class="src-badge"><?php echo esc_html( strip_tags( get_the_term_list( get_the_ID(), 'research_type', '', ', ' ) ) ); ?></span>
+						<span class="src-badge small-badge"><?php echo esc_html( strip_tags( get_the_term_list( get_the_ID(), 'research_type', '', ', ' ) ) ); ?></span>
 						<div class="src-card-top-actions">
-							<span class="src-date"><?php echo get_the_date(); ?></span>
+							<span class="src-date small-text"><?php echo get_the_date(); ?></span>
 							<?php if ( is_user_logged_in() ) : ?>
 								<button class="src-fav-toggle <?php echo $is_fav ? 'active' : ''; ?>" title="<?php _e( 'Add to Favorites', 'scientific-research-center' ); ?>">
 									<span class="dashicons <?php echo $is_fav ? 'dashicons-heart' : 'dashicons-heart'; ?>"></span>
@@ -647,20 +647,17 @@ class SRC_Research {
 						</div>
 					</div>
 					<h3><?php the_title(); ?></h3>
-					<div class="src-card-meta">
-						<strong><?php the_author(); ?></strong>
+					<div class="src-card-meta academic-meta">
+						<div class="src-meta-item"><span class="dashicons dashicons-admin-users"></span> <strong><?php the_author(); ?></strong></div>
 						<?php if ( $institution ) : ?>
-							<span> @ <?php echo esc_html( $institution ); ?></span>
+							<div class="src-meta-item"><span class="dashicons dashicons-welcome-learn-more"></span> <span><?php echo esc_html( $institution ); ?></span></div>
 						<?php endif; ?>
 					</div>
 					<div class="src-card-excerpt">
-						<?php echo wp_trim_words( get_the_content(), 20 ); ?>
+						<?php echo wp_trim_words( get_the_content(), 15 ); ?>
 					</div>
 					<div class="src-card-actions">
-						<a href="<?php the_permalink(); ?>" class="src-btn-outline"><?php _e( 'View Details', 'scientific-research-center' ); ?></a>
-						<?php if ( $file_id ) : ?>
-							<a href="<?php echo esc_url( $file_url ); ?>" class="src-submit-btn" download><?php _e( 'Download', 'scientific-research-center' ); ?></a>
-						<?php endif; ?>
+						<a href="<?php the_permalink(); ?>" class="src-view-details-btn"><?php _e( 'View Details', 'scientific-research-center' ); ?></a>
 					</div>
 				</div>
 				<?php
