@@ -70,7 +70,7 @@ class SRC_Frontend {
 	 */
 	public function handle_ajax_load_system_users() {
 		check_ajax_referer( 'src_auth_nonce', 'nonce' );
-		if ( ! current_user_can( 'manage_options' ) && ! current_user_can( 'edit_others_posts' ) && ! current_user_can( 'src_institution' ) ) {
+		if ( ! current_user_can( 'manage_options' ) && ! current_user_can( 'edit_others_posts' ) && ! current_user_can( 'list_users' ) ) {
 			wp_send_json_error( array( 'message' => __( 'Access Denied.', 'scientific-research-center' ) ) );
 		}
 
@@ -88,7 +88,7 @@ class SRC_Frontend {
 		}
 
 		// Security: Strictly scope access for Institution role
-		if ( current_user_can( 'src_institution' ) && ! current_user_can( 'manage_options' ) ) {
+		if ( current_user_can( 'list_users' ) && ! current_user_can( 'manage_options' ) ) {
 			$institution_filter = get_user_meta( get_current_user_id(), 'src_institution', true );
 			if ( empty( $institution_filter ) ) {
 				wp_send_json_error( array( 'message' => __( 'No institution linked to your account.', 'scientific-research-center' ) ) );

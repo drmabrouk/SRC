@@ -29,6 +29,10 @@ class SRC_Auth {
 			return new WP_Error( 'src_missing_fields', __( 'Please fill in all required fields.', 'scientific-research-center' ) );
 		}
 
+		if ( strlen( $username ) < 4 ) {
+			return new WP_Error( 'src_username_short', __( 'Username must be at least 4 characters long.', 'scientific-research-center' ) );
+		}
+
 		if ( empty( $user_data['terms'] ) ) {
 			return new WP_Error( 'src_terms_required', __( 'You must agree to the Terms & Policies.', 'scientific-research-center' ) );
 		}
