@@ -70,9 +70,14 @@ class SRC_Admin {
 				<h2><?php _e( 'Import / Export Users', 'scientific-research-center' ); ?></h2>
 				<p><?php _e( 'Seamlessly import and export user accounts between the plugin and WordPress core.', 'scientific-research-center' ); ?></p>
 
-				<form method="post">
+				<form method="post" style="display:inline-block; margin-right: 10px;">
 					<?php wp_nonce_field( 'src_user_export', 'src_export_nonce' ); ?>
 					<input type="submit" name="src_export_users" class="button button-primary" value="<?php _e( 'Export Users to JSON', 'scientific-research-center' ); ?>">
+				</form>
+
+				<form method="post" style="display:inline-block;">
+					<?php wp_nonce_field( 'src_user_export', 'src_export_nonce' ); ?>
+					<input type="submit" name="src_export_research" class="button button-primary" value="<?php _e( 'Export Research to JSON', 'scientific-research-center' ); ?>">
 				</form>
 
 				<hr>

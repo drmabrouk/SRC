@@ -13,6 +13,24 @@ get_header();
 while ( have_posts() ) :
 	the_post();
 	$post_id = get_the_ID();
+	$abstract = get_the_content();
+	$title = get_the_title();
+	$author_name = get_the_author();
+
+	// Structured Data (JSON-LD) for Scientific Article
+	echo '<script type="application/ld+json">
+	{
+	  "@context": "https://schema.org",
+	  "@type": "ScholarlyArticle",
+	  "headline": "' . esc_js( $title ) . '",
+	  "author": {
+		"@type": "Person",
+		"name": "' . esc_js( $author_name ) . '"
+	  },
+	  "datePublished": "' . get_the_date( 'c' ) . '",
+	  "description": "' . esc_js( wp_trim_words( $abstract, 50 ) ) . '"
+	}
+	</script>';
 	$author_id = get_the_author_meta( 'ID' );
 	$institution = get_user_meta( $author_id, 'src_institution', true );
 	$co_authors = get_post_meta( $post_id, 'src_co_authors', true );
