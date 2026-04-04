@@ -42,31 +42,58 @@ $role_name = isset( $role_definitions[ $role ] ) ? $role_definitions[ $role ]['n
 		</div>
 
 		<nav class="src-cp-nav">
-			<ul>
-				<li class="active" data-section="dashboard">
-					<span class="dashicons dashicons-dashboard"></span> <?php _e( 'Dashboard', 'scientific-research-center' ); ?>
+			<ul class="src-collapsible-menu">
+				<li class="src-menu-item active" data-section="dashboard">
+					<div class="src-menu-toggle">
+						<span class="dashicons dashicons-dashboard"></span> <?php _e( 'Overview', 'scientific-research-center' ); ?>
+					</div>
 				</li>
 
 				<?php if ( in_array( $role, array( 'src_administrator', 'administrator', 'src_supervisor' ) ) ) : ?>
-					<li data-section="users-management">
-						<span class="dashicons dashicons-groups"></span> <?php _e( 'System Users', 'scientific-research-center' ); ?>
+					<li class="src-menu-item" data-section="users-management">
+						<div class="src-menu-toggle">
+							<span class="dashicons dashicons-groups"></span> <?php _e( 'User Management', 'scientific-research-center' ); ?>
+							<span class="src-toggle-icon dashicons dashicons-arrow-down-alt2"></span>
+						</div>
+						<div class="src-submenu">
+							<p><?php _e( 'System Users', 'scientific-research-center' ); ?></p>
+							<p><?php _e( 'Role Management', 'scientific-research-center' ); ?></p>
+						</div>
 					</li>
-					<li data-section="submissions-management">
-						<span class="dashicons dashicons-media-document"></span> <?php _e( 'Submissions', 'scientific-research-center' ); ?>
+					<li class="src-menu-item" data-section="submissions-management">
+						<div class="src-menu-toggle">
+							<span class="dashicons dashicons-media-document"></span> <?php _e( 'Submissions', 'scientific-research-center' ); ?>
+							<span class="src-toggle-icon dashicons dashicons-arrow-down-alt2"></span>
+						</div>
+						<div class="src-submenu">
+							<p><?php _e( 'Moderation', 'scientific-research-center' ); ?></p>
+							<p><?php _e( 'Pending Review', 'scientific-research-center' ); ?></p>
+						</div>
 					</li>
-					<li data-section="research-engine">
-						<span class="dashicons dashicons-rest-api"></span> <?php _e( 'Research Engine', 'scientific-research-center' ); ?>
+					<li class="src-menu-item" data-section="research-engine">
+						<div class="src-menu-toggle">
+							<span class="dashicons dashicons-rest-api"></span> <?php _e( 'Search Engine', 'scientific-research-center' ); ?>
+							<span class="src-toggle-icon dashicons dashicons-arrow-down-alt2"></span>
+						</div>
+						<div class="src-submenu">
+							<p><?php _e( 'Index Controls', 'scientific-research-center' ); ?></p>
+							<p><?php _e( 'Discovery Settings', 'scientific-research-center' ); ?></p>
+						</div>
 					</li>
 				<?php endif; ?>
 
 				<?php if ( $role === 'src_institution' ) : ?>
-					<li data-section="institution-members">
-						<span class="dashicons dashicons-businessperson"></span> <?php _e( 'Institution Members', 'scientific-research-center' ); ?>
+					<li class="src-menu-item" data-section="institution-members">
+						<div class="src-menu-toggle">
+							<span class="dashicons dashicons-businessperson"></span> <?php _e( 'Institution Members', 'scientific-research-center' ); ?>
+						</div>
 					</li>
 				<?php endif; ?>
 
-				<li data-section="settings">
-					<span class="dashicons dashicons-admin-settings"></span> <?php _e( 'Settings', 'scientific-research-center' ); ?>
+				<li class="src-menu-item" data-section="settings">
+					<div class="src-menu-toggle">
+						<span class="dashicons dashicons-admin-settings"></span> <?php _e( 'Settings', 'scientific-research-center' ); ?>
+					</div>
 				</li>
 			</ul>
 		</nav>
