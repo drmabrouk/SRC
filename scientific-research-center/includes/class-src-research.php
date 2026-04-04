@@ -311,11 +311,28 @@ class SRC_Research {
 			wp_send_json_error( array( 'message' => __( 'Access Denied.', 'scientific-research-center' ) ) );
 		}
 
-		$submissions = get_posts( array(
+		$search = isset( $_POST['search'] ) ? sanitize_text_field( $_POST['search'] ) : '';
+		$type = isset( $_POST['type'] ) ? sanitize_text_field( $_POST['type'] ) : '';
+		$status = isset( $_POST['status'] ) ? sanitize_text_field( $_POST['status'] ) : 'pending';
+
+		$args = array(
 			'post_type'   => 'research_paper',
-			'post_status' => array( 'pending', 'publish', 'draft' ),
+			'post_status' => ( $status === 'any' ) ? array( 'pending', 'publish', 'draft' ) : $status,
 			'numberposts' => -1,
-		) );
+			's'           => $search,
+		);
+
+		if ( $type ) {
+			$args['tax_query'] = array(
+				array(
+					'taxonomy' => 'research_type',
+					'field'    => 'slug',
+					'terms'    => $type,
+				),
+			);
+		}
+
+		$submissions = get_posts( $args );
 
 		ob_start();
 		?>
@@ -342,9 +359,12 @@ class SRC_Research {
 								<strong><?php echo esc_html( $sub->post_title ); ?></strong><br>
 								<small><?php echo esc_html( strip_tags( get_the_term_list( $sub->ID, 'research_type', '', ', ' ) ) ); ?></small>
 							</td>
-							<td><?php echo esc_html( $author->display_name ); ?></td>
+							<td>
+								<?php echo esc_html( $author->display_name ); ?><br>
+								<small><?php echo esc_html( get_user_meta( $sub->post_author, 'src_institution', true ) ); ?></small>
+							</td>
 							<td><span class="src-badge status-<?php echo $status; ?>"><?php echo ucfirst( $status ); ?></span></td>
-							<td><?php echo get_the_date( '', $sub->ID ); ?></td>
+							<td><?php echo get_the_date( 'Y-m-d', $sub->ID ); ?></td>
 							<td class="src-actions">
 								<?php if ( $status === 'pending' ) : ?>
 									<button class="src-icon-btn src-sub-act" data-action="approve" data-id="<?php echo $sub->ID; ?>" title="Approve"><span class="dashicons dashicons-yes"></span></button>
