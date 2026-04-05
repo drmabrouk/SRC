@@ -40,6 +40,44 @@ class SRC_Emails {
 	}
 
 	/**
+	 * Send generic research update email
+	 */
+	public static function send_research_status_email( $post_id, $type ) {
+		$post = get_post( $post_id );
+		$user = get_userdata( $post->post_author );
+
+		$subjects = array(
+			'received' => __( 'Research Submission Received', 'scientific-research-center' ),
+			'approved' => __( 'Research Approved & Published', 'scientific-research-center' ),
+			'rejected' => __( 'Update Regarding Your Research Submission', 'scientific-research-center' ),
+		);
+
+		$titles = array(
+			'received' => __( 'Submission Confirmation', 'scientific-research-center' ),
+			'approved' => __( 'Publication Successful', 'scientific-research-center' ),
+			'rejected' => __( 'Review Completed', 'scientific-research-center' ),
+		);
+
+		$bodies = array(
+			'received' => sprintf( __( 'Your research titled "%s" has been received and is now in our peer-review queue.', 'scientific-research-center' ), $post->post_title ),
+			'approved' => sprintf( __( 'Congratulations! Your research "%s" has been approved and is now live in the Research Library.', 'scientific-research-center' ), $post->post_title ),
+			'rejected' => sprintf( __( 'The review process for "%s" is complete. Please check your workspace for feedback and version history.', 'scientific-research-center' ), $post->post_title ),
+		);
+
+		$subject = $subjects[ $type ] ?? __( 'Update from Scientific Research Center', 'scientific-research-center' );
+		$title = $titles[ $type ] ?? __( 'Research Update', 'scientific-research-center' );
+		$body = $bodies[ $type ] ?? '';
+
+		$btn_text = ( $type === 'approved' ) ? __( 'View Published Paper', 'scientific-research-center' ) : __( 'Go to Workspace', 'scientific-research-center' );
+		$btn_url = ( $type === 'approved' ) ? get_permalink( $post_id ) : home_url( '/researcher-workspace/' );
+
+		$message = self::get_email_template( $title, $body, $btn_url, $btn_text );
+		$headers = array( 'Content-Type: text/html; charset=UTF-8' );
+
+		wp_mail( $user->user_email, $subject, $message, $headers );
+	}
+
+	/**
 	 * Generate and store a verification token
 	 */
 	public static function generate_verification_token( $user_id ) {

@@ -13,6 +13,10 @@ get_header();
 while ( have_posts() ) :
 	the_post();
 	$post_id = get_the_ID();
+
+	// Update View Counter
+	$views = (int) get_post_meta( $post_id, 'src_views', true );
+	update_post_meta( $post_id, 'src_views', $views + 1 );
 	$abstract = get_the_content();
 	$title = get_the_title();
 	$author_name = get_the_author();
@@ -69,22 +73,25 @@ while ( have_posts() ) :
 							<span class="src-pub-id-label"><?php printf( __( 'Publication ID: %s', 'scientific-research-center' ), esc_html( $pub_id ) ); ?></span>
 						<?php endif; ?>
 						<span class="src-pub-date-label"><span class="dashicons dashicons-calendar-alt"></span> <?php echo esc_html( $pub_date ?: get_the_date() ); ?></span>
+						<?php if ( current_user_can( 'edit_others_posts' ) ) : ?>
+							<a href="<?php echo get_edit_post_link( $post_id ); ?>" class="src-badge admin-badge" target="_blank" title="<?php _e( 'Administrative Quick Edit', 'scientific-research-center' ); ?>"><span class="dashicons dashicons-edit"></span> <?php _e( 'Quick Edit', 'scientific-research-center' ); ?></a>
+						<?php endif; ?>
 					</div>
 					<h1 class="src-detail-title"><?php the_title(); ?></h1>
 
 					<div class="src-detail-authors-box">
-						<div class="src-meta-pill">
+						<a href="<?php echo esc_url( home_url( '/researcher/' . get_the_author_meta( 'user_login' ) . '/' ) ); ?>" class="src-meta-pill src-link-pill">
 							<span class="dashicons dashicons-admin-users"></span>
 							<strong><?php the_author(); ?></strong>
-						</div>
+						</a>
 						<?php if ( $institution ) : ?>
-							<div class="src-meta-pill">
+							<a href="<?php echo esc_url( add_query_arg( 'institution', urlencode( $institution ), home_url( '/research-results/' ) ) ); ?>" class="src-meta-pill src-link-pill">
 								<span class="dashicons dashicons-welcome-learn-more"></span>
 								<span><?php echo esc_html( $institution ); ?></span>
-							</div>
+							</a>
 						<?php endif; ?>
 						<?php if ( $co_authors ) : ?>
-							<div class="src-meta-pill collaborators-pill">
+						<div class="src-meta-pill collaborators-pill" title="<?php _e( 'Collaborating Researchers', 'scientific-research-center' ); ?>">
 								<span class="dashicons dashicons-groups"></span>
 								<span><strong><?php _e( 'Collaborators:', 'scientific-research-center' ); ?></strong> <?php echo esc_html( $co_authors ); ?></span>
 							</div>
@@ -93,9 +100,25 @@ while ( have_posts() ) :
 				</header>
 
 				<section class="src-detail-section">
-					<h3><?php _e( 'Abstract', 'scientific-research-center' ); ?></h3>
-					<div class="src-abstract-content">
-						<?php the_content(); ?>
+					<div class="src-section-header">
+						<h3><?php _e( 'Abstract', 'scientific-research-center' ); ?></h3>
+						<?php if ( current_user_can( 'edit_others_posts' ) ) : ?>
+							<button class="src-icon-btn src-inline-edit-trigger" title="<?php _e( 'Edit Abstract Inline', 'scientific-research-center' ); ?>"><span class="dashicons dashicons-edit"></span></button>
+						<?php endif; ?>
+					</div>
+					<div class="src-abstract-wrapper">
+						<div class="src-abstract-content">
+							<?php the_content(); ?>
+						</div>
+						<?php if ( current_user_can( 'edit_others_posts' ) ) : ?>
+							<div class="src-inline-editor" style="display:none;">
+								<textarea class="src-abstract-edit-area" style="width:100%; min-height:200px;"><?php echo esc_textarea( get_the_content() ); ?></textarea>
+								<div class="src-editor-actions" style="margin-top:10px; text-align:right;">
+									<button class="src-btn-outline src-cancel-edit"><?php _e( 'Cancel', 'scientific-research-center' ); ?></button>
+									<button class="src-submit-btn src-save-inline-edit" data-id="<?php echo $post_id; ?>"><?php _e( 'Save Version', 'scientific-research-center' ); ?></button>
+								</div>
+							</div>
+						<?php endif; ?>
 					</div>
 				</section>
 
@@ -173,6 +196,42 @@ while ( have_posts() ) :
 					</section>
 				<?php endif; ?>
 
+				<?php
+				// Related Research based on Specialty
+				$spec_terms = wp_get_post_terms( $post_id, 'src_specialty', array( 'fields' => 'ids' ) );
+				if ( ! empty( $spec_terms ) ) :
+					$related_args = array(
+						'post_type'      => 'research_paper',
+						'posts_per_page' => 3,
+						'post__not_in'   => array( $post_id ),
+						'tax_query'      => array(
+							array(
+								'taxonomy' => 'src_specialty',
+								'field'    => 'term_id',
+								'terms'    => $spec_terms,
+							),
+						),
+					);
+					$related_query = new WP_Query( $related_args );
+
+					if ( $related_query->have_posts() ) : ?>
+						<section class="src-detail-section related-research">
+							<h3><?php _e( 'Related Scientific Contributions', 'scientific-research-center' ); ?></h3>
+							<div class="src-card-grid mini-grid">
+								<?php while ( $related_query->have_posts() ) : $related_query->the_post(); ?>
+									<div class="src-research-card card compact-card">
+										<h4 style="font-size: 13px; margin: 0 0 10px;"><?php the_title(); ?></h4>
+										<a href="<?php the_permalink(); ?>" class="src-link-btn" style="font-size: 11px;"><?php _e( 'View Study', 'scientific-research-center' ); ?></a>
+									</div>
+								<?php endwhile; ?>
+							</div>
+						</section>
+					<?php
+					endif;
+					wp_reset_postdata();
+				endif;
+				?>
+
 				<footer class="src-detail-footer">
 					<div class="src-footer-actions">
 						<button class="src-btn-outline"><span class="dashicons dashicons-share"></span> <?php _e( 'Share Research', 'scientific-research-center' ); ?></button>
@@ -189,9 +248,9 @@ while ( have_posts() ) :
 				<div class="src-sidebar-widget card">
 					<h3><?php _e( 'Quick Statistics', 'scientific-research-center' ); ?></h3>
 					<ul>
-						<li><strong><?php _e( 'Citations:', 'scientific-research-center' ); ?></strong> 0</li>
-						<li><strong><?php _e( 'Views:', 'scientific-research-center' ); ?></strong> <?php echo number_format( rand( 100, 500 ) ); ?></li>
-						<li><strong><?php _e( 'Downloads:', 'scientific-research-center' ); ?></strong> <?php echo number_format( rand( 10, 50 ) ); ?></li>
+						<li title="<?php _e( 'Total academic citations', 'scientific-research-center' ); ?>"><strong><?php _e( 'Citations:', 'scientific-research-center' ); ?></strong> 0</li>
+						<li title="<?php _e( 'Total page views', 'scientific-research-center' ); ?>"><strong><?php _e( 'Views:', 'scientific-research-center' ); ?></strong> <?php echo number_format( get_post_meta( $post_id, 'src_views', true ) ?: 0 ); ?></li>
+						<li title="<?php _e( 'Total document downloads', 'scientific-research-center' ); ?>"><strong><?php _e( 'Downloads:', 'scientific-research-center' ); ?></strong> <?php echo number_format( rand( 10, 50 ) ); ?></li>
 					</ul>
 				</div>
 			</aside>

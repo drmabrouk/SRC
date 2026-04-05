@@ -147,19 +147,19 @@ $current_section = isset( $_GET['section'] ) ? sanitize_text_field( $_GET['secti
 					<div class="src-card src-quick-access-card">
 						<h3><span class="dashicons dashicons-external"></span> <?php _e( 'Quick Access', 'scientific-research-center' ); ?></h3>
 						<div class="src-quick-grid">
-							<a href="?section=submissions-management" class="src-quick-btn">
+							<a href="?section=submissions-management" class="src-quick-btn" title="<?php _e( 'Manage scientific submissions', 'scientific-research-center' ); ?>">
 								<span class="dashicons dashicons-media-document"></span>
 								<p><?php _e( 'Submissions', 'scientific-research-center' ); ?></p>
 							</a>
-							<a href="?section=research-engine" class="src-quick-btn">
+							<a href="?section=research-engine" class="src-quick-btn" title="<?php _e( 'Configure discovery engine', 'scientific-research-center' ); ?>">
 								<span class="dashicons dashicons-rest-api"></span>
 								<p><?php _e( 'Search Engine', 'scientific-research-center' ); ?></p>
 							</a>
-							<a href="?section=users-management" class="src-quick-btn">
+							<a href="?section=users-management" class="src-quick-btn" title="<?php _e( 'Administer platform users', 'scientific-research-center' ); ?>">
 								<span class="dashicons dashicons-groups"></span>
 								<p><?php _e( 'Users', 'scientific-research-center' ); ?></p>
 							</a>
-							<a href="<?php echo home_url( '/submit-research/' ); ?>" class="src-quick-btn">
+							<a href="<?php echo home_url( '/submit-research/' ); ?>" class="src-quick-btn" title="<?php _e( 'Upload new research', 'scientific-research-center' ); ?>">
 								<span class="dashicons dashicons-upload"></span>
 								<p><?php _e( 'Upload', 'scientific-research-center' ); ?></p>
 							</a>
@@ -194,7 +194,7 @@ $current_section = isset( $_GET['section'] ) ? sanitize_text_field( $_GET['secti
 					<?php endif; ?>
 
 					<div class="src-card src-activity-card">
-						<h3><span class="dashicons dashicons-list-view"></span> <?php _e( 'Recent Activity', 'scientific-research-center' ); ?></h3>
+						<h3><span class="dashicons dashicons-list-view"></span> <?php _e( 'Platform Activity Audit', 'scientific-research-center' ); ?></h3>
 						<div class="src-activity-feed">
 							<?php
 							global $wpdb;
