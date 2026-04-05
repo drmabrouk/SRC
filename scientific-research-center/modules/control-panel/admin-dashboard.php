@@ -365,17 +365,30 @@ $current_section = isset( $_GET['section'] ) ? sanitize_text_field( $_GET['secti
 				<h1><?php _e( 'Submissions Management', 'scientific-research-center' ); ?></h1>
 				<p><?php _e( 'Review and process scientific research submissions from the global community.', 'scientific-research-center' ); ?></p>
 
-				<div class="src-submission-search-container">
-					<div class="src-search-bar compact">
-						<input type="text" id="src-sub-search" placeholder="<?php _e( 'Search by title, author, or keywords...', 'scientific-research-center' ); ?>">
-						<span class="dashicons dashicons-search"></span>
+				<div class="src-submission-search-container user-management-filters">
+					<div class="src-filters-row main-row">
+						<div class="src-search-bar compact">
+							<input type="text" id="src-sub-search" placeholder="<?php _e( 'Search by title, author, or keywords...', 'scientific-research-center' ); ?>">
+							<span class="dashicons dashicons-search"></span>
+						</div>
 					</div>
-					<div class="src-sub-filters">
+					<div class="src-filters-row secondary-row">
 						<select id="src-sub-filter-type">
 							<option value=""><?php _e( 'All Types', 'scientific-research-center' ); ?></option>
 							<option value="thesis"><?php _e( 'Theses', 'scientific-research-center' ); ?></option>
 							<option value="paper"><?php _e( 'Papers', 'scientific-research-center' ); ?></option>
 							<option value="study"><?php _e( 'Studies', 'scientific-research-center' ); ?></option>
+						</select>
+						<select id="src-sub-filter-inst">
+							<option value=""><?php _e( 'All Institutions', 'scientific-research-center' ); ?></option>
+							<?php foreach ( get_utils_institutions() as $inst ) echo '<option value="'.esc_attr($inst).'">'.esc_html($inst).'</option>'; ?>
+						</select>
+						<select id="src-sub-filter-cat">
+							<option value=""><?php _e( 'All Categories', 'scientific-research-center' ); ?></option>
+							<?php
+							$cats = get_terms( array( 'taxonomy' => 'research_category', 'hide_empty' => false ) );
+							foreach ( $cats as $cat ) echo '<option value="'.$cat->slug.'">'.$cat->name.'</option>';
+							?>
 						</select>
 						<select id="src-sub-filter-status">
 							<option value="pending"><?php _e( 'Pending Only', 'scientific-research-center' ); ?></option>
@@ -389,6 +402,50 @@ $current_section = isset( $_GET['section'] ) ? sanitize_text_field( $_GET['secti
 				<div class="src-user-list-container" id="src-submission-list">
 					<div class="src-loading-skeleton"></div>
 				</div>
+
+				<!-- Reviewer Assignment Modal -->
+				<div id="src-assign-reviewer-modal" class="src-modal monochromatic">
+					<div class="src-modal-content">
+						<div class="src-modal-header">
+							<h2><?php _e( 'Assign Reviewer', 'scientific-research-center' ); ?></h2>
+							<span class="src-modal-close">&times;</span>
+						</div>
+						<form id="src-assign-reviewer-form">
+							<input type="hidden" name="sub_id" id="assign_sub_id">
+							<div class="src-field-group">
+								<select name="reviewer_id" id="assign_reviewer" required>
+									<option value=""><?php _e( 'Select a Reviewer...', 'scientific-research-center' ); ?></option>
+									<?php
+									$reviewers = get_users( array( 'role' => 'src_reviewer' ) );
+									foreach ( $reviewers as $rev ) echo '<option value="'.$rev->ID.'">'.esc_html($rev->display_name).'</option>';
+									?>
+								</select>
+								<label for="assign_reviewer" class="select-label"><?php _e( 'Scientific Reviewer', 'scientific-research-center' ); ?></label>
+							</div>
+							<div class="src-field-group">
+								<input type="date" name="deadline" id="assign_deadline" required>
+								<label for="assign_deadline" class="select-label"><?php _e( 'Review Deadline', 'scientific-research-center' ); ?></label>
+							</div>
+							<div class="src-modal-footer">
+								<button type="submit" class="src-submit-btn"><?php _e( 'Assign & Notify', 'scientific-research-center' ); ?></button>
+							</div>
+							<div class="src-form-msg"></div>
+						</form>
+					</div>
+				</div>
+
+				<!-- Submission History Modal -->
+				<div id="src-sub-history-modal" class="src-modal monochromatic">
+					<div class="src-modal-content wide">
+						<div class="src-modal-header">
+							<h2><?php _e( 'Submission History & Version Control', 'scientific-research-center' ); ?></h2>
+							<span class="src-modal-close">&times;</span>
+						</div>
+						<div id="src-sub-history-content">
+							<div class="src-loading-skeleton"></div>
+						</div>
+					</div>
+				</div>
 			</div>
 			<?php endif; ?>
 
@@ -398,40 +455,65 @@ $current_section = isset( $_GET['section'] ) ? sanitize_text_field( $_GET['secti
 				<p><?php _e( 'Configure the core discovery engine, indexing rules, and scientific taxonomy hierarchy.', 'scientific-research-center' ); ?></p>
 
 				<div class="src-engine-layout grid-2">
-					<div class="src-engine-controls card">
-						<h3><?php _e( 'Index Control', 'scientific-research-center' ); ?></h3>
-						<p><?php _e( 'Manage how research is indexed and discovered.', 'scientific-research-center' ); ?></p>
-						<button class="src-submit-btn"><?php _e( 'Rebuild Search Index', 'scientific-research-center' ); ?></button>
-						<button class="src-btn-outline"><?php _e( 'Clear Engine Cache', 'scientific-research-center' ); ?></button>
+					<div class="src-engine-col-left">
+						<div class="src-engine-controls card">
+							<h3><span class="dashicons dashicons-admin-settings"></span> <?php _e( 'Index & Display Control', 'scientific-research-center' ); ?></h3>
+							<button class="src-submit-btn" id="src-rebuild-index-btn"><?php _e( 'Rebuild Search Index', 'scientific-research-center' ); ?></button>
+
+							<div class="src-display-settings" style="margin-top: 30px;">
+								<div class="src-field-group">
+									<select id="src-card-design">
+										<option value="compact" <?php selected(get_option('src_search_card_design'), 'compact'); ?>><?php _e( 'Academic Compact (Default)', 'scientific-research-center' ); ?></option>
+										<option value="detailed" <?php selected(get_option('src_search_card_design'), 'detailed'); ?>><?php _e( 'Information Rich', 'scientific-research-center' ); ?></option>
+									</select>
+									<label class="select-label"><?php _e( 'Search Result Card Design', 'scientific-research-center' ); ?></label>
+								</div>
+
+								<div class="src-meta-toggles">
+									<p><strong><?php _e( 'Metadata Visibility', 'scientific-research-center' ); ?></strong></p>
+									<?php
+									$meta_vis = get_option('src_search_metadata_visibility', array('author', 'institution', 'date'));
+									$options = array('author' => 'Author Name', 'institution' => 'Institution', 'date' => 'Publication Date', 'type' => 'Research Type');
+									foreach ($options as $key => $label) : ?>
+										<label><input type="checkbox" class="src-meta-vis-check" value="<?php echo $key; ?>" <?php checked(in_array($key, $meta_vis)); ?>> <?php echo $label; ?></label>
+									<?php endforeach; ?>
+								</div>
+								<button class="src-btn-outline" id="src-save-search-settings-btn" style="margin-top: 20px;"><?php _e( 'Save Display Preferences', 'scientific-research-center' ); ?></button>
+							</div>
+						</div>
+
+						<div class="src-engine-analytics card" style="margin-top: 30px;">
+							<h3><span class="dashicons dashicons-chart-area"></span> <?php _e( 'Search Analytics', 'scientific-research-center' ); ?></h3>
+							<div id="src-search-analytics-content">
+								<div class="src-loading-skeleton"></div>
+							</div>
+						</div>
 					</div>
 
 					<div class="src-engine-hierarchy card">
-						<h3><?php _e( 'Scientific Hierarchy Management', 'scientific-research-center' ); ?></h3>
-						<p><?php _e( 'Add, edit, or remove faculties, specialties, and sub-specialties to organize the global research engine.', 'scientific-research-center' ); ?></p>
+						<h3><span class="dashicons dashicons-category"></span> <?php _e( 'Scientific Hierarchy', 'scientific-research-center' ); ?></h3>
+						<p><?php _e( 'Manage faculties, specialties, and taxonomies.', 'scientific-research-center' ); ?></p>
 
 						<div class="src-hierarchy-editor">
 							<div class="src-field-row">
 								<div class="src-field-group">
 									<select id="src-hier-type">
-										<option value="src_faculty"><?php _e( 'Faculty / College', 'scientific-research-center' ); ?></option>
+										<option value="src_faculty"><?php _e( 'Faculty', 'scientific-research-center' ); ?></option>
 										<option value="src_specialty"><?php _e( 'Specialty', 'scientific-research-center' ); ?></option>
 										<option value="src_sub_specialty"><?php _e( 'Sub-specialty', 'scientific-research-center' ); ?></option>
-										<option value="src_institution_tax"><?php _e( 'Registered Institution', 'scientific-research-center' ); ?></option>
+										<option value="src_institution_tax"><?php _e( 'Institution', 'scientific-research-center' ); ?></option>
 									</select>
-									<label for="src-hier-type" class="select-label"><?php _e( 'Category Type', 'scientific-research-center' ); ?></label>
 								</div>
 								<div class="src-field-group">
-									<input type="text" id="src-hier-name" placeholder=" ">
-									<label for="src-hier-name"><?php _e( 'Name', 'scientific-research-center' ); ?></label>
-								</div>
-								<div class="src-field-group">
-									<select id="src-hier-parent">
-										<option value="0"><?php _e( 'None (Root)', 'scientific-research-center' ); ?></option>
-									</select>
-									<label for="src-hier-parent" class="select-label"><?php _e( 'Parent Category', 'scientific-research-center' ); ?></label>
+									<input type="text" id="src-hier-name" placeholder="Name">
 								</div>
 							</div>
-							<button class="src-submit-btn" id="src-add-taxonomy-item"><?php _e( 'Add Item', 'scientific-research-center' ); ?></button>
+							<div class="src-field-group">
+								<select id="src-hier-parent">
+									<option value="0"><?php _e( 'None (Root)', 'scientific-research-center' ); ?></option>
+								</select>
+							</div>
+							<button class="src-submit-btn full-width" id="src-add-taxonomy-item"><?php _e( 'Add Item to Hierarchy', 'scientific-research-center' ); ?></button>
 						</div>
 
 						<div class="src-user-list-container">
@@ -521,40 +603,90 @@ $current_section = isset( $_GET['section'] ) ? sanitize_text_field( $_GET['secti
 			<p><?php _e( 'Customize the appearance, typography, and functional labels of your research gateway.', 'scientific-research-center' ); ?></p>
 
 			<div class="src-settings-layout grid-2">
-				<div class="src-card">
-					<h3><span class="dashicons dashicons-admin-appearance"></span> <?php _e( 'Identity & Labels', 'scientific-research-center' ); ?></h3>
-					<div class="src-field-group">
-						<input type="text" name="custom_label_research" id="set_label_res" placeholder=" " value="<?php echo esc_attr( get_option( 'src_label_research', 'Research' ) ); ?>">
-						<label for="set_label_res"><?php _e( 'Research Field Label', 'scientific-research-center' ); ?></label>
+				<div class="src-settings-col-left">
+					<div class="src-card">
+						<h3><span class="dashicons dashicons-admin-appearance"></span> <?php _e( 'Identity & Labels', 'scientific-research-center' ); ?></h3>
+						<div class="src-field-group">
+							<input type="text" name="custom_label_research" id="set_label_res" placeholder=" " value="<?php echo esc_attr( get_option( 'src_label_research', 'Research' ) ); ?>">
+							<label for="set_label_res"><?php _e( 'Research Field Label', 'scientific-research-center' ); ?></label>
+						</div>
+						<div class="src-field-group">
+							<select id="set_theme_font">
+								<option value="system"><?php _e( 'System Default', 'scientific-research-center' ); ?></option>
+								<option value="serif"><?php _e( 'Academic Serif', 'scientific-research-center' ); ?></option>
+								<option value="mono"><?php _e( 'Monospace', 'scientific-research-center' ); ?></option>
+							</select>
+							<label for="set_theme_font" class="select-label"><?php _e( 'Platform Font Style', 'scientific-research-center' ); ?></label>
+						</div>
 					</div>
-					<div class="src-field-group">
-						<select id="set_theme_font">
-							<option value="system"><?php _e( 'System Default', 'scientific-research-center' ); ?></option>
-							<option value="serif"><?php _e( 'Academic Serif', 'scientific-research-center' ); ?></option>
-							<option value="mono"><?php _e( 'Monospace', 'scientific-research-center' ); ?></option>
-						</select>
-						<label for="set_theme_font" class="select-label"><?php _e( 'Platform Font Style', 'scientific-research-center' ); ?></label>
+
+					<div class="src-card" style="margin-top: 30px;">
+						<h3><span class="dashicons dashicons-email"></span> <?php _e( 'Email Templates', 'scientific-research-center' ); ?></h3>
+						<div class="src-email-editor">
+							<div class="src-field-group">
+								<select id="src-email-template-select">
+									<option value="verification"><?php _e( 'User Verification', 'scientific-research-center' ); ?></option>
+									<option value="submission_received"><?php _e( 'Submission Received', 'scientific-research-center' ); ?></option>
+									<option value="approval"><?php _e( 'Research Approved', 'scientific-research-center' ); ?></option>
+								</select>
+							</div>
+							<div class="src-field-group">
+								<input type="text" id="src-email-subject" placeholder="Email Subject">
+							</div>
+							<div class="src-field-group">
+								<textarea id="src-email-body" style="height: 150px;" placeholder="Template Body (HTML allowed)"></textarea>
+							</div>
+							<button class="src-submit-btn full-width" id="src-save-email-tpl-btn"><?php _e( 'Save Template', 'scientific-research-center' ); ?></button>
+						</div>
 					</div>
 				</div>
 
-				<div class="src-card">
-					<h3><span class="dashicons dashicons-art"></span> <?php _e( 'Visual Theme', 'scientific-research-center' ); ?></h3>
-					<div class="src-field-group">
-						<select id="set_theme_color">
-							<option value="monochrome"><?php _e( 'Strict Monochrome (Standard)', 'scientific-research-center' ); ?></option>
-							<option value="midnight"><?php _e( 'Midnight Scholar', 'scientific-research-center' ); ?></option>
-						</select>
-						<label for="set_theme_color" class="select-label"><?php _e( 'Color Palette', 'scientific-research-center' ); ?></label>
+				<div class="src-settings-col-right">
+					<div class="src-card">
+						<h3><span class="dashicons dashicons-shield-alt"></span> <?php _e( 'Security & Permissions', 'scientific-research-center' ); ?></h3>
+						<div class="src-role-manager">
+							<p><strong><?php _e( 'Module Access Control', 'scientific-research-center' ); ?></strong></p>
+							<div class="src-field-group">
+								<select id="src-role-perm-select">
+									<?php foreach ( SRC_Roles::get_roles_definition() as $slug => $data ) : ?>
+										<option value="<?php echo $slug; ?>"><?php echo $data['name']; ?></option>
+									<?php endforeach; ?>
+								</select>
+							</div>
+							<div id="src-role-caps-list" class="src-checkbox-list">
+								<label><input type="checkbox" value="upload_files"> <?php _e( 'File Uploads', 'scientific-research-center' ); ?></label>
+								<label><input type="checkbox" value="edit_posts"> <?php _e( 'Edit Submissions', 'scientific-research-center' ); ?></label>
+								<label><input type="checkbox" value="publish_posts"> <?php _e( 'Publish Papers', 'scientific-research-center' ); ?></label>
+							</div>
+							<button class="src-btn-outline" id="src-save-role-perms-btn" style="margin-top: 15px;"><?php _e( 'Update Permissions', 'scientific-research-center' ); ?></button>
+						</div>
+
+						<hr style="margin: 30px 0;">
+
+						<div class="src-security-policies">
+							<p><strong><?php _e( 'Platform Policies', 'scientific-research-center' ); ?></strong></p>
+							<div class="src-field-group">
+								<input type="number" id="src-min-pwd" value="<?php echo get_option('src_pwd_min_length', 8); ?>">
+								<label><?php _e( 'Min Password Length', 'scientific-research-center' ); ?></label>
+							</div>
+							<div class="src-field-group">
+								<input type="number" id="src-session-time" value="<?php echo get_option('src_session_timeout', 60); ?>">
+								<label><?php _e( 'Session Timeout (Minutes)', 'scientific-research-center' ); ?></label>
+							</div>
+							<button class="src-submit-btn full-width" id="src-save-security-btn"><?php _e( 'Apply Security Policies', 'scientific-research-center' ); ?></button>
+						</div>
 					</div>
-					<div class="src-field-group">
-						<input type="text" name="custom_accent" placeholder="#000000" value="#000000">
-						<label><?php _e( 'Primary Accent Color', 'scientific-research-center' ); ?></label>
+
+					<div class="src-card" style="margin-top: 30px;">
+						<h3><span class="dashicons dashicons-backup"></span> <?php _e( 'Data & Backups', 'scientific-research-center' ); ?></h3>
+						<p><?php _e( 'Export all platform data for safe backup.', 'scientific-research-center' ); ?></p>
+						<button class="src-btn-outline full-width" onclick="location.href='?section=users-management'"><?php _e( 'Global Data Export (JSON)', 'scientific-research-center' ); ?></button>
 					</div>
 				</div>
 			</div>
 
 			<div class="src-settings-footer">
-				<button class="src-submit-btn"><?php _e( 'Update System Preferences', 'scientific-research-center' ); ?></button>
+				<button class="src-submit-btn"><?php _e( 'Update Visual Preferences', 'scientific-research-center' ); ?></button>
 			</div>
 		</div>
 		<?php endif; ?>
