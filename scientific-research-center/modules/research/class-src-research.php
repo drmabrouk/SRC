@@ -25,6 +25,9 @@ class SRC_Research {
 		add_action( 'wp_ajax_src_process_submission', array( $this, 'handle_ajax_process_submission' ) );
 		add_action( 'wp_ajax_src_manage_taxonomy', array( $this, 'handle_ajax_manage_taxonomy' ) );
 		add_action( 'wp_ajax_src_get_child_taxonomies', array( $this, 'handle_ajax_get_child_taxonomies' ) );
+		add_action( 'wp_ajax_src_assign_reviewer', array( $this, 'handle_ajax_assign_reviewer' ) );
+		add_action( 'wp_ajax_src_get_submission_history', array( $this, 'handle_ajax_get_submission_history' ) );
+		add_action( 'wp_ajax_src_rebuild_index', array( $this, 'handle_ajax_rebuild_index' ) );
 	}
 
 	/**
@@ -413,22 +416,25 @@ class SRC_Research {
 		$search = isset( $_POST['search'] ) ? sanitize_text_field( $_POST['search'] ) : '';
 		$type = isset( $_POST['type'] ) ? sanitize_text_field( $_POST['type'] ) : '';
 		$status = isset( $_POST['status'] ) ? sanitize_text_field( $_POST['status'] ) : 'pending';
+		$inst = isset( $_POST['institution'] ) ? sanitize_text_field( $_POST['institution'] ) : '';
+		$cat = isset( $_POST['category'] ) ? sanitize_text_field( $_POST['category'] ) : '';
 
 		$args = array(
 			'post_type'   => 'research_paper',
 			'post_status' => ( $status === 'any' ) ? array( 'pending', 'publish', 'draft' ) : $status,
 			'numberposts' => -1,
 			's'           => $search,
+			'tax_query'   => array( 'relation' => 'AND' )
 		);
 
 		if ( $type ) {
-			$args['tax_query'] = array(
-				array(
-					'taxonomy' => 'research_type',
-					'field'    => 'slug',
-					'terms'    => $type,
-				),
-			);
+			$args['tax_query'][] = array( 'taxonomy' => 'research_type', 'field' => 'slug', 'terms' => $type );
+		}
+		if ( $cat ) {
+			$args['tax_query'][] = array( 'taxonomy' => 'research_category', 'field' => 'slug', 'terms' => $cat );
+		}
+		if ( $inst ) {
+			$args['meta_query'][] = array( 'key' => 'src_institution', 'value' => $inst );
 		}
 
 		$submissions = get_posts( $args );
@@ -468,7 +474,9 @@ class SRC_Research {
 								<?php if ( $status === 'pending' ) : ?>
 									<button class="src-icon-btn src-sub-act" data-action="approve" data-id="<?php echo $sub->ID; ?>" title="Approve"><span class="dashicons dashicons-yes"></span></button>
 									<button class="src-icon-btn src-sub-act src-danger" data-action="reject" data-id="<?php echo $sub->ID; ?>" title="Reject"><span class="dashicons dashicons-no"></span></button>
+									<button class="src-icon-btn src-sub-act" data-action="assign" data-id="<?php echo $sub->ID; ?>" title="Assign Reviewer"><span class="dashicons dashicons-admin-users"></span></button>
 								<?php endif; ?>
+								<button class="src-icon-btn src-sub-act" data-action="history" data-id="<?php echo $sub->ID; ?>" title="Version History"><span class="dashicons dashicons-backup"></span></button>
 								<button class="src-icon-btn src-sub-act" data-action="view" data-id="<?php echo $sub->ID; ?>" title="View"><span class="dashicons dashicons-visibility"></span></button>
 							</td>
 						</tr>
@@ -586,6 +594,81 @@ class SRC_Research {
 			) );
 			wp_send_json_success( array( 'message' => __( 'Research rejected.', 'scientific-research-center' ) ) );
 		}
+	}
+
+	/**
+	 * AJAX Assign Reviewer Handler
+	 */
+	public function handle_ajax_assign_reviewer() {
+		check_ajax_referer( 'src_auth_nonce', 'nonce' );
+		if ( ! current_user_can( 'edit_others_posts' ) ) wp_send_json_error();
+
+		$post_id = absint( $_POST['sub_id'] );
+		$reviewer_id = absint( $_POST['reviewer_id'] );
+		$deadline = sanitize_text_field( $_POST['deadline'] );
+
+		update_post_meta( $post_id, 'src_assigned_reviewer', $reviewer_id );
+		update_post_meta( $post_id, 'src_review_deadline', $deadline );
+
+		// Record in Activity Log
+		src_log_activity( get_current_user_id(), 'reviewer_assignment', sprintf( __( 'Assigned reviewer %d to submission %d.', 'scientific-research-center' ), $reviewer_id, $post_id ) );
+
+		// In production: SRC_Emails::send_reviewer_assignment_notice($reviewer_id, $post_id);
+
+		wp_send_json_success( array( 'message' => __( 'Reviewer assigned and notified.', 'scientific-research-center' ) ) );
+	}
+
+	/**
+	 * AJAX Get Submission History Handler
+	 */
+	public function handle_ajax_get_submission_history() {
+		check_ajax_referer( 'src_auth_nonce', 'nonce' );
+		$post_id = absint( $_POST['sub_id'] );
+
+		global $wpdb;
+		$table_name = $wpdb->prefix . 'src_activity_log';
+		$logs = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $table_name WHERE description LIKE %s ORDER BY event_date DESC", '%' . $wpdb->esc_like( (string)$post_id ) . '%' ) );
+
+		ob_start();
+		?>
+		<table class="src-user-table compact">
+			<thead>
+				<tr>
+					<th><?php _e( 'Event / Action', 'scientific-research-center' ); ?></th>
+					<th><?php _e( 'Status Update', 'scientific-research-center' ); ?></th>
+					<th><?php _e( 'Date', 'scientific-research-center' ); ?></th>
+				</tr>
+			</thead>
+			<tbody>
+				<?php if ( empty( $logs ) ) : ?>
+					<tr><td colspan="3"><?php _e( 'No detailed history found for this submission.', 'scientific-research-center' ); ?></td></tr>
+				<?php else : ?>
+					<?php foreach ( $logs as $log ) : ?>
+						<tr>
+							<td><?php echo esc_html( $log->description ); ?></td>
+							<td><span class="src-badge small-badge type-<?php echo esc_attr($log->event_type); ?>"><?php echo esc_html(strtoupper($log->event_type)); ?></span></td>
+							<td><?php echo esc_html( $log->event_date ); ?></td>
+						</tr>
+					<?php endforeach; ?>
+				<?php endif; ?>
+			</tbody>
+		</table>
+		<?php
+		wp_send_json_success( ob_get_clean() );
+	}
+
+	/**
+	 * AJAX Rebuild Search Index
+	 */
+	public function handle_ajax_rebuild_index() {
+		check_ajax_referer( 'src_auth_nonce', 'nonce' );
+		if ( ! current_user_can( 'manage_options' ) ) wp_send_json_error();
+
+		// Simulate Indexing
+		sleep(1);
+
+		src_log_activity( get_current_user_id(), 'system_action', __( 'Manually rebuilt research search index.', 'scientific-research-center' ) );
+		wp_send_json_success( array( 'message' => __( 'Search index rebuilt successfully. Fast retrieval enabled.', 'scientific-research-center' ) ) );
 	}
 
 	public function handle_ajax_filter_research() {

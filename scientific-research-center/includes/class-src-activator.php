@@ -26,6 +26,9 @@ class SRC_Activator {
 		// Create activity log table
 		self::create_activity_log_table();
 
+		// Create search analytics table
+		self::create_search_analytics_table();
+
 		// Flush rewrite rules
 		flush_rewrite_rules();
 	}

@@ -36,6 +36,14 @@ class SRC_Frontend {
 		add_action( 'wp_ajax_src_get_user_logs', array( $this, 'handle_ajax_get_user_logs' ) );
 		add_action( 'wp_ajax_src_bulk_export_users', array( $this, 'handle_ajax_bulk_export_users' ) );
 		add_action( 'wp_ajax_src_bulk_import_users', array( $this, 'handle_ajax_bulk_import_users' ) );
+		add_action( 'wp_ajax_src_save_search_settings', array( $this, 'handle_ajax_save_search_settings' ) );
+		add_action( 'wp_ajax_src_get_search_analytics', array( $this, 'handle_ajax_get_search_analytics' ) );
+		add_action( 'wp_ajax_src_save_email_template', array( $this, 'handle_ajax_save_email_template' ) );
+		add_action( 'wp_ajax_src_save_role_permissions', array( $this, 'handle_ajax_save_role_permissions' ) );
+		add_action( 'wp_ajax_src_save_security_settings', array( $this, 'handle_ajax_save_security_settings' ) );
+		add_action( 'wp_ajax_src_get_email_template', array( $this, 'handle_ajax_get_email_template' ) );
+		add_action( 'wp_ajax_src_get_role_permissions', array( $this, 'handle_ajax_get_role_permissions' ) );
+		add_action( 'wp_ajax_src_log_search', array( $this, 'handle_ajax_log_search' ) );
 	}
 
 	/**
@@ -58,6 +66,51 @@ class SRC_Frontend {
 			);
 		}
 		wp_send_json_success( $user_data );
+	}
+
+	/**
+	 * AJAX Get Email Template
+	 */
+	public function handle_ajax_get_email_template() {
+		check_ajax_referer( 'src_auth_nonce', 'nonce' );
+		if ( ! current_user_can( 'manage_options' ) ) wp_send_json_error();
+
+		$template_id = sanitize_text_field( $_POST['template_id'] );
+		$subject = get_option( "src_email_tpl_{$template_id}_subject", __( 'Update from Scientific Research Center', 'scientific-research-center' ) );
+		$body = get_option( "src_email_tpl_{$template_id}_body", "Hello [user_name],\n\nYour research paper has been updated.\n\nRegards,\nSupport Team" );
+
+		wp_send_json_success( array( 'subject' => $subject, 'body' => $body ) );
+	}
+
+	/**
+	 * AJAX Get Role Permissions
+	 */
+	public function handle_ajax_get_role_permissions() {
+		check_ajax_referer( 'src_auth_nonce', 'nonce' );
+		if ( ! current_user_can( 'manage_options' ) ) wp_send_json_error();
+
+		$role_slug = sanitize_text_field( $_POST['role_slug'] );
+		$role = get_role( $role_slug );
+		if ( ! $role ) wp_send_json_error();
+
+		wp_send_json_success( $role->capabilities );
+	}
+
+	/**
+	 * AJAX Log Search Analytics
+	 */
+	public function handle_ajax_log_search() {
+		check_ajax_referer( 'src_auth_nonce', 'nonce' );
+		$keyword = sanitize_text_field( $_POST['keyword'] );
+		if ( empty( $keyword ) ) wp_send_json_error();
+
+		global $wpdb;
+		$table_name = $wpdb->prefix . 'src_search_analytics';
+		$wpdb->insert( $table_name, array(
+			'keyword' => $keyword,
+			'user_id' => get_current_user_id() ?: NULL
+		) );
+		wp_send_json_success();
 	}
 
 	/**
@@ -478,6 +531,114 @@ class SRC_Frontend {
 		</table>
 		<?php
 		wp_send_json_success( ob_get_clean() );
+	}
+
+	/**
+	 * AJAX Save Search Engine Settings
+	 */
+	public function handle_ajax_save_search_settings() {
+		check_ajax_referer( 'src_auth_nonce', 'nonce' );
+		if ( ! current_user_can( 'manage_options' ) ) wp_send_json_error();
+
+		update_option( 'src_search_card_design', sanitize_text_field( $_POST['card_design'] ) );
+		update_option( 'src_search_metadata_visibility', $_POST['metadata_visibility'] ); // Array
+
+		wp_send_json_success( array( 'message' => __( 'Search display settings updated.', 'scientific-research-center' ) ) );
+	}
+
+	/**
+	 * AJAX Get Search Analytics
+	 */
+	public function handle_ajax_get_search_analytics() {
+		check_ajax_referer( 'src_auth_nonce', 'nonce' );
+		if ( ! current_user_can( 'manage_options' ) ) wp_send_json_error();
+
+		global $wpdb;
+		$table_name = $wpdb->prefix . 'src_search_analytics';
+
+		$top_keywords = $wpdb->get_results( "SELECT keyword, COUNT(*) as count FROM $table_name GROUP BY keyword ORDER BY count DESC LIMIT 10" );
+
+		ob_start();
+		?>
+		<div class="src-analytics-grid grid-2">
+			<div class="src-card">
+				<h3><?php _e( 'Top Searched Keywords', 'scientific-research-center' ); ?></h3>
+				<ul class="src-analytics-list">
+					<?php foreach ( $top_keywords as $kw ) : ?>
+						<li><strong><?php echo esc_html( $kw->keyword ); ?></strong> <span><?php echo esc_html( $kw->count ); ?> searches</span></li>
+					<?php endforeach; ?>
+				</ul>
+			</div>
+			<div class="src-card">
+				<h3><?php _e( 'Search Volume (24h)', 'scientific-research-center' ); ?></h3>
+				<div class="src-visual-graph mini monochromatic-bar-chart">
+					<!-- Simulated hourly data -->
+					<div class="src-graph-bar" style="height: 20%;"></div>
+					<div class="src-graph-bar" style="height: 45%;"></div>
+					<div class="src-graph-bar" style="height: 80%;"></div>
+					<div class="src-graph-bar" style="height: 30%;"></div>
+				</div>
+			</div>
+		</div>
+		<?php
+		wp_send_json_success( ob_get_clean() );
+	}
+
+	/**
+	 * AJAX Save Email Template
+	 */
+	public function handle_ajax_save_email_template() {
+		check_ajax_referer( 'src_auth_nonce', 'nonce' );
+		if ( ! current_user_can( 'manage_options' ) ) wp_send_json_error();
+
+		$template_id = sanitize_text_field( $_POST['template_id'] );
+		$subject = sanitize_text_field( $_POST['subject'] );
+		$body = wp_kses_post( $_POST['body'] );
+
+		update_option( "src_email_tpl_{$template_id}_subject", $subject );
+		update_option( "src_email_tpl_{$template_id}_body", $body );
+
+		wp_send_json_success( array( 'message' => __( 'Email template saved.', 'scientific-research-center' ) ) );
+	}
+
+	/**
+	 * AJAX Save Role Permissions
+	 */
+	public function handle_ajax_save_role_permissions() {
+		check_ajax_referer( 'src_auth_nonce', 'nonce' );
+		if ( ! current_user_can( 'manage_options' ) ) wp_send_json_error();
+
+		$role_slug = sanitize_text_field( $_POST['role_slug'] );
+		$caps = $_POST['caps']; // Array of capability keys
+
+		$role = get_role( $role_slug );
+		if ( ! $role ) wp_send_json_error();
+
+		// For security, only allow specific plugin-related caps to be toggled
+		$allowed_caps = array( 'upload_files', 'edit_posts', 'publish_posts', 'edit_others_posts', 'list_users' );
+
+		foreach ( $allowed_caps as $cap ) {
+			if ( in_array( $cap, $caps ) ) {
+				$role->add_cap( $cap );
+			} else {
+				$role->remove_cap( $cap );
+			}
+		}
+
+		wp_send_json_success( array( 'message' => __( 'Role permissions updated.', 'scientific-research-center' ) ) );
+	}
+
+	/**
+	 * AJAX Save Security Settings
+	 */
+	public function handle_ajax_save_security_settings() {
+		check_ajax_referer( 'src_auth_nonce', 'nonce' );
+		if ( ! current_user_can( 'manage_options' ) ) wp_send_json_error();
+
+		update_option( 'src_pwd_min_length', absint( $_POST['min_length'] ) );
+		update_option( 'src_session_timeout', absint( $_POST['timeout'] ) );
+
+		wp_send_json_success( array( 'message' => __( 'Security policies updated.', 'scientific-research-center' ) ) );
 	}
 
 	/**

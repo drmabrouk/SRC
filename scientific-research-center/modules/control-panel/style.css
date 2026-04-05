@@ -312,6 +312,24 @@ body.src-cp-active { overflow-x: hidden; }
 }
 .src-modal-content.wide { width: 800px; }
 @keyframes modalSlide { from { transform: translateY(-50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+/* Advanced Components */
+.src-checkbox-list { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
+.src-checkbox-list label { font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 10px; cursor: pointer; }
+.src-checkbox-list input { accent-color: #000; }
+
+.src-analytics-list { list-style: none; padding: 0; margin: 20px 0; }
+.src-analytics-list li { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f5f5f5; font-size: 13px; }
+.src-analytics-list li strong { color: #000; }
+.src-analytics-list li span { color: #999; font-weight: 700; }
+
+.src-visual-graph.mini { height: 100px; padding: 10px 5px; margin-top: 10px; }
+
+.src-meta-toggles { display: flex; flex-wrap: wrap; gap: 15px; margin: 15px 0; }
+.src-meta-toggles label { font-size: 12px; font-weight: 700; display: flex; align-items: center; gap: 8px; background: #fafafa; padding: 6px 12px; border-radius: 6px; border: 1px solid #eee; cursor: pointer; }
+.src-meta-toggles input:checked + span { color: #000; }
+
+hr { border: 0; border-top: 1px solid #eee; margin: 20px 0; }
 .src-modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
 .src-modal-header h2 { margin: 0; font-size: 22px; font-weight: 900; }
 .src-modal-close { font-size: 28px; cursor: pointer; color: #999; }

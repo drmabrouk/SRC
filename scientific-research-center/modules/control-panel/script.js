@@ -44,13 +44,16 @@ jQuery(document).ready(function($) {
     });
 
     // Auto-load data for the active section on page load
-    const activeSection = $('.src-menu-item.active').find('a').parent().data('section') || 'dashboard';
+    const activeSection = urlParams.get('section') || 'dashboard';
     if (activeSection === 'users-management' || activeSection === 'institution-members') {
         loadSystemUsers(activeSection === 'institution-members');
     } else if (activeSection === 'submissions-management') {
         loadSubmissions();
     } else if (activeSection === 'research-engine') {
         loadTaxonomyEditor();
+        loadSearchAnalytics();
+    } else if (activeSection === 'settings') {
+        loadEmailTemplate();
     }
 
     // Mobile Sidebar Toggle
@@ -550,6 +553,14 @@ jQuery(document).ready(function($) {
     // Search Button Redirection (Always to Results Page)
     $(document).on('click', '#lib_search_btn', function() {
         const query = $('#lib_search').val() || '';
+
+        if (query) {
+            $.ajax({
+                type: 'POST',
+                url: src_ajax.ajax_url,
+                data: { action: 'src_log_search', nonce: src_ajax.nonce, keyword: query }
+            });
+        }
         const faculty = $('#lib_faculty').val();
         const specialty = $('#lib_specialty').val();
         const subspecialty = $('#lib_sub_specialty').val();
@@ -582,7 +593,7 @@ jQuery(document).ready(function($) {
         }, 500);
     });
 
-    $(document).on('change', '#src-sub-filter-type, #src-sub-filter-status', function() {
+    $(document).on('change', '#src-sub-filter-type, #src-sub-filter-inst, #src-sub-filter-cat, #src-sub-filter-status', function() {
         loadSubmissions();
     });
 
@@ -591,6 +602,26 @@ jQuery(document).ready(function($) {
         const $btn = $(this);
         const action = $btn.data('action');
         const subId = $btn.data('id');
+
+        if (action === 'assign') {
+            $('#assign_sub_id').val(subId);
+            $('#src-assign-reviewer-modal').fadeIn();
+            return;
+        }
+
+        if (action === 'history') {
+            const $modal = $('#src-sub-history-modal');
+            const $content = $('#src-sub-history-content');
+            $modal.fadeIn();
+            $.ajax({
+                type: 'POST',
+                url: src_ajax.ajax_url,
+                data: { action: 'src_get_submission_history', nonce: src_ajax.nonce, sub_id: subId },
+                beforeSend: function() { $content.html('<div class="src-loading-skeleton"></div>'); },
+                success: function(response) { if (response.success) $content.html(response.data); }
+            });
+            return;
+        }
 
         if (action === 'view') {
             window.open(src_ajax.site_url + '?p=' + subId + '&preview=true', '_blank');
@@ -615,6 +646,31 @@ jQuery(document).ready(function($) {
         });
     });
 
+    $(document).on('submit', '#src-assign-reviewer-form', function(e) {
+        e.preventDefault();
+        const $form = $(this);
+        const $msg = $form.find('.src-form-msg');
+        $msg.text('Assigning...').css('color', '#000');
+
+        $.ajax({
+            type: 'POST',
+            url: src_ajax.ajax_url,
+            data: {
+                action: 'src_assign_reviewer',
+                nonce: src_ajax.nonce,
+                sub_id: $('#assign_sub_id').val(),
+                reviewer_id: $('#assign_reviewer').val(),
+                deadline: $('#assign_deadline').val()
+            },
+            success: function(response) {
+                if (response.success) {
+                    $msg.text(response.data.message).css('color', 'green');
+                    setTimeout(() => { $('#src-assign-reviewer-modal').fadeOut(); loadSubmissions(); }, 1500);
+                }
+            }
+        });
+    });
+
     function loadSubmissions() {
         const $container = $('#src-submission-list');
         if (!$container.length) return;
@@ -627,6 +683,8 @@ jQuery(document).ready(function($) {
                 nonce: src_ajax.nonce,
                 search: $('#src-sub-search').val() || '',
                 type: $('#src-sub-filter-type').val() || '',
+                institution: $('#src-sub-filter-inst').val() || '',
+                category: $('#src-sub-filter-cat').val() || '',
                 status: $('#src-sub-filter-status').val() || 'pending'
             },
             beforeSend: function() {
@@ -730,6 +788,140 @@ jQuery(document).ready(function($) {
     // Taxonomy Management Handlers
     $(document).on('change', '#src-hier-type', function() {
         loadTaxonomyEditor();
+    });
+
+    $(document).on('click', '#src-rebuild-index-btn', function() {
+        const $btn = $(this);
+        $btn.text('Indexing...').attr('disabled', true);
+        $.ajax({
+            type: 'POST',
+            url: src_ajax.ajax_url,
+            data: { action: 'src_rebuild_index', nonce: src_ajax.nonce },
+            success: function(response) {
+                alert(response.data.message);
+                $btn.text('Rebuild Search Index').attr('disabled', false);
+            }
+        });
+    });
+
+    $(document).on('click', '#src-save-search-settings-btn', function() {
+        const metaVis = [];
+        $('.src-meta-vis-check:checked').each(function() { metaVis.push($(this).val()); });
+
+        $.ajax({
+            type: 'POST',
+            url: src_ajax.ajax_url,
+            data: {
+                action: 'src_save_search_settings',
+                nonce: src_ajax.nonce,
+                card_design: $('#src-card-design').val(),
+                metadata_visibility: metaVis
+            },
+            success: function(response) { alert(response.data.message); }
+        });
+    });
+
+    function loadSearchAnalytics() {
+        const $container = $('#src-search-analytics-content');
+        if (!$container.length) return;
+        $.ajax({
+            type: 'POST',
+            url: src_ajax.ajax_url,
+            data: { action: 'src_get_search_analytics', nonce: src_ajax.nonce },
+            success: function(response) { if (response.success) $container.html(response.data); }
+        });
+    }
+
+    // Settings AJAX Handlers
+    $(document).on('change', '#src-email-template-select', function() {
+        loadEmailTemplate();
+    });
+
+    $(document).on('change', '#src-role-perm-select', function() {
+        loadRolePermissions();
+    });
+
+    $(document).on('click', '#src-save-email-tpl-btn', function() {
+        $.ajax({
+            type: 'POST',
+            url: src_ajax.ajax_url,
+            data: {
+                action: 'src_save_email_template',
+                nonce: src_ajax.nonce,
+                template_id: $('#src-email-template-select').val(),
+                subject: $('#src-email-subject').val(),
+                body: $('#src-email-body').val()
+            },
+            success: function(response) { alert(response.data.message); }
+        });
+    });
+
+    function loadEmailTemplate() {
+        $.ajax({
+            type: 'POST',
+            url: src_ajax.ajax_url,
+            data: {
+                action: 'src_get_email_template',
+                nonce: src_ajax.nonce,
+                template_id: $('#src-email-template-select').val()
+            },
+            success: function(response) {
+                if (response.success) {
+                    $('#src-email-subject').val(response.data.subject);
+                    $('#src-email-body').val(response.data.body);
+                }
+            }
+        });
+    }
+
+    function loadRolePermissions() {
+        $.ajax({
+            type: 'POST',
+            url: src_ajax.ajax_url,
+            data: {
+                action: 'src_get_role_permissions',
+                nonce: src_ajax.nonce,
+                role_slug: $('#src-role-perm-select').val()
+            },
+            success: function(response) {
+                if (response.success) {
+                    $('#src-role-caps-list input').prop('checked', false);
+                    $.each(response.data, function(cap, val) {
+                        $(`#src-role-caps-list input[value="${cap}"]`).prop('checked', val);
+                    });
+                }
+            }
+        });
+    }
+
+    $(document).on('click', '#src-save-role-perms-btn', function() {
+        const caps = [];
+        $('#src-role-caps-list input:checked').each(function() { caps.push($(this).val()); });
+        $.ajax({
+            type: 'POST',
+            url: src_ajax.ajax_url,
+            data: {
+                action: 'src_save_role_permissions',
+                nonce: src_ajax.nonce,
+                role_slug: $('#src-role-perm-select').val(),
+                caps: caps
+            },
+            success: function(response) { alert(response.data.message); }
+        });
+    });
+
+    $(document).on('click', '#src-save-security-btn', function() {
+        $.ajax({
+            type: 'POST',
+            url: src_ajax.ajax_url,
+            data: {
+                action: 'src_save_security_settings',
+                nonce: src_ajax.nonce,
+                min_length: $('#src-min-pwd').val(),
+                timeout: $('#src-session-time').val()
+            },
+            success: function(response) { alert(response.data.message); }
+        });
     });
 
     $(document).on('click', '#src-add-taxonomy-item', function() {
