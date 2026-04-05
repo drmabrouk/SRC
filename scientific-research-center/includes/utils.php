@@ -28,6 +28,19 @@ function get_utils_institutions() {
 }
 
 /**
+ * Keyword highlighting helper
+ */
+function src_highlight_keywords( $text, $query ) {
+	if ( empty( $query ) ) return $text;
+	$words = explode( ' ', $query );
+	foreach ( $words as $word ) {
+		$word = preg_quote( $word, '/' );
+		$text = preg_replace( "/($word)/i", '<mark class="src-highlight">$1</mark>', $text );
+	}
+	return $text;
+}
+
+/**
  * Log activity in the custom log table
  */
 function src_log_activity( $user_id, $event_type, $description ) {

@@ -279,9 +279,13 @@ class SRC_Research {
 		// Add Notification for Admins/Reviewers
 		$admin_users = get_users( array( 'role__in' => array( 'administrator', 'src_administrator', 'src_supervisor' ) ) );
 		foreach ( $admin_users as $admin ) {
+			$role = ! empty( $admin->roles ) ? $admin->roles[0] : 'administrator';
+			$role_slug = str_replace( 'src_', '', $role );
+			if ( $role === 'administrator' ) $role_slug = 'administrator';
+
 			$this->add_notification( $admin->ID, array(
 				'message' => sprintf( __( 'New research submission: %s', 'scientific-research-center' ), $title ),
-				'url'     => home_url( '/administrator-dashboard/' ), // Should point to submissions management
+				'url'     => home_url( '/' . $role_slug . '-workspace/?section=submissions-management' ),
 			) );
 		}
 
@@ -444,8 +448,10 @@ class SRC_Research {
 		<table class="src-user-table">
 			<thead>
 				<tr>
-					<th><?php _e( 'Research', 'scientific-research-center' ); ?></th>
-					<th><?php _e( 'Author', 'scientific-research-center' ); ?></th>
+					<th><?php _e( 'Research Paper', 'scientific-research-center' ); ?></th>
+					<th><?php _e( 'Author / Researcher', 'scientific-research-center' ); ?></th>
+					<th><?php _e( 'Institution', 'scientific-research-center' ); ?></th>
+					<th><?php _e( 'Specialty', 'scientific-research-center' ); ?></th>
 					<th><?php _e( 'Status', 'scientific-research-center' ); ?></th>
 					<th><?php _e( 'Date', 'scientific-research-center' ); ?></th>
 					<th><?php _e( 'Actions', 'scientific-research-center' ); ?></th>
@@ -453,21 +459,22 @@ class SRC_Research {
 			</thead>
 			<tbody>
 				<?php if ( empty( $submissions ) ) : ?>
-					<tr><td colspan="5"><?php _e( 'No submissions found.', 'scientific-research-center' ); ?></td></tr>
+					<tr><td colspan="7"><?php _e( 'No submissions found.', 'scientific-research-center' ); ?></td></tr>
 				<?php else : ?>
 					<?php foreach ( $submissions as $sub ) :
 						$author = get_userdata( $sub->post_author );
 						$status = $sub->post_status;
+						$inst = get_user_meta( $sub->post_author, 'src_institution', true );
+						$spec = get_user_meta( $sub->post_author, 'src_specialty', true );
 						?>
 						<tr>
 							<td>
 								<strong><?php echo esc_html( $sub->post_title ); ?></strong><br>
 								<small><?php echo esc_html( strip_tags( get_the_term_list( $sub->ID, 'research_type', '', ', ' ) ) ); ?></small>
 							</td>
-							<td>
-								<?php echo esc_html( $author->display_name ); ?><br>
-								<small><?php echo esc_html( get_user_meta( $sub->post_author, 'src_institution', true ) ); ?></small>
-							</td>
+							<td><?php echo esc_html( $author->display_name ); ?></td>
+							<td><?php echo esc_html( $inst ?: '-' ); ?></td>
+							<td><?php echo esc_html( $spec ?: '-' ); ?></td>
 							<td><span class="src-badge status-<?php echo $status; ?>"><?php echo ucfirst( $status ); ?></span></td>
 							<td><?php echo get_the_date( 'Y-m-d', $sub->ID ); ?></td>
 							<td class="src-actions">

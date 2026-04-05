@@ -678,7 +678,7 @@ class SRC_Frontend {
 	}
 
 	/**
-	 * Load custom templates for Dashboards and Profiles
+	 * Load custom templates for Workspaces and Profiles
 	 */
 	public function load_src_templates( $template ) {
 		// Handle Profiles
@@ -689,11 +689,11 @@ class SRC_Frontend {
 			}
 		}
 
-		// Handle Dashboards
+		// Handle Workspaces
 		if ( is_page() ) {
 			$slug = get_post_field( 'post_name', get_post() );
-			if ( str_contains( $slug, '-dashboard' ) ) {
-				return SRC_PLUGIN_DIR . 'modules/control-panel/admin-dashboard.php';
+			if ( str_contains( $slug, '-workspace' ) ) {
+				return SRC_PLUGIN_DIR . 'modules/control-panel/workspace-portal.php';
 			}
 
 			if ( $slug === 'profile-completion' ) {
@@ -733,9 +733,8 @@ class SRC_Frontend {
 		$profile_picture_id = get_user_meta( $user_id, 'src_profile_picture', true );
 		$profile_picture_url = $profile_picture_id ? wp_get_attachment_url( $profile_picture_id ) : get_avatar_url( $user_id );
 
-		$account_link = ( in_array( $role, array( 'src_administrator', 'administrator', 'src_supervisor' ) ) )
-			? home_url( '/' . $role_slug . '-dashboard/' )
-			: home_url( '/' . $role_slug . '-dashboard/' );
+		$workspace_suffix = ( $role === 'src_reviewer' ) ? 'scientific-reviewer-workspace' : $role_slug . '-workspace';
+		$account_link = home_url( '/' . $workspace_suffix . '/' );
 
 		// Get unread notifications
 		$notifications = get_user_meta( $user_id, 'src_notifications', true ) ?: array();
@@ -802,7 +801,8 @@ class SRC_Frontend {
 
 				<!-- Favorites -->
 				<?php if ( in_array( $role, array( 'src_researcher', 'src_reviewer', 'src_member' ) ) ) : ?>
-					<a href="<?php echo esc_url( home_url( '/' . $role_slug . '-dashboard/?section=favorites' ) ); ?>" class="src-header-icon-circle <?php echo $fav_count > 0 ? 'has-badge' : ''; ?>" id="src-fav-header-icon" title="<?php _e( 'My Favorites', 'scientific-research-center' ); ?>">
+					<?php $workspace_slug = ( $role === 'src_reviewer' ) ? 'scientific-reviewer-workspace' : $role_slug . '-workspace'; ?>
+					<a href="<?php echo esc_url( home_url( '/' . $workspace_slug . '/?section=favorites' ) ); ?>" class="src-header-icon-circle <?php echo $fav_count > 0 ? 'has-badge' : ''; ?>" id="src-fav-header-icon" title="<?php _e( 'My Favorites', 'scientific-research-center' ); ?>">
 						<span class="dashicons dashicons-heart"></span>
 						<span class="src-icon-badge fav-badge" <?php echo $fav_count === 0 ? 'style="display:none;"' : ''; ?>><?php echo $fav_count; ?></span>
 					</a>
@@ -1064,11 +1064,13 @@ class SRC_Frontend {
 			$role = ! empty( $user->roles ) ? $user->roles[0] : 'src_member';
 			$role_slug = str_replace( 'src_', '', $role );
 			if ( $role === 'administrator' ) $role_slug = 'administrator';
-			$dashboard_url = home_url( '/' . $role_slug . '-dashboard/' );
+
+			$slug_suffix = ( $role === 'src_reviewer' ) ? 'scientific-reviewer-workspace' : $role_slug . '-workspace';
+			$workspace_url = home_url( '/' . $slug_suffix . '/' );
 
 			wp_send_json_success( array(
 				'message' => __( 'Login successful! Redirecting...', 'scientific-research-center' ),
-				'redirect' => $dashboard_url
+				'redirect' => $workspace_url
 			) );
 		}
 	}
@@ -1119,7 +1121,7 @@ class SRC_Frontend {
 	}
 
 	/**
-	 * Redirect logged-in users to their role-specific dashboard and handle access control.
+	 * Redirect logged-in users to their role-specific professional workspace and handle access control.
 	 */
 	public function role_based_redirects() {
 		$current_post = get_post();
@@ -1145,16 +1147,16 @@ class SRC_Frontend {
 				$role_slug = 'administrator';
 			}
 
-			$dashboard_slug = $role_slug . '-dashboard';
+			$workspace_suffix = ( $role === 'src_reviewer' ) ? 'scientific-reviewer-workspace' : $role_slug . '-workspace';
 
-			if ( $current_slug !== $dashboard_slug ) {
-				wp_safe_redirect( home_url( '/' . $dashboard_slug . '/' ) );
+			if ( $current_slug !== $workspace_suffix ) {
+				wp_safe_redirect( home_url( '/' . $workspace_suffix . '/' ) );
 				exit;
 			}
 		}
 
-		// Access control for dashboard pages
-		if ( str_contains( $current_slug, '-dashboard' ) ) {
+		// Access control for professional workspace pages
+		if ( str_contains( $current_slug, '-workspace' ) ) {
 			if ( ! is_user_logged_in() ) {
 				wp_safe_redirect( home_url( '/login-register/' ) );
 				exit;
@@ -1167,9 +1169,9 @@ class SRC_Frontend {
 				$role_slug = 'administrator';
 			}
 
-			$allowed_dashboard = $role_slug . '-dashboard';
-			if ( $current_slug !== $allowed_dashboard ) {
-				wp_die( __( 'Access denied. You do not have permission to view this dashboard.', 'scientific-research-center' ) );
+			$allowed_workspace = ( $role === 'src_reviewer' ) ? 'scientific-reviewer-workspace' : $role_slug . '-workspace';
+			if ( $current_slug !== $allowed_workspace ) {
+				wp_die( __( 'Access denied. You do not have permission to view this workspace.', 'scientific-research-center' ) );
 			}
 		}
 	}
