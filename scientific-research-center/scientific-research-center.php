@@ -33,6 +33,7 @@ require_once SRC_PLUGIN_DIR . 'modules/auth/class-src-auth.php';
 require_once SRC_PLUGIN_DIR . 'modules/research/class-src-research.php';
 require_once SRC_PLUGIN_DIR . 'modules/control-panel/class-src-admin.php';
 require_once SRC_PLUGIN_DIR . 'modules/control-panel/class-src-user-management.php';
+require_once SRC_PLUGIN_DIR . 'modules/control-panel/class-src-activity-logger.php';
 
 /**
  * Main Plugin Class
@@ -49,6 +50,7 @@ class Scientific_Research_Center {
 		new SRC_Auth();
 		new SRC_Admin();
 		new SRC_User_Management();
+		new SRC_Activity_Logger();
 		new SRC_Frontend();
 		new SRC_Emails();
 		new SRC_Research();

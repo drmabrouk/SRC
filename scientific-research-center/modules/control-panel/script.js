@@ -67,18 +67,25 @@ jQuery(document).ready(function($) {
         }, 500);
     });
 
-    $(document).on('change', '#src-user-role-filter, #src-user-sort', function() {
+    $(document).on('change', '#src-user-role-filter, #src-user-inst-filter, #src-user-status-filter, #src-user-sort', function() {
         loadSystemUsers();
+    });
+
+    $(document).on('keyup', '#src-user-specialty-filter', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            loadSystemUsers();
+        }, 500);
     });
 
     // AJAX Load Users
     function loadSystemUsers(isInstitution = false) {
         const $container = $('#src-user-list');
-        if (isInstitution) {
-            // handle institution members if needed differently
-        }
         const search = $('#src-user-search').val() || '';
         const roleFilter = $('#src-user-role-filter').val() || '';
+        const instFilter = $('#src-user-inst-filter').val() || '';
+        const statusFilter = $('#src-user-status-filter').val() || '';
+        const specFilter = $('#src-user-specialty-filter').val() || '';
         const sortVal = $('#src-user-sort').val() || 'display_name-ASC';
         const [orderby, order] = sortVal.split('-');
 
@@ -90,9 +97,11 @@ jQuery(document).ready(function($) {
                 nonce: src_ajax.nonce,
                 search: search,
                 role_filter: roleFilter,
+                institution_filter: isInstitution ? 'current' : instFilter,
+                status_filter: statusFilter,
+                specialty_filter: specFilter,
                 orderby: orderby,
-                order: order,
-                institution_filter: isInstitution ? 'current' : ''
+                order: order
             },
             beforeSend: function() {
                 $container.html('<div class="src-loading-skeleton"></div>');
@@ -107,11 +116,36 @@ jQuery(document).ready(function($) {
         });
     }
 
-    // User Actions (Edit, Delete, Suspend, Notify)
+    // User Actions (Edit, Delete, Suspend, Notify, Logs)
     $(document).on('click', '.src-user-act', function() {
         const $btn = $(this);
         const action = $btn.data('action');
         const userId = $btn.data('id');
+
+        if (action === 'logs') {
+            const $modal = $('#src-user-log-modal');
+            const $content = $('#src-user-log-content');
+            $modal.fadeIn();
+
+            $.ajax({
+                type: 'POST',
+                url: src_ajax.ajax_url,
+                data: {
+                    action: 'src_get_user_logs',
+                    nonce: src_ajax.nonce,
+                    user_id: userId
+                },
+                beforeSend: function() {
+                    $content.html('<div class="src-loading-skeleton"></div>');
+                },
+                success: function(response) {
+                    if (response.success) {
+                        $content.html(response.data);
+                    }
+                }
+            });
+            return;
+        }
 
         if (action === 'delete' && !confirm('Are you sure you want to delete this user?')) return;
 
@@ -130,6 +164,61 @@ jQuery(document).ready(function($) {
                     loadSystemUsers($('.src-cp-nav li.active').data('section') === 'institution-members');
                 } else {
                     alert(response.data.message);
+                }
+            }
+        });
+    });
+
+    // Add User Modal Handlers
+    $(document).on('click', '.src-add-user-trigger', function() {
+        $('#src-modal-title').text('Add New Platform User');
+        $('#src-modal-submit-btn').text('Create User Account');
+        $('#modal_user_id').val('');
+        $('#add_user').attr('disabled', false);
+        $('#src-user-form')[0].reset();
+        $('#src-user-modal').fadeIn();
+    });
+
+    $(document).on('click', '.src-modal-close', function() {
+        $('.src-modal').fadeOut();
+    });
+
+    $(document).on('submit', '#src-user-form', function(e) {
+        e.preventDefault();
+        const $form = $(this);
+        const $msg = $form.find('.src-form-msg');
+        const userId = $('#modal_user_id').val();
+
+        $msg.text(userId ? 'Updating user...' : 'Creating user...').css('color', '#000');
+
+        $.ajax({
+            type: 'POST',
+            url: src_ajax.ajax_url,
+            data: {
+                action: userId ? 'src_user_action' : 'src_add_new_user',
+                user_action: userId ? 'update' : '',
+                user_id: userId,
+                nonce: src_ajax.nonce,
+                first_name: $form.find('input[name="first_name"]').val(),
+                last_name: $form.find('input[name="last_name"]').val(),
+                username: $form.find('input[name="username"]').val(),
+                email: $form.find('input[name="email"]').val(),
+                role: $form.find('select[name="role"]').val(),
+                password: $form.find('input[name="password"]').val(),
+                institution: $form.find('input[name="institution"]').val(),
+                specialty: $form.find('input[name="specialty"]').val()
+            },
+            success: function(response) {
+                if (response.success) {
+                    $msg.text(response.data.message).css('color', 'green');
+                    setTimeout(() => {
+                        $('#src-user-modal').fadeOut();
+                        $form[0].reset();
+                        $msg.text('');
+                        loadSystemUsers();
+                    }, 1500);
+                } else {
+                    $msg.text(response.data.message).css('color', 'red');
                 }
             }
         });
@@ -678,6 +767,35 @@ jQuery(document).ready(function($) {
         const id = $btn.data('id');
         const type = $btn.data('type');
 
+        if (action === 'edit') {
+            $.ajax({
+                type: 'POST',
+                url: src_ajax.ajax_url,
+                data: {
+                    action: 'src_get_user_data',
+                    nonce: src_ajax.nonce,
+                    user_id: userId
+                },
+                success: function(response) {
+                    if (response.success) {
+                        $('#src-modal-title').text('Edit Platform User');
+                        $('#src-modal-submit-btn').text('Update Account');
+                        $('#modal_user_id').val(userId);
+                        $('#add_fn').val(response.data.first_name);
+                        $('#add_ln').val(response.data.last_name);
+                        $('#add_user').val(response.data.user_login).attr('disabled', true);
+                        $('#add_email').val(response.data.user_email);
+                        $('#add_role').val(response.data.role);
+                        $('#add_inst').val(response.data.institution);
+                        $('#add_spec').val(response.data.specialty);
+                        $('#add_pass').val('');
+                        $('#src-user-modal').fadeIn();
+                    }
+                }
+            });
+            return;
+        }
+
         if (action === 'delete' && !confirm('Remove this category?')) return;
 
         $.ajax({
@@ -804,6 +922,50 @@ jQuery(document).ready(function($) {
                 } else {
                     alert(response.data.message);
                 }
+            }
+        });
+    });
+
+    $(document).on('click', '#src-export-users-trigger', function() {
+        $.ajax({
+            type: 'POST',
+            url: src_ajax.ajax_url,
+            data: {
+                action: 'src_bulk_export_users',
+                nonce: src_ajax.nonce
+            },
+            success: function(response) {
+                if (response.success) {
+                    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(response.data));
+                    const downloadAnchorNode = document.createElement('a');
+                    downloadAnchorNode.setAttribute("href",     dataStr);
+                    downloadAnchorNode.setAttribute("download", "src_users_export.json");
+                    document.body.appendChild(downloadAnchorNode);
+                    downloadAnchorNode.click();
+                    downloadAnchorNode.remove();
+                }
+            }
+        });
+    });
+
+    $(document).on('change', '#src-import-users-input', function() {
+        const file = this.files[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('action', 'src_bulk_import_users');
+        formData.append('nonce', src_ajax.nonce);
+        formData.append('import_file', file);
+
+        $.ajax({
+            type: 'POST',
+            url: src_ajax.ajax_url,
+            data: formData,
+            contentType: false,
+            processData: false,
+            success: function(response) {
+                alert(response.data.message);
+                if (response.success) loadSystemUsers();
             }
         });
     });

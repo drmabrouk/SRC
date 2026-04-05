@@ -110,12 +110,20 @@ $current_section = isset( $_GET['section'] ) ? sanitize_text_field( $_GET['secti
 				$research_counts = wp_count_posts( 'research_paper' );
 				$pending_research = $research_counts->pending;
 				$approved_research = $research_counts->publish;
+				$active_inst = count( get_utils_institutions() );
 				?>
 				<div class="src-metric-card">
 					<div class="src-metric-icon"><span class="dashicons dashicons-admin-users"></span></div>
 					<div class="src-metric-data">
 						<h3><?php echo number_format( $total_users ); ?></h3>
 						<span><?php _e( 'Total Platform Users', 'scientific-research-center' ); ?></span>
+					</div>
+				</div>
+				<div class="src-metric-card">
+					<div class="src-metric-icon"><span class="dashicons dashicons-bank"></span></div>
+					<div class="src-metric-data">
+						<h3><?php echo number_format( $active_inst ); ?></h3>
+						<span><?php _e( 'Active Institutions', 'scientific-research-center' ); ?></span>
 					</div>
 				</div>
 				<div class="src-metric-card">
@@ -134,10 +142,80 @@ $current_section = isset( $_GET['section'] ) ? sanitize_text_field( $_GET['secti
 				</div>
 			</div>
 
-			<div class="src-dashboard-cards">
-				<div class="src-card">
-					<h3><?php _e( 'System Activity Overview', 'scientific-research-center' ); ?></h3>
-					<p><?php _e( 'Your platform metrics are up-to-date.', 'scientific-research-center' ); ?></p>
+			<div class="src-overview-layout grid-2">
+				<div class="src-overview-left">
+					<div class="src-card src-quick-access-card">
+						<h3><span class="dashicons dashicons-external"></span> <?php _e( 'Quick Access', 'scientific-research-center' ); ?></h3>
+						<div class="src-quick-grid">
+							<a href="?section=submissions-management" class="src-quick-btn">
+								<span class="dashicons dashicons-media-document"></span>
+								<p><?php _e( 'Submissions', 'scientific-research-center' ); ?></p>
+							</a>
+							<a href="?section=research-engine" class="src-quick-btn">
+								<span class="dashicons dashicons-rest-api"></span>
+								<p><?php _e( 'Search Engine', 'scientific-research-center' ); ?></p>
+							</a>
+							<a href="?section=users-management" class="src-quick-btn">
+								<span class="dashicons dashicons-groups"></span>
+								<p><?php _e( 'Users', 'scientific-research-center' ); ?></p>
+							</a>
+							<a href="<?php echo home_url( '/submit-research/' ); ?>" class="src-quick-btn">
+								<span class="dashicons dashicons-upload"></span>
+								<p><?php _e( 'Upload', 'scientific-research-center' ); ?></p>
+							</a>
+						</div>
+					</div>
+
+					<div class="src-card src-graph-card">
+						<h3><span class="dashicons dashicons-chart-line"></span> <?php _e( 'Research Trends', 'scientific-research-center' ); ?></h3>
+						<div class="src-visual-graph monochromatic-bar-chart">
+							<div class="src-graph-bar" style="height: 40%;" data-label="Mon"></div>
+							<div class="src-graph-bar" style="height: 65%;" data-label="Tue"></div>
+							<div class="src-graph-bar" style="height: 50%;" data-label="Wed"></div>
+							<div class="src-graph-bar" style="height: 90%;" data-label="Thu"></div>
+							<div class="src-graph-bar" style="height: 75%;" data-label="Fri"></div>
+							<div class="src-graph-bar" style="height: 30%;" data-label="Sat"></div>
+							<div class="src-graph-bar" style="height: 20%;" data-label="Sun"></div>
+						</div>
+						<p class="src-graph-caption"><?php _e( 'Daily publication counts (Weekly overview)', 'scientific-research-center' ); ?></p>
+					</div>
+				</div>
+
+				<div class="src-overview-right">
+					<?php if ( $pending_research > 0 ) : ?>
+						<div class="src-alert-box alert-warning">
+							<span class="dashicons dashicons-warning"></span>
+							<div class="src-alert-content">
+								<strong><?php printf( __( '%d Research Submissions Pending', 'scientific-research-center' ), $pending_research ); ?></strong>
+								<p><?php _e( 'Please review pending submissions for approval.', 'scientific-research-center' ); ?></p>
+							</div>
+							<a href="?section=submissions-management" class="src-link-btn"><?php _e( 'Review', 'scientific-research-center' ); ?></a>
+						</div>
+					<?php endif; ?>
+
+					<div class="src-card src-activity-card">
+						<h3><span class="dashicons dashicons-list-view"></span> <?php _e( 'Recent Activity', 'scientific-research-center' ); ?></h3>
+						<div class="src-activity-feed">
+							<?php
+							global $wpdb;
+							$table_name = $wpdb->prefix . 'src_activity_log';
+							$logs = $wpdb->get_results( "SELECT * FROM $table_name ORDER BY event_date DESC LIMIT 5" );
+
+							if ( empty( $logs ) ) : ?>
+								<p class="src-empty-msg"><?php _e( 'No recent activity recorded.', 'scientific-research-center' ); ?></p>
+							<?php else : ?>
+								<?php foreach ( $logs as $log ) : ?>
+									<div class="src-activity-item">
+										<div class="src-activity-icon type-<?php echo esc_attr( $log->event_type ); ?>"></div>
+										<div class="src-activity-details">
+											<p><?php echo esc_html( $log->description ); ?></p>
+											<span><?php echo esc_html( human_time_diff( strtotime( $log->event_date ), current_time( 'timestamp' ) ) ); ?> <?php _e( 'ago', 'scientific-research-center' ); ?></span>
+										</div>
+									</div>
+								<?php endforeach; ?>
+							<?php endif; ?>
+						</div>
+					</div>
 				</div>
 			</div>
 		</div>
@@ -149,12 +227,23 @@ $current_section = isset( $_GET['section'] ) ? sanitize_text_field( $_GET['secti
 				<h1><?php _e( 'System Users Management', 'scientific-research-center' ); ?></h1>
 				<p><?php _e( 'Manage, filter, and monitor all platform users and their respective roles.', 'scientific-research-center' ); ?></p>
 
-				<div class="src-search-filters-bar">
-					<div class="src-search-bar compact">
-						<input type="text" id="src-user-search" placeholder="<?php _e( 'Search by name, email, role...', 'scientific-research-center' ); ?>">
-						<span class="dashicons dashicons-search"></span>
+				<div class="src-search-filters-bar user-management-filters">
+					<div class="src-filters-row main-row">
+						<div class="src-search-bar compact">
+							<input type="text" id="src-user-search" placeholder="<?php _e( 'Search users...', 'scientific-research-center' ); ?>">
+							<span class="dashicons dashicons-search"></span>
+						</div>
+						<div class="src-action-buttons">
+							<button class="src-submit-btn src-add-user-trigger"><span class="dashicons dashicons-plus"></span> <?php _e( 'Add New User', 'scientific-research-center' ); ?></button>
+							<button class="src-btn-outline" id="src-export-users-trigger"><span class="dashicons dashicons-download"></span> <?php _e( 'Export JSON', 'scientific-research-center' ); ?></button>
+							<div class="src-upload-btn-wrapper">
+								<button class="src-btn-outline"><span class="dashicons dashicons-upload"></span> <?php _e( 'Import JSON', 'scientific-research-center' ); ?></button>
+								<input type="file" id="src-import-users-input" accept=".json">
+							</div>
+						</div>
 					</div>
-					<div class="src-search-dropdowns">
+
+					<div class="src-filters-row secondary-row">
 						<select id="src-user-role-filter">
 							<option value=""><?php _e( 'All Roles', 'scientific-research-center' ); ?></option>
 							<?php
@@ -163,6 +252,22 @@ $current_section = isset( $_GET['section'] ) ? sanitize_text_field( $_GET['secti
 								echo '<option value="' . esc_attr( $slug ) . '">' . esc_html( $data['name'] ) . '</option>';
 							}
 							?>
+						</select>
+						<select id="src-user-inst-filter">
+							<option value=""><?php _e( 'All Institutions', 'scientific-research-center' ); ?></option>
+							<?php
+							foreach ( get_utils_institutions() as $inst ) {
+								echo '<option value="' . esc_attr( $inst ) . '">' . esc_html( $inst ) . '</option>';
+							}
+							?>
+						</select>
+						<div class="src-search-bar compact" style="flex: 1;">
+							<input type="text" id="src-user-specialty-filter" placeholder="<?php _e( 'Filter by Specialty...', 'scientific-research-center' ); ?>">
+						</div>
+						<select id="src-user-status-filter">
+							<option value=""><?php _e( 'All Statuses', 'scientific-research-center' ); ?></option>
+							<option value="active"><?php _e( 'Active', 'scientific-research-center' ); ?></option>
+							<option value="suspended"><?php _e( 'Suspended', 'scientific-research-center' ); ?></option>
 						</select>
 						<select id="src-user-sort">
 							<option value="display_name-ASC"><?php _e( 'Name (A-Z)', 'scientific-research-center' ); ?></option>
@@ -175,6 +280,82 @@ $current_section = isset( $_GET['section'] ) ? sanitize_text_field( $_GET['secti
 				<div class="src-user-list-container" id="src-user-list">
 					<!-- AJAX Loaded User Table -->
 					<div class="src-loading-skeleton"></div>
+				</div>
+
+				<!-- Add/Edit User Modal -->
+				<div id="src-user-modal" class="src-modal monochromatic">
+					<div class="src-modal-content">
+						<div class="src-modal-header">
+							<h2 id="src-modal-title"><?php _e( 'Add New Platform User', 'scientific-research-center' ); ?></h2>
+							<span class="src-modal-close">&times;</span>
+						</div>
+						<form id="src-user-form">
+							<input type="hidden" name="user_id" id="modal_user_id" value="">
+							<div class="src-field-row">
+								<div class="src-field-group">
+									<input type="text" name="first_name" id="add_fn" placeholder=" " required>
+									<label for="add_fn"><?php _e( 'First Name', 'scientific-research-center' ); ?></label>
+								</div>
+								<div class="src-field-group">
+									<input type="text" name="last_name" id="add_ln" placeholder=" " required>
+									<label for="add_ln"><?php _e( 'Last Name', 'scientific-research-center' ); ?></label>
+								</div>
+							</div>
+							<div class="src-field-row">
+								<div class="src-field-group">
+									<input type="text" name="username" id="add_user" placeholder=" " required>
+									<label for="add_user"><?php _e( 'Username', 'scientific-research-center' ); ?></label>
+								</div>
+								<div class="src-field-group">
+									<input type="email" name="email" id="add_email" placeholder=" " required>
+									<label for="add_email"><?php _e( 'Email Address', 'scientific-research-center' ); ?></label>
+								</div>
+							</div>
+							<div class="src-field-row">
+								<div class="src-field-group">
+									<select name="role" id="add_role" required>
+										<?php
+										foreach ( SRC_Roles::get_roles_definition() as $slug => $data ) {
+											echo '<option value="' . esc_attr( $slug ) . '">' . esc_html( $data['name'] ) . '</option>';
+										}
+										?>
+									</select>
+									<label for="add_role" class="select-label"><?php _e( 'Assigned Role', 'scientific-research-center' ); ?></label>
+								</div>
+								<div class="src-field-group">
+									<input type="password" name="password" id="add_pass" placeholder=" " required>
+									<label for="add_pass"><?php _e( 'Password', 'scientific-research-center' ); ?></label>
+								</div>
+							</div>
+							<div class="src-field-row">
+								<div class="src-field-group">
+									<input type="text" name="institution" id="add_inst" placeholder=" " list="src_institution_list">
+									<label for="add_inst"><?php _e( 'Affiliated Institution (Optional)', 'scientific-research-center' ); ?></label>
+								</div>
+								<div class="src-field-group">
+									<input type="text" name="specialty" id="add_spec" placeholder=" ">
+									<label for="add_spec"><?php _e( 'Scientific Specialty', 'scientific-research-center' ); ?></label>
+								</div>
+							</div>
+							<div class="src-modal-footer">
+								<button type="submit" id="src-modal-submit-btn" class="src-submit-btn"><?php _e( 'Create User Account', 'scientific-research-center' ); ?></button>
+							</div>
+							<div class="src-form-msg"></div>
+						</form>
+					</div>
+				</div>
+
+				<!-- Activity Log Modal -->
+				<div id="src-user-log-modal" class="src-modal monochromatic">
+					<div class="src-modal-content wide">
+						<div class="src-modal-header">
+							<h2><?php _e( 'User Activity Audit Log', 'scientific-research-center' ); ?></h2>
+							<span class="src-modal-close">&times;</span>
+						</div>
+						<div id="src-user-log-content">
+							<div class="src-loading-skeleton"></div>
+						</div>
+					</div>
 				</div>
 			</div>
 			<?php endif; ?>
