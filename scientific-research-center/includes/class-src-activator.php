@@ -23,8 +23,32 @@ class SRC_Activator {
 		// Create Dashboard pages for each role
 		self::create_dashboard_pages();
 
+		// Create activity log table
+		self::create_activity_log_table();
+
 		// Flush rewrite rules
 		flush_rewrite_rules();
+	}
+
+	/**
+	 * Create Activity Log Table
+	 */
+	private static function create_activity_log_table() {
+		global $wpdb;
+		$table_name = $wpdb->prefix . 'src_activity_log';
+		$charset_collate = $wpdb->get_charset_collate();
+
+		$sql = "CREATE TABLE $table_name (
+			id bigint(20) NOT NULL AUTO_INCREMENT,
+			user_id bigint(20) NOT NULL,
+			event_type varchar(50) NOT NULL,
+			description text NOT NULL,
+			event_date datetime DEFAULT CURRENT_TIMESTAMP NOT NULL,
+			PRIMARY KEY  (id)
+		) $charset_collate;";
+
+		require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
+		dbDelta( $sql );
 	}
 
 	/**

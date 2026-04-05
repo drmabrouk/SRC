@@ -26,3 +26,22 @@ function get_utils_institutions() {
 
 	return $results;
 }
+
+/**
+ * Log activity in the custom log table
+ */
+function src_log_activity( $user_id, $event_type, $description ) {
+	global $wpdb;
+	$table_name = $wpdb->prefix . 'src_activity_log';
+
+	$wpdb->insert(
+		$table_name,
+		array(
+			'user_id'     => $user_id,
+			'event_type'  => $event_type,
+			'description' => $description,
+			'event_date'  => current_time( 'mysql' ),
+		),
+		array( '%d', '%s', '%s', '%s' )
+	);
+}

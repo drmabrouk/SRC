@@ -31,6 +31,76 @@ class SRC_Frontend {
 		add_action( 'wp_ajax_src_mark_notifications_read', array( $this, 'handle_ajax_mark_notifications_read' ) );
 		add_action( 'wp_ajax_src_toggle_favorite', array( $this, 'handle_ajax_toggle_favorite' ) );
 		add_action( 'wp_ajax_src_system_refresh', array( $this, 'handle_ajax_system_refresh' ) );
+		add_action( 'wp_ajax_src_add_new_user', array( $this, 'handle_ajax_add_new_user' ) );
+		add_action( 'wp_ajax_src_get_user_data', array( $this, 'handle_ajax_get_user_data' ) );
+		add_action( 'wp_ajax_src_get_user_logs', array( $this, 'handle_ajax_get_user_logs' ) );
+		add_action( 'wp_ajax_src_bulk_export_users', array( $this, 'handle_ajax_bulk_export_users' ) );
+		add_action( 'wp_ajax_src_bulk_import_users', array( $this, 'handle_ajax_bulk_import_users' ) );
+	}
+
+	/**
+	 * AJAX Bulk Export Users
+	 */
+	public function handle_ajax_bulk_export_users() {
+		check_ajax_referer( 'src_auth_nonce', 'nonce' );
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error();
+		}
+
+		$users = get_users();
+		$user_data = array();
+		foreach ( $users as $user ) {
+			$user_data[] = array(
+				'user_login' => $user->user_login,
+				'user_email' => $user->user_email,
+				'roles'      => $user->roles,
+				'meta'       => get_user_meta( $user->ID )
+			);
+		}
+		wp_send_json_success( $user_data );
+	}
+
+	/**
+	 * AJAX Bulk Import Users
+	 */
+	public function handle_ajax_bulk_import_users() {
+		check_ajax_referer( 'src_auth_nonce', 'nonce' );
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error();
+		}
+
+		if ( empty( $_FILES['import_file'] ) ) {
+			wp_send_json_error( array( 'message' => 'No file provided.' ) );
+		}
+
+		$json_data = file_get_contents( $_FILES['import_file']['tmp_name'] );
+		$users = json_decode( $json_data, true );
+
+		if ( ! is_array( $users ) ) {
+			wp_send_json_error( array( 'message' => 'Invalid JSON.' ) );
+		}
+
+		$count = 0;
+		foreach ( $users as $u ) {
+			if ( ! email_exists( $u['user_email'] ) && ! username_exists( $u['user_login'] ) ) {
+				$user_id = wp_insert_user( array(
+					'user_login' => $u['user_login'],
+					'user_email' => $u['user_email'],
+					'user_pass'  => wp_generate_password()
+				) );
+				if ( ! is_wp_error( $user_id ) ) {
+					$user = new WP_User( $user_id );
+					foreach ( $u['roles'] as $role ) $user->add_role( $role );
+					foreach ( $u['meta'] as $k => $vs ) {
+						foreach ( $vs as $v ) update_user_meta( $user_id, $k, maybe_unserialize( $v ) );
+					}
+					$count++;
+				}
+			}
+		}
+
+		src_log_activity( get_current_user_id(), 'admin_action', sprintf( __( 'Bulk imported %d users.', 'scientific-research-center' ), $count ) );
+		wp_send_json_success( array( 'message' => sprintf( __( 'Imported %d users successfully.', 'scientific-research-center' ), $count ) ) );
 	}
 
 	/**
@@ -44,7 +114,7 @@ class SRC_Frontend {
 			wp_send_json_error( array( 'message' => __( 'You must be logged in to complete your profile.', 'scientific-research-center' ) ) );
 		}
 
-		$meta_fields = array( 'country', 'mobile', 'alt_email', 'gender', 'academic_degree', 'institution', 'country_code' );
+		$meta_fields = array( 'country', 'mobile', 'alt_email', 'gender', 'academic_degree', 'institution', 'country_code', 'specialty' );
 		foreach ( $meta_fields as $field ) {
 			if ( isset( $_POST[ $field ] ) ) {
 				update_user_meta( $user_id, 'src_' . $field, sanitize_text_field( $_POST[ $field ] ) );
@@ -99,6 +169,8 @@ class SRC_Frontend {
 		$search = isset( $_POST['search'] ) ? sanitize_text_field( $_POST['search'] ) : '';
 		$filter_role = isset( $_POST['role_filter'] ) ? sanitize_text_field( $_POST['role_filter'] ) : '';
 		$institution_filter = isset( $_POST['institution_filter'] ) ? sanitize_text_field( $_POST['institution_filter'] ) : '';
+		$status_filter = isset( $_POST['status_filter'] ) ? sanitize_text_field( $_POST['status_filter'] ) : '';
+		$specialty_filter = isset( $_POST['specialty_filter'] ) ? sanitize_text_field( $_POST['specialty_filter'] ) : '';
 		$orderby = isset( $_POST['orderby'] ) ? sanitize_text_field( $_POST['orderby'] ) : 'display_name';
 		$order = isset( $_POST['order'] ) ? sanitize_text_field( $_POST['order'] ) : 'ASC';
 
@@ -107,10 +179,27 @@ class SRC_Frontend {
 			'search_columns' => array( 'user_login', 'user_email', 'display_name' ),
 			'orderby'        => $orderby,
 			'order'          => $order,
+			'meta_query'     => array( 'relation' => 'AND' )
 		);
 
 		if ( $filter_role ) {
 			$args['role'] = $filter_role;
+		}
+
+		if ( $status_filter ) {
+			$args['meta_query'][] = array(
+				'key'     => 'src_user_status',
+				'value'   => $status_filter,
+				'compare' => '='
+			);
+		}
+
+		if ( $specialty_filter ) {
+			$args['meta_query'][] = array(
+				'key'     => 'src_specialty',
+				'value'   => $specialty_filter,
+				'compare' => 'LIKE'
+			);
 		}
 
 		// Security: Strictly scope access for Institution role
@@ -119,14 +208,20 @@ class SRC_Frontend {
 			if ( empty( $institution_filter ) ) {
 				wp_send_json_error( array( 'message' => __( 'No institution linked to your account.', 'scientific-research-center' ) ) );
 			}
-			$args['meta_key'] = 'src_institution';
-			$args['meta_value'] = $institution_filter;
+			$args['meta_query'][] = array(
+				'key'     => 'src_institution',
+				'value'   => $institution_filter,
+				'compare' => '='
+			);
 		} elseif ( $institution_filter ) {
 			if ( $institution_filter === 'current' ) {
 				$institution_filter = get_user_meta( get_current_user_id(), 'src_institution', true );
 			}
-			$args['meta_key'] = 'src_institution';
-			$args['meta_value'] = $institution_filter;
+			$args['meta_query'][] = array(
+				'key'     => 'src_institution',
+				'value'   => $institution_filter,
+				'compare' => '='
+			);
 		}
 
 		$users = get_users( $args );
@@ -140,6 +235,7 @@ class SRC_Frontend {
 					<th><?php _e( 'Email', 'scientific-research-center' ); ?></th>
 					<th><?php _e( 'Role', 'scientific-research-center' ); ?></th>
 					<th><?php _e( 'Institution', 'scientific-research-center' ); ?></th>
+					<th><?php _e( 'Specialty', 'scientific-research-center' ); ?></th>
 					<th><?php _e( 'Actions', 'scientific-research-center' ); ?></th>
 				</tr>
 			</thead>
@@ -150,6 +246,7 @@ class SRC_Frontend {
 					<?php foreach ( $users as $user ) :
 						$user_role = ! empty( $user->roles ) ? $user->roles[0] : 'Member';
 						$institution = get_user_meta( $user->ID, 'src_institution', true );
+						$specialty = get_user_meta( $user->ID, 'src_specialty', true );
 						$status = get_user_meta( $user->ID, 'src_user_status', true );
 						if ( ! $status ) $status = 'active';
 						?>
@@ -161,6 +258,7 @@ class SRC_Frontend {
 							<td><?php echo esc_html( $user->user_email ); ?></td>
 							<td><?php echo esc_html( ucfirst( str_replace( 'src_', '', $user_role ) ) ); ?></td>
 							<td><?php echo esc_html( $institution ? $institution : '-' ); ?></td>
+							<td><?php echo esc_html( $specialty ? $specialty : '-' ); ?></td>
 							<td class="src-actions">
 								<button class="src-icon-btn src-user-act" data-action="edit" data-id="<?php echo $user->ID; ?>" title="Edit"><span class="dashicons dashicons-edit"></span></button>
 								<?php if ( $status === 'active' ) : ?>
@@ -170,6 +268,7 @@ class SRC_Frontend {
 								<?php endif; ?>
 								<button class="src-icon-btn src-user-act src-danger" data-action="delete" data-id="<?php echo $user->ID; ?>" title="Delete"><span class="dashicons dashicons-trash"></span></button>
 								<button class="src-icon-btn src-user-act" data-action="notify" data-id="<?php echo $user->ID; ?>" title="Notify"><span class="dashicons dashicons-email"></span></button>
+								<button class="src-icon-btn src-user-act" data-action="logs" data-id="<?php echo $user->ID; ?>" title="View Logs"><span class="dashicons dashicons-list-view"></span></button>
 							</td>
 						</tr>
 					<?php endforeach; ?>
@@ -220,11 +319,15 @@ class SRC_Frontend {
 		switch ( $action ) {
 			case 'suspend':
 				update_user_meta( $user_id, 'src_user_status', 'suspended' );
-				wp_send_json_success( array( 'message' => __( 'User suspended.', 'scientific-research-center' ) ) );
+				src_log_activity( get_current_user_id(), 'admin_action', sprintf( __( 'Suspended user: %d', 'scientific-research-center' ), $user_id ) );
+				// In a production environment, call SRC_Emails::send_suspension_notice($user_id);
+				wp_send_json_success( array( 'message' => __( 'User suspended and notified.', 'scientific-research-center' ) ) );
 				break;
 			case 'reactivate':
 				update_user_meta( $user_id, 'src_user_status', 'active' );
-				wp_send_json_success( array( 'message' => __( 'User reactivated.', 'scientific-research-center' ) ) );
+				src_log_activity( get_current_user_id(), 'admin_action', sprintf( __( 'Reactivated user: %d', 'scientific-research-center' ), $user_id ) );
+				// In a production environment, call SRC_Emails::send_reactivation_notice($user_id);
+				wp_send_json_success( array( 'message' => __( 'User reactivated and notified.', 'scientific-research-center' ) ) );
 				break;
 			case 'delete':
 				if ( ! current_user_can( 'manage_options' ) ) {
@@ -238,7 +341,143 @@ class SRC_Frontend {
 				// Simple notification simulation
 				wp_send_json_success( array( 'message' => __( 'Notification sent.', 'scientific-research-center' ) ) );
 				break;
+			case 'update':
+				if ( ! current_user_can( 'manage_options' ) ) {
+					wp_send_json_error( array( 'message' => __( 'Access Denied.', 'scientific-research-center' ) ) );
+				}
+				$user_data = array(
+					'ID'         => $user_id,
+					'first_name' => sanitize_text_field( $_POST['first_name'] ),
+					'last_name'  => sanitize_text_field( $_POST['last_name'] ),
+					'user_email' => sanitize_email( $_POST['email'] ),
+				);
+				if ( ! empty( $_POST['password'] ) ) {
+					$user_data['user_pass'] = $_POST['password'];
+				}
+				wp_update_user( $user_data );
+
+				$user = new WP_User( $user_id );
+				$user->set_role( sanitize_text_field( $_POST['role'] ) );
+
+				update_user_meta( $user_id, 'src_institution', sanitize_text_field( $_POST['institution'] ) );
+				update_user_meta( $user_id, 'src_specialty', sanitize_text_field( $_POST['specialty'] ) );
+
+				src_log_activity( get_current_user_id(), 'admin_action', sprintf( __( 'Updated user info: %s', 'scientific-research-center' ), $user->user_login ) );
+
+				wp_send_json_success( array( 'message' => __( 'User updated successfully.', 'scientific-research-center' ) ) );
+				break;
 		}
+	}
+
+	/**
+	 * AJAX Add New User Handler
+	 */
+	public function handle_ajax_add_new_user() {
+		check_ajax_referer( 'src_auth_nonce', 'nonce' );
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Access Denied.', 'scientific-research-center' ) ) );
+		}
+
+		$user_data = array(
+			'username'    => sanitize_user( $_POST['username'] ),
+			'email'       => sanitize_email( $_POST['email'] ),
+			'password'    => $_POST['password'],
+			'first_name'  => sanitize_text_field( $_POST['first_name'] ),
+			'last_name'   => sanitize_text_field( $_POST['last_name'] ),
+			'role'        => sanitize_text_field( $_POST['role'] ),
+			'institution' => sanitize_text_field( $_POST['institution'] ),
+		);
+
+		// Manually create user (internal admin bypasses standard registration logic)
+		$user_id = wp_create_user( $user_data['username'], $user_data['password'], $user_data['email'] );
+		if ( is_wp_error( $user_id ) ) {
+			wp_send_json_error( array( 'message' => $user_id->get_error_message() ) );
+		}
+
+		$user = new WP_User( $user_id );
+		$user->set_role( $user_data['role'] );
+
+		wp_update_user( array(
+			'ID'         => $user_id,
+			'first_name' => $user_data['first_name'],
+			'last_name'  => $user_data['last_name'],
+		) );
+
+		if ( $user_data['institution'] ) {
+			update_user_meta( $user_id, 'src_institution', $user_data['institution'] );
+		}
+		if ( isset($_POST['specialty']) ) {
+			update_user_meta( $user_id, 'src_specialty', sanitize_text_field($_POST['specialty']) );
+		}
+
+		update_user_meta( $user_id, 'src_email_verified', '1' ); // Admin-created users are pre-verified
+
+		src_log_activity( get_current_user_id(), 'admin_action', sprintf( __( 'Created new user: %s', 'scientific-research-center' ), $user_data['username'] ) );
+
+		wp_send_json_success( array( 'message' => __( 'User account created successfully.', 'scientific-research-center' ) ) );
+	}
+
+	/**
+	 * AJAX Get User Data Handler
+	 */
+	public function handle_ajax_get_user_data() {
+		check_ajax_referer( 'src_auth_nonce', 'nonce' );
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error();
+		}
+
+		$user_id = absint( $_POST['user_id'] );
+		$user = get_userdata( $user_id );
+		if ( ! $user ) wp_send_json_error();
+
+		wp_send_json_success( array(
+			'first_name'  => $user->first_name,
+			'last_name'   => $user->last_name,
+			'user_email'  => $user->user_email,
+			'role'        => ! empty( $user->roles ) ? $user->roles[0] : '',
+			'institution' => get_user_meta( $user_id, 'src_institution', true ),
+			'specialty'   => get_user_meta( $user_id, 'src_specialty', true ),
+		) );
+	}
+
+	/**
+	 * AJAX Get User Logs Handler
+	 */
+	public function handle_ajax_get_user_logs() {
+		check_ajax_referer( 'src_auth_nonce', 'nonce' );
+		if ( ! current_user_can( 'manage_options' ) && ! current_user_can( 'edit_others_posts' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Access Denied.', 'scientific-research-center' ) ) );
+		}
+
+		$user_id = absint( $_POST['user_id'] );
+		global $wpdb;
+		$table_name = $wpdb->prefix . 'src_activity_log';
+		$logs = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $table_name WHERE user_id = %d ORDER BY event_date DESC", $user_id ) );
+
+		ob_start();
+		?>
+		<table class="src-user-table compact">
+			<thead>
+				<tr>
+					<th><?php _e( 'Event', 'scientific-research-center' ); ?></th>
+					<th><?php _e( 'Date', 'scientific-research-center' ); ?></th>
+				</tr>
+			</thead>
+			<tbody>
+				<?php if ( empty( $logs ) ) : ?>
+					<tr><td colspan="2"><?php _e( 'No activity found for this user.', 'scientific-research-center' ); ?></td></tr>
+				<?php else : ?>
+					<?php foreach ( $logs as $log ) : ?>
+						<tr>
+							<td><?php echo esc_html( $log->description ); ?></td>
+							<td><?php echo esc_html( $log->event_date ); ?></td>
+						</tr>
+					<?php endforeach; ?>
+				<?php endif; ?>
+			</tbody>
+		</table>
+		<?php
+		wp_send_json_success( ob_get_clean() );
 	}
 
 	/**

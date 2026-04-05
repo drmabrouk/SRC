@@ -101,6 +101,10 @@ if ( ! $user_id ) {
 				</div>
 			</div>
 			<div class="src-field-group">
+				<input type="text" name="specialty" id="prof_spec" placeholder=" " value="<?php echo esc_attr( get_user_meta( $user->ID, 'src_specialty', true ) ); ?>">
+				<label for="prof_spec"><?php _e( 'Scientific Specialty (e.g. Molecular Biology)', 'scientific-research-center' ); ?></label>
+			</div>
+			<div class="src-field-group">
 				<select name="gender" id="prof_gender" required>
 					<option value="male" <?php selected( get_user_meta( $user->ID, 'src_gender', true ), 'male' ); ?>><?php _e( 'Male', 'scientific-research-center' ); ?></option>
 					<option value="female" <?php selected( get_user_meta( $user->ID, 'src_gender', true ), 'female' ); ?>><?php _e( 'Female', 'scientific-research-center' ); ?></option>
