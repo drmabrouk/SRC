@@ -19,7 +19,7 @@ if ( empty( $full_name ) ) $full_name = $current_user->display_name;
 $role_definitions = SRC_Roles::get_roles_definition();
 $role_name = isset( $role_definitions[ $role ] ) ? $role_definitions[ $role ]['name'] : ucfirst( str_replace( 'src_', '', $role ) );
 
-$current_section = isset( $_GET['section'] ) ? sanitize_text_field( $_GET['section'] ) : 'dashboard';
+$current_section = isset( $_GET['section'] ) ? sanitize_text_field( $_GET['section'] ) : 'overview';
 ?>
 
 <div class="src-control-panel monochromatic full-width-layout">
@@ -31,9 +31,9 @@ $current_section = isset( $_GET['section'] ) ? sanitize_text_field( $_GET['secti
 	<!-- Left Sidebar -->
 	<aside class="src-cp-sidebar fixed-sidebar">
 		<div class="src-cp-profile horizontal">
-			<div class="src-cp-avatar small left" id="src-trigger-dashboard-upload">
+			<div class="src-cp-avatar small left" id="src-trigger-workspace-upload">
 				<img src="<?php echo esc_url( $profile_picture_url ); ?>" alt="<?php echo esc_attr( $full_name ); ?>">
-				<input type="file" id="src-dashboard-avatar-input" style="display:none;" accept="image/*">
+				<input type="file" id="src-workspace-avatar-input" style="display:none;" accept="image/*">
 			</div>
 			<div class="src-cp-user-info">
 				<h4><?php echo esc_html( $full_name ); ?></h4>
@@ -48,24 +48,24 @@ $current_section = isset( $_GET['section'] ) ? sanitize_text_field( $_GET['secti
 
 		<nav class="src-cp-nav">
 			<ul class="src-collapsible-menu">
-				<li class="src-menu-item <?php echo $current_section === 'dashboard' ? 'active' : ''; ?>">
-					<a href="?section=dashboard" class="src-menu-toggle">
+				<li class="src-menu-item <?php echo $current_section === 'overview' ? 'active' : ''; ?>" data-section="overview">
+					<a href="?section=overview" class="src-menu-toggle">
 						<span class="dashicons dashicons-dashboard"></span> <?php _e( 'Overview', 'scientific-research-center' ); ?>
 					</a>
 				</li>
 
 				<?php if ( in_array( $role, array( 'src_administrator', 'administrator', 'src_supervisor' ) ) ) : ?>
-					<li class="src-menu-item <?php echo $current_section === 'users-management' ? 'active' : ''; ?>">
+					<li class="src-menu-item <?php echo $current_section === 'users-management' ? 'active' : ''; ?>" data-section="users-management">
 						<a href="?section=users-management" class="src-menu-toggle">
 							<span class="dashicons dashicons-groups"></span> <?php _e( 'User Management', 'scientific-research-center' ); ?>
 						</a>
 					</li>
-					<li class="src-menu-item <?php echo $current_section === 'submissions-management' ? 'active' : ''; ?>">
+					<li class="src-menu-item <?php echo $current_section === 'submissions-management' ? 'active' : ''; ?>" data-section="submissions-management">
 						<a href="?section=submissions-management" class="src-menu-toggle">
 							<span class="dashicons dashicons-media-document"></span> <?php _e( 'Submissions', 'scientific-research-center' ); ?>
 						</a>
 					</li>
-					<li class="src-menu-item <?php echo $current_section === 'research-engine' ? 'active' : ''; ?>">
+					<li class="src-menu-item <?php echo $current_section === 'research-engine' ? 'active' : ''; ?>" data-section="research-engine">
 						<a href="?section=research-engine" class="src-menu-toggle">
 							<span class="dashicons dashicons-rest-api"></span> <?php _e( 'Search Engine', 'scientific-research-center' ); ?>
 						</a>
@@ -73,7 +73,7 @@ $current_section = isset( $_GET['section'] ) ? sanitize_text_field( $_GET['secti
 				<?php endif; ?>
 
 				<?php if ( $role === 'src_institution' ) : ?>
-					<li class="src-menu-item <?php echo $current_section === 'institution-members' ? 'active' : ''; ?>">
+					<li class="src-menu-item <?php echo $current_section === 'institution-members' ? 'active' : ''; ?>" data-section="institution-members">
 						<a href="?section=institution-members" class="src-menu-toggle">
 							<span class="dashicons dashicons-businessperson"></span> <?php _e( 'Institution Members', 'scientific-research-center' ); ?>
 						</a>
@@ -81,14 +81,14 @@ $current_section = isset( $_GET['section'] ) ? sanitize_text_field( $_GET['secti
 				<?php endif; ?>
 
 				<?php if ( in_array( $role, array( 'src_researcher', 'src_reviewer', 'src_member' ) ) ) : ?>
-					<li class="src-menu-item <?php echo $current_section === 'favorites' ? 'active' : ''; ?>">
+					<li class="src-menu-item <?php echo $current_section === 'favorites' ? 'active' : ''; ?>" data-section="favorites">
 						<a href="?section=favorites" class="src-menu-toggle">
 							<span class="dashicons dashicons-heart"></span> <?php _e( 'My Favorites', 'scientific-research-center' ); ?>
 						</a>
 					</li>
 				<?php endif; ?>
 
-				<li class="src-menu-item <?php echo $current_section === 'settings' ? 'active' : ''; ?>">
+				<li class="src-menu-item <?php echo $current_section === 'settings' ? 'active' : ''; ?>" data-section="settings">
 					<a href="?section=settings" class="src-menu-toggle">
 						<span class="dashicons dashicons-admin-settings"></span> <?php _e( 'Settings', 'scientific-research-center' ); ?>
 					</a>
@@ -99,12 +99,12 @@ $current_section = isset( $_GET['section'] ) ? sanitize_text_field( $_GET['secti
 
 	<!-- Right Main Column -->
 	<main class="src-cp-main tight-layout">
-		<?php if ( $current_section === 'dashboard' ) : ?>
-		<div id="src-cp-content-dashboard" class="src-cp-section active">
-			<h1><?php printf( __( '%s Control Panel', 'scientific-research-center' ), $role_name ); ?></h1>
-			<p><?php _e( 'Welcome to your professional workspace.', 'scientific-research-center' ); ?></p>
+		<?php if ( $current_section === 'overview' ) : ?>
+		<div id="src-cp-content-overview" class="src-cp-section active">
+			<h1><?php printf( __( '%s Professional Workspace', 'scientific-research-center' ), $role_name ); ?></h1>
+			<p><?php _e( 'Secure access to your scientific research portfolio and platform management tools.', 'scientific-research-center' ); ?></p>
 
-			<div class="src-dashboard-metrics">
+			<div class="src-workspace-metrics">
 				<?php
 				$total_users = count_users()['total_users'];
 				$research_counts = wp_count_posts( 'research_paper' );

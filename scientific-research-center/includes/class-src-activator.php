@@ -20,8 +20,8 @@ class SRC_Activator {
 		// Create the Login / Register page
 		self::create_auth_page();
 
-		// Create Dashboard pages for each role
-		self::create_dashboard_pages();
+		// Create Professional Workspace pages for each role
+		self::create_workspace_pages();
 
 		// Create activity log table
 		self::create_activity_log_table();
@@ -131,16 +131,16 @@ class SRC_Activator {
 	}
 
 	/**
-	 * Automatically create dashboard pages for each role
+	 * Automatically create professional workspace pages for each role
 	 */
-	private static function create_dashboard_pages() {
+	private static function create_workspace_pages() {
 		$roles = array(
-			'src_administrator' => 'Administrator Dashboard',
-			'src_supervisor'    => 'Supervisor Dashboard',
-			'src_institution'   => 'Institution Dashboard',
-			'src_reviewer'      => 'Reviewer Dashboard',
-			'src_researcher'    => 'Researcher Dashboard',
-			'src_member'        => 'Member Dashboard',
+			'src_administrator' => 'Administrator Workspace',
+			'src_supervisor'    => 'Supervisor Workspace',
+			'src_institution'   => 'Institution Workspace',
+			'src_reviewer'      => 'Scientific Reviewer Workspace',
+			'src_researcher'    => 'Researcher Workspace',
+			'src_member'        => 'Member Workspace',
 		);
 
 		foreach ( $roles as $slug => $title ) {

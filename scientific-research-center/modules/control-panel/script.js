@@ -44,7 +44,7 @@ jQuery(document).ready(function($) {
     });
 
     // Auto-load data for the active section on page load
-    const activeSection = urlParams.get('section') || 'dashboard';
+    const activeSection = urlParams.get('section') || 'overview';
     if (activeSection === 'users-management' || activeSection === 'institution-members') {
         loadSystemUsers(activeSection === 'institution-members');
     } else if (activeSection === 'submissions-management') {
@@ -751,16 +751,16 @@ jQuery(document).ready(function($) {
         $('#src-header-avatar-input').click();
     });
 
-    $(document).on('click', '#src-trigger-dashboard-upload img, #src-trigger-profile-upload', function() {
+    $(document).on('click', '#src-trigger-workspace-upload img, #src-trigger-profile-upload', function() {
         const $input = $(this).find('input[type="file"]');
         if ($input.length) {
             $input.click();
         } else {
-            $('#src-dashboard-avatar-input').click();
+            $('#src-workspace-avatar-input').click();
         }
     });
 
-    $(document).on('change', '#src-dashboard-avatar-input, #prof_picture_input', function() {
+    $(document).on('change', '#src-workspace-avatar-input, #prof_picture_input', function() {
         const file = this.files[0];
         if (!file) return;
 

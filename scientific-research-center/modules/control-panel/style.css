@@ -251,8 +251,8 @@ body.src-cp-active { overflow-x: hidden; }
 .src-cp-section h1 { font-size: 28px; font-weight: 900; margin: 0 0 10px; color: #000; letter-spacing: -0.5px; }
 .src-cp-section > p { font-size: 15px; color: #777; margin: 0 0 40px; line-height: 1.5; }
 
-/* Dashboard Metrics */
-.src-dashboard-metrics { display: flex; gap: 20px; margin: 30px 0 50px; }
+/* Workspace Metrics */
+.src-workspace-metrics { display: flex; gap: 20px; margin: 30px 0 50px; }
 .src-metric-card { flex: 1; background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 25px; display: flex; align-items: center; gap: 20px; transition: all 0.3s; }
 .src-metric-card:hover { border-color: #000; box-shadow: 0 5px 15px rgba(0,0,0,0.03); }
 .src-metric-icon { width: 50px; height: 50px; border-radius: 10px; background: #f9f9f9; display: flex; align-items: center; justify-content: center; font-size: 24px; color: #000; }
@@ -580,7 +580,7 @@ hr { border: 0; border-top: 1px solid #eee; margin: 20px 0; }
 }
 
 @media (max-width: 768px) {
-    .src-dashboard-metrics { flex-direction: column; }
+    .src-workspace-metrics { flex-direction: column; }
     .src-search-filters-bar { flex-direction: column; }
     .src-search-dropdowns { width: 100%; flex-wrap: wrap; }
     .src-search-dropdowns select { flex: 1; }
