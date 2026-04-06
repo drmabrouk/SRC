@@ -19,17 +19,6 @@ $category = isset( $_GET['category'] ) ? absint( $_GET['category'] ) : 0;
 $pub_year = isset( $_GET['year'] ) ? absint( $_GET['year'] ) : 0;
 $type_filter = isset( $_GET['type'] ) ? sanitize_text_field( $_GET['type'] ) : '';
 $sort_by = isset( $_GET['sort'] ) ? sanitize_text_field( $_GET['sort'] ) : 'relevance';
-
-// Keyword highlighting helper
-function src_highlight_keywords( $text, $query ) {
-	if ( empty( $query ) ) return $text;
-	$words = explode( ' ', $query );
-	foreach ( $words as $word ) {
-		$word = preg_quote( $word, '/' );
-		$text = preg_replace( "/($word)/i", '<mark class="src-highlight">$1</mark>', $text );
-	}
-	return $text;
-}
 ?>
 
 <div class="src-results-page monochromatic">

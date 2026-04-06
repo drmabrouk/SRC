@@ -62,7 +62,7 @@ class SRC_Activator {
 		$page_content = '[src_auth_form]';
 		$page_check = get_page_by_title( $page_title );
 
-		if ( ! isset( $page_check->ID ) ) {
+		if ( ! $page_check ) {
 			$new_page = array(
 				'post_title'   => $page_title,
 				'post_content' => $page_content,
@@ -76,7 +76,7 @@ class SRC_Activator {
 		// Create Profile Completion Page
 		$pc_title = 'Profile Completion';
 		$pc_check = get_page_by_title( $pc_title );
-		if ( ! isset( $pc_check->ID ) ) {
+		if ( ! $pc_check ) {
 			wp_insert_post( array(
 				'post_title'   => $pc_title,
 				'post_content' => '',
@@ -88,7 +88,7 @@ class SRC_Activator {
 
 		// Create Submit Research Page
 		$sr_title = 'Submit Research';
-		if ( ! isset( get_page_by_title( $sr_title )->ID ) ) {
+		if ( ! get_page_by_title( $sr_title ) ) {
 			wp_insert_post( array(
 				'post_title'   => $sr_title,
 				'post_content' => '[src_submit_research]',
@@ -101,7 +101,7 @@ class SRC_Activator {
 		// Create Research Library Page
 		$rl_title = 'Research Library';
 		$rl_page = get_page_by_title( $rl_title );
-		if ( ! isset( $rl_page->ID ) ) {
+		if ( ! $rl_page ) {
 			$rl_id = wp_insert_post( array(
 				'post_title'   => $rl_title,
 				'post_content' => '[src_research_library]',
@@ -115,7 +115,7 @@ class SRC_Activator {
 
 		// Create Search Results Page
 		$sr_res_title = 'Research Results';
-		if ( ! isset( get_page_by_title( $sr_res_title )->ID ) ) {
+		if ( ! get_page_by_title( $sr_res_title ) ) {
 			wp_insert_post( array(
 				'post_title'   => $sr_res_title,
 				'post_content' => '',
@@ -128,6 +128,26 @@ class SRC_Activator {
 		// Set as Front Page
 		update_option( 'show_on_front', 'page' );
 		update_option( 'page_on_front', $rl_id );
+	}
+
+	/**
+	 * Create Search Analytics Table
+	 */
+	private static function create_search_analytics_table() {
+		global $wpdb;
+		$table_name = $wpdb->prefix . 'src_search_analytics';
+		$charset_collate = $wpdb->get_charset_collate();
+
+		$sql = "CREATE TABLE $table_name (
+			id bigint(20) NOT NULL AUTO_INCREMENT,
+			keyword varchar(255) NOT NULL,
+			user_id bigint(20) DEFAULT NULL,
+			search_date datetime DEFAULT CURRENT_TIMESTAMP NOT NULL,
+			PRIMARY KEY  (id)
+		) $charset_collate;";
+
+		require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
+		dbDelta( $sql );
 	}
 
 	/**
@@ -145,7 +165,7 @@ class SRC_Activator {
 
 		foreach ( $roles as $slug => $title ) {
 			$page_check = get_page_by_title( $title );
-			if ( ! isset( $page_check->ID ) ) {
+			if ( ! $page_check ) {
 				wp_insert_post( array(
 					'post_title'   => $title,
 					'post_content' => '', // Content will be handled by the template
