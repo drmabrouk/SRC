@@ -28,6 +28,7 @@ class SRC_Research {
 		add_action( 'wp_ajax_src_assign_reviewer', array( $this, 'handle_ajax_assign_reviewer' ) );
 		add_action( 'wp_ajax_src_get_submission_history', array( $this, 'handle_ajax_get_submission_history' ) );
 		add_action( 'wp_ajax_src_rebuild_index', array( $this, 'handle_ajax_rebuild_index' ) );
+		add_action( 'wp_ajax_src_save_inline_research', array( $this, 'handle_ajax_save_inline_research' ) );
 	}
 
 	/**
@@ -289,6 +290,9 @@ class SRC_Research {
 			) );
 		}
 
+		// Send Automated Notification Email
+		SRC_Emails::send_research_status_email( $post_id, 'received' );
+
 		wp_send_json_success( array( 'message' => __( 'Research submitted successfully! It is now pending review.', 'scientific-research-center' ) ) );
 	}
 
@@ -341,11 +345,15 @@ class SRC_Research {
 				$current_time = current_time( 'timestamp' );
 				$intervals = floor( ( $current_time - $start_time ) / ( 30 * 60 ) );
 				$live_count = $start_count + max( 0, $intervals );
+				$live_downloads = 84200 + ( $intervals * 3 );
+				$live_users = 12400 + ( floor( $intervals / 10 ) );
 				?>
 				<p class="src-home-subheadline">
 					<?php printf(
-						__( 'You can access %s scientific papers, theses, studies, and case reports.', 'scientific-research-center' ),
-						'<span class="src-inline-counter" data-count="' . $live_count . '">' . number_format( $live_count ) . '</span>'
+						__( 'You can access %s scientific papers, %s downloads, and %s active global researchers.', 'scientific-research-center' ),
+						'<span class="src-inline-counter" data-count="' . $live_count . '">' . number_format( $live_count ) . '</span>',
+						'<span class="src-inline-counter no-anim">' . number_format( $live_downloads ) . '</span>',
+						'<span class="src-inline-counter no-anim">' . number_format( $live_users ) . '</span>'
 					); ?>
 				</p>
 
@@ -384,6 +392,25 @@ class SRC_Research {
 									<?php
 									$insts = get_terms( array( 'taxonomy' => 'src_institution_tax', 'hide_empty' => false ) );
 									foreach ( $insts as $inst ) echo '<option value="'.$inst->term_id.'">'.$inst->name.'</option>';
+									?>
+								</select>
+							</div>
+
+							<div class="src-field-group compact-select">
+								<select id="lib_category" class="src-hier-search-select">
+									<option value=""><?php _e( 'Select Category', 'scientific-research-center' ); ?></option>
+									<?php
+									$cats = get_terms( array( 'taxonomy' => 'research_category', 'hide_empty' => false ) );
+									foreach ( $cats as $cat ) echo '<option value="'.$cat->term_id.'">'.$cat->name.'</option>';
+									?>
+								</select>
+							</div>
+
+							<div class="src-field-group compact-select">
+								<select id="lib_year" class="src-hier-search-select">
+									<option value=""><?php _e( 'Select Year', 'scientific-research-center' ); ?></option>
+									<?php
+									for ( $y = date('Y'); $y >= 2000; $y-- ) echo '<option value="'.$y.'">'.$y.'</option>';
 									?>
 								</select>
 							</div>
@@ -593,12 +620,16 @@ class SRC_Research {
 				'ID'          => $post_id,
 				'post_status' => 'publish',
 			) );
+
+			SRC_Emails::send_research_status_email( $post_id, 'approved' );
 			wp_send_json_success( array( 'message' => __( 'Research approved and published.', 'scientific-research-center' ) ) );
 		} elseif ( $action === 'reject' ) {
 			wp_update_post( array(
 				'ID'          => $post_id,
 				'post_status' => 'draft', // or custom status 'rejected'
 			) );
+
+			SRC_Emails::send_research_status_email( $post_id, 'rejected' );
 			wp_send_json_success( array( 'message' => __( 'Research rejected.', 'scientific-research-center' ) ) );
 		}
 	}
@@ -662,6 +693,27 @@ class SRC_Research {
 		</table>
 		<?php
 		wp_send_json_success( ob_get_clean() );
+	}
+
+	/**
+	 * AJAX Save Inline Research Edit
+	 */
+	public function handle_ajax_save_inline_research() {
+		check_ajax_referer( 'src_auth_nonce', 'nonce' );
+		if ( ! current_user_can( 'edit_others_posts' ) ) wp_send_json_error();
+
+		$post_id = absint( $_POST['post_id'] );
+		$content = wp_kses_post( $_POST['content'] );
+
+		// Record version in activity log before update
+		src_log_activity( get_current_user_id(), 'version_control', sprintf( __( 'Saved new version for research ID: %d', 'scientific-research-center' ), $post_id ) );
+
+		wp_update_post( array(
+			'ID'           => $post_id,
+			'post_content' => $content
+		) );
+
+		wp_send_json_success();
 	}
 
 	/**

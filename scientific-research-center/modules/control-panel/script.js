@@ -407,6 +407,38 @@ jQuery(document).ready(function($) {
     // Research Submission Wizard
     let currentWizardStep = 1;
 
+    // Drag and Drop Implementation
+    const $dropZone = $('#src-main-file-zone');
+    if ($dropZone.length) {
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            $dropZone.on(eventName, e => {
+                e.preventDefault();
+                e.stopPropagation();
+            });
+        });
+
+        $dropZone.on('dragenter dragover', () => $dropZone.addClass('drag-active'));
+        $dropZone.on('dragleave drop', () => $dropZone.removeClass('drag-active'));
+
+        $dropZone.on('drop', e => {
+            const dt = e.originalEvent.dataTransfer;
+            const files = dt.files;
+            if (files.length) {
+                $('#res_file')[0].files = files;
+                $dropZone.find('p').text(`File selected: ${files[0].name}`);
+                $dropZone.find('.src-upload-icon .dashicons').removeClass('dashicons-cloud-upload').addClass('dashicons-yes');
+            }
+        });
+
+        // Update UI on standard input change
+        $(document).on('change', '#res_file', function() {
+            if (this.files.length) {
+                $dropZone.find('p').text(`File selected: ${this.files[0].name}`);
+                $dropZone.find('.src-upload-icon .dashicons').removeClass('dashicons-cloud-upload').addClass('dashicons-yes');
+            }
+        });
+    }
+
     $(document).on('click', '.src-wizard-next', function() {
         const $currentStepContent = $(`.src-wizard-step-content[data-step="${currentWizardStep}"]`);
         let valid = true;
@@ -565,12 +597,16 @@ jQuery(document).ready(function($) {
         const specialty = $('#lib_specialty').val();
         const subspecialty = $('#lib_sub_specialty').val();
         const institution = $('#lib_institution').val();
+        const category = $('#lib_category').val();
+        const year = $('#lib_year').val();
 
         let resultsUrl = src_ajax.site_url + '/research-results/?s=' + encodeURIComponent(query);
         if (faculty) resultsUrl += '&faculty=' + faculty;
         if (specialty) resultsUrl += '&specialty=' + specialty;
         if (subspecialty) resultsUrl += '&subspecialty=' + subspecialty;
         if (institution) resultsUrl += '&institution=' + institution;
+        if (category) resultsUrl += '&category=' + category;
+        if (year) resultsUrl += '&year=' + year;
 
         window.location.href = resultsUrl;
     });
@@ -1032,6 +1068,50 @@ jQuery(document).ready(function($) {
             }
         });
     }
+
+    // Inline Administrative Editing
+    $(document).on('click', '.src-inline-edit-trigger', function() {
+        const $section = $(this).closest('.src-detail-section');
+        $section.find('.src-abstract-content').hide();
+        $section.find('.src-inline-editor').fadeIn();
+        $(this).hide();
+    });
+
+    $(document).on('click', '.src-cancel-edit', function() {
+        const $section = $(this).closest('.src-detail-section');
+        $section.find('.src-inline-editor').hide();
+        $section.find('.src-abstract-content').fadeIn();
+        $section.find('.src-inline-edit-trigger').show();
+    });
+
+    $(document).on('click', '.src-save-inline-edit', function() {
+        const $btn = $(this);
+        const $section = $btn.closest('.src-detail-section');
+        const postId = $btn.data('id');
+        const newContent = $section.find('.src-abstract-edit-area').val();
+
+        $btn.text('Saving...').attr('disabled', true);
+
+        $.ajax({
+            type: 'POST',
+            url: src_ajax.ajax_url,
+            data: {
+                action: 'src_save_inline_research',
+                nonce: src_ajax.nonce,
+                post_id: postId,
+                content: newContent
+            },
+            success: function(response) {
+                if (response.success) {
+                    $section.find('.src-abstract-content').html(newContent.replace(/\n/g, '<br>')).fadeIn();
+                    $section.find('.src-inline-editor').hide();
+                    $section.find('.src-inline-edit-trigger').show();
+                    alert('Research version saved and indexed.');
+                }
+                $btn.text('Save Version').attr('disabled', false);
+            }
+        });
+    });
 
     // Favorites Toggling
     $(document).on('click', '.src-fav-toggle', function(e) {

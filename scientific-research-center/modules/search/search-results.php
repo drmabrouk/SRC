@@ -15,6 +15,8 @@ $faculty = isset( $_GET['faculty'] ) ? absint( $_GET['faculty'] ) : 0;
 $specialty = isset( $_GET['specialty'] ) ? absint( $_GET['specialty'] ) : 0;
 $subspecialty = isset( $_GET['subspecialty'] ) ? absint( $_GET['subspecialty'] ) : 0;
 $institution = isset( $_GET['institution'] ) ? absint( $_GET['institution'] ) : 0;
+$category = isset( $_GET['category'] ) ? absint( $_GET['category'] ) : 0;
+$pub_year = isset( $_GET['year'] ) ? absint( $_GET['year'] ) : 0;
 $type_filter = isset( $_GET['type'] ) ? sanitize_text_field( $_GET['type'] ) : '';
 $sort_by = isset( $_GET['sort'] ) ? sanitize_text_field( $_GET['sort'] ) : 'relevance';
 
@@ -73,6 +75,19 @@ function src_highlight_keywords( $text, $query ) {
 				</div>
 
 				<div class="src-filter-group collapsible expanded">
+					<h3 class="src-filter-toggle"><?php _e( 'Scientific Category', 'scientific-research-center' ); ?> <span class="dashicons dashicons-arrow-down-alt2"></span></h3>
+					<div class="src-filter-content">
+						<select name="category" class="src-filter-select">
+							<option value="0"><?php _e( 'All Categories', 'scientific-research-center' ); ?></option>
+							<?php
+							$cats = get_terms( array( 'taxonomy' => 'research_category', 'hide_empty' => false ) );
+							foreach ( $cats as $cat ) echo '<option value="'.$cat->term_id.'" '.selected($category, $cat->term_id, false).'>'.$cat->name.'</option>';
+							?>
+						</select>
+					</div>
+				</div>
+
+				<div class="src-filter-group collapsible expanded">
 					<h3 class="src-filter-toggle"><?php _e( 'Institution', 'scientific-research-center' ); ?> <span class="dashicons dashicons-arrow-down-alt2"></span></h3>
 					<div class="src-filter-content">
 						<select name="institution" class="src-filter-select">
@@ -80,6 +95,21 @@ function src_highlight_keywords( $text, $query ) {
 							<?php
 							$insts = get_terms( array( 'taxonomy' => 'src_institution_tax', 'hide_empty' => false ) );
 							foreach ( $insts as $inst ) echo '<option value="'.$inst->term_id.'" '.selected($institution, $inst->term_id, false).'>'.$inst->name.'</option>';
+							?>
+						</select>
+					</div>
+				</div>
+
+				<div class="src-filter-group collapsible expanded">
+					<h3 class="src-filter-toggle"><?php _e( 'Publication Year', 'scientific-research-center' ); ?> <span class="dashicons dashicons-arrow-down-alt2"></span></h3>
+					<div class="src-filter-content">
+						<select name="year" class="src-filter-select">
+							<option value="0"><?php _e( 'All Years', 'scientific-research-center' ); ?></option>
+							<?php
+							$current_year = date('Y');
+							for ($y = $current_year; $y >= 2000; $y--) {
+								echo '<option value="'.$y.'" '.selected($pub_year, $y, false).'>'.$y.'</option>';
+							}
 							?>
 						</select>
 					</div>
@@ -103,6 +133,9 @@ function src_highlight_keywords( $text, $query ) {
 							<option value="date_desc" <?php selected( $sort_by, 'date_desc' ); ?>><?php _e( 'Latest First', 'scientific-research-center' ); ?></option>
 							<option value="date_asc" <?php selected( $sort_by, 'date_asc' ); ?>><?php _e( 'Oldest First', 'scientific-research-center' ); ?></option>
 							<option value="title_asc" <?php selected( $sort_by, 'title_asc' ); ?>><?php _e( 'Title (A-Z)', 'scientific-research-center' ); ?></option>
+							<option value="author_asc" <?php selected( $sort_by, 'author_asc' ); ?>><?php _e( 'Author (A-Z)', 'scientific-research-center' ); ?></option>
+							<option value="inst_asc" <?php selected( $sort_by, 'inst_asc' ); ?>><?php _e( 'Institution (A-Z)', 'scientific-research-center' ); ?></option>
+							<option value="views_desc" <?php selected( $sort_by, 'views_desc' ); ?>><?php _e( 'Most Viewed', 'scientific-research-center' ); ?></option>
 						</select>
 					</div>
 				</div>
@@ -128,6 +161,17 @@ function src_highlight_keywords( $text, $query ) {
 					case 'date_desc': $args['orderby'] = 'date'; $args['order'] = 'DESC'; break;
 					case 'date_asc':  $args['orderby'] = 'date'; $args['order'] = 'ASC'; break;
 					case 'title_asc': $args['orderby'] = 'title'; $args['order'] = 'ASC'; break;
+					case 'author_asc': $args['orderby'] = 'author'; $args['order'] = 'ASC'; break;
+					case 'inst_asc':
+						$args['meta_key'] = 'src_institution';
+						$args['orderby'] = 'meta_value';
+						$args['order'] = 'ASC';
+						break;
+					case 'views_desc':
+						$args['meta_key'] = 'src_views';
+						$args['orderby'] = 'meta_value_num';
+						$args['order'] = 'DESC';
+						break;
 				}
 
 				// Apply Taxonomy Filters
@@ -147,9 +191,21 @@ function src_highlight_keywords( $text, $query ) {
 				if ( $institution ) {
 					$tax_query[] = array( 'taxonomy' => 'src_institution_tax', 'field' => 'term_id', 'terms' => $institution );
 				}
+				if ( $category ) {
+					$tax_query[] = array( 'taxonomy' => 'research_category', 'field' => 'term_id', 'terms' => $category );
+				}
 
 				if ( count( $tax_query ) > 1 ) {
 					$args['tax_query'] = $tax_query;
+				}
+
+				// Year Filter Logic
+				if ( $pub_year ) {
+					$args['date_query'] = array(
+						array(
+							'year' => $pub_year,
+						),
+					);
 				}
 
 				$query = new WP_Query( $args );
@@ -179,9 +235,9 @@ function src_highlight_keywords( $text, $query ) {
 							</div>
 							<h3><?php echo src_highlight_keywords( get_the_title(), $search_query ); ?></h3>
 							<div class="src-card-meta academic-meta">
-								<div class="src-meta-item"><span class="dashicons dashicons-admin-users"></span> <strong><?php the_author(); ?></strong></div>
+								<a href="<?php echo esc_url( home_url( '/researcher/' . get_the_author_meta( 'user_login' ) . '/' ) ); ?>" class="src-meta-item src-link-item"><span class="dashicons dashicons-admin-users"></span> <strong><?php the_author(); ?></strong></a>
 								<?php if ( $institution ) : ?>
-									<div class="src-meta-item"><span class="dashicons dashicons-welcome-learn-more"></span> <span><?php echo esc_html( $institution ); ?></span></div>
+									<a href="<?php echo esc_url( add_query_arg( 'institution', urlencode( $institution ), home_url( '/research-results/' ) ) ); ?>" class="src-meta-item src-link-item"><span class="dashicons dashicons-welcome-learn-more"></span> <span><?php echo esc_html( $institution ); ?></span></a>
 								<?php endif; ?>
 							</div>
 							<div class="src-card-excerpt">
