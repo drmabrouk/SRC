@@ -29,8 +29,8 @@ class SRC_Roles {
 	 * Remove custom roles.
 	 */
 	public static function remove_roles() {
-		reset( self::get_roles_definition() );
-		foreach ( self::get_roles_definition() as $slug => $data ) {
+		$roles = self::get_roles_definition();
+		foreach ( $roles as $slug => $data ) {
 			remove_role( $slug );
 		}
 	}
