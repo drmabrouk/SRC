@@ -69,55 +69,6 @@ class SRC_Research {
 	/**
 	 * Register Research Taxonomies
 	 */
-	public function register_research_taxonomies() {
-		// Research Type (Thesis, Paper, Study)
-		register_taxonomy( 'research_type', 'research_paper', array(
-			'label'        => __( 'Research Type', 'scientific-research-center' ),
-			'rewrite'      => array( 'slug' => 'research-type' ),
-			'hierarchical' => true,
-			'show_in_rest' => true,
-		) );
-
-		// Research Category (Scientific Fields)
-		register_taxonomy( 'research_category', 'research_paper', array(
-			'label'        => __( 'Scientific Category', 'scientific-research-center' ),
-			'rewrite'      => array( 'slug' => 'research-category' ),
-			'hierarchical' => true,
-			'show_in_rest' => true,
-		) );
-
-		// Faculty (Level 1)
-		register_taxonomy( 'src_faculty', 'research_paper', array(
-			'label'        => __( 'Faculty / College', 'scientific-research-center' ),
-			'rewrite'      => array( 'slug' => 'faculty' ),
-			'hierarchical' => true,
-			'show_in_rest' => true,
-		) );
-
-		// Specialty (Level 2 - Child of Faculty)
-		register_taxonomy( 'src_specialty', 'research_paper', array(
-			'label'        => __( 'Specialty', 'scientific-research-center' ),
-			'rewrite'      => array( 'slug' => 'specialty' ),
-			'hierarchical' => true,
-			'show_in_rest' => true,
-		) );
-
-		// Sub-specialty (Level 3 - Child of Specialty)
-		register_taxonomy( 'src_sub_specialty', 'research_paper', array(
-			'label'        => __( 'Sub-specialty', 'scientific-research-center' ),
-			'rewrite'      => array( 'slug' => 'sub-specialty' ),
-			'hierarchical' => true,
-			'show_in_rest' => true,
-		) );
-
-		// Registered Institution (Level 4)
-		register_taxonomy( 'src_institution_tax', 'research_paper', array(
-			'label'        => __( 'Registered Institution', 'scientific-research-center' ),
-			'rewrite'      => array( 'slug' => 'institution' ),
-			'hierarchical' => true,
-			'show_in_rest' => true,
-		) );
-	}
 
 	/**
 	 * Render Research Submission Form
