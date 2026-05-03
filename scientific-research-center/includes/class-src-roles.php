@@ -54,6 +54,7 @@ class SRC_Roles {
 		$reviewer_caps = array_merge( $researcher_caps, array(
 			'publish_posts' => true,
 			'edit_published_posts' => true,
+			'edit_others_posts' => true,
 		) );
 
 		// Institution adds to Reviewer

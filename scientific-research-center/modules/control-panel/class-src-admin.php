@@ -54,9 +54,6 @@ class SRC_Admin {
 	 * Render the User Management page
 	 */
 	public function render_user_management_page() {
-		$user_management = new SRC_User_Management();
-		$user_management->handle_actions();
-
 		if ( isset( $_GET['src_imported'] ) ) {
 			echo '<div class="updated"><p>' . sprintf( __( '%d users imported successfully!', 'scientific-research-center' ), absint( $_GET['src_imported'] ) ) . '</p></div>';
 		}

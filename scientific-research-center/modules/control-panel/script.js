@@ -152,6 +152,35 @@ jQuery(document).ready(function($) {
 
         if (action === 'delete' && !confirm('Are you sure you want to delete this user?')) return;
 
+        if (action === 'edit') {
+            $.ajax({
+                type: 'POST',
+                url: src_ajax.ajax_url,
+                data: {
+                    action: 'src_get_user_data',
+                    nonce: src_ajax.nonce,
+                    user_id: userId
+                },
+                success: function(response) {
+                    if (response.success) {
+                        $('#src-modal-title').text('Edit Platform User');
+                        $('#src-modal-submit-btn').text('Update Account');
+                        $('#modal_user_id').val(userId);
+                        $('#add_fn').val(response.data.first_name);
+                        $('#add_ln').val(response.data.last_name);
+                        $('#add_user').val(response.data.user_login).attr('disabled', true);
+                        $('#add_email').val(response.data.user_email);
+                        $('#add_role').val(response.data.role);
+                        $('#add_inst').val(response.data.institution);
+                        $('#add_spec').val(response.data.specialty);
+                        $('#add_pass').val('');
+                        $('#src-user-modal').fadeIn();
+                    }
+                }
+            });
+            return;
+        }
+
         $.ajax({
             type: 'POST',
             url: src_ajax.ajax_url,
@@ -788,7 +817,7 @@ jQuery(document).ready(function($) {
     });
 
     $(document).on('click', '#src-trigger-workspace-upload img, #src-trigger-profile-upload', function() {
-        const $input = $(this).find('input[type="file"]');
+        const $input = $(this).closest('.src-cp-avatar, .src-profile-avatar-wrapper').find('input[type="file"]');
         if ($input.length) {
             $input.click();
         } else {
@@ -994,35 +1023,6 @@ jQuery(document).ready(function($) {
         const action = $btn.data('action');
         const id = $btn.data('id');
         const type = $btn.data('type');
-
-        if (action === 'edit') {
-            $.ajax({
-                type: 'POST',
-                url: src_ajax.ajax_url,
-                data: {
-                    action: 'src_get_user_data',
-                    nonce: src_ajax.nonce,
-                    user_id: userId
-                },
-                success: function(response) {
-                    if (response.success) {
-                        $('#src-modal-title').text('Edit Platform User');
-                        $('#src-modal-submit-btn').text('Update Account');
-                        $('#modal_user_id').val(userId);
-                        $('#add_fn').val(response.data.first_name);
-                        $('#add_ln').val(response.data.last_name);
-                        $('#add_user').val(response.data.user_login).attr('disabled', true);
-                        $('#add_email').val(response.data.user_email);
-                        $('#add_role').val(response.data.role);
-                        $('#add_inst').val(response.data.institution);
-                        $('#add_spec').val(response.data.specialty);
-                        $('#add_pass').val('');
-                        $('#src-user-modal').fadeIn();
-                    }
-                }
-            });
-            return;
-        }
 
         if (action === 'delete' && !confirm('Remove this category?')) return;
 

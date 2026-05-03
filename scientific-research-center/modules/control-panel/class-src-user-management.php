@@ -10,6 +10,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class SRC_User_Management {
 
+	public function __construct() {
+		add_action( 'admin_init', array( $this, 'handle_actions' ) );
+	}
+
 	public function handle_actions() {
 		if ( isset( $_POST['src_export_users'] ) ) {
 			$this->export_users();

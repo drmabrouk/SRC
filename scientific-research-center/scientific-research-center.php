@@ -22,9 +22,9 @@ define( 'SRC_VERSION', '1.0.0' );
 
 // Include Core Utilities
 require_once SRC_PLUGIN_DIR . 'includes/utils.php';
+require_once SRC_PLUGIN_DIR . 'includes/class-src-roles.php';
 require_once SRC_PLUGIN_DIR . 'includes/class-src-activator.php';
 require_once SRC_PLUGIN_DIR . 'includes/class-src-deactivator.php';
-require_once SRC_PLUGIN_DIR . 'includes/class-src-roles.php';
 require_once SRC_PLUGIN_DIR . 'includes/class-src-emails.php';
 require_once SRC_PLUGIN_DIR . 'includes/class-src-frontend.php';
 

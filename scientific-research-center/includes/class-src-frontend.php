@@ -692,7 +692,7 @@ class SRC_Frontend {
 		// Handle Workspaces
 		if ( is_page() ) {
 			$slug = get_post_field( 'post_name', get_post() );
-			if ( str_contains( $slug, '-workspace' ) ) {
+			if ( false !== strpos( $slug, '-workspace' ) ) {
 				return SRC_PLUGIN_DIR . 'modules/control-panel/workspace-portal.php';
 			}
 
@@ -1156,7 +1156,7 @@ class SRC_Frontend {
 		}
 
 		// Access control for professional workspace pages
-		if ( str_contains( $current_slug, '-workspace' ) ) {
+		if ( false !== strpos( $current_slug, '-workspace' ) ) {
 			if ( ! is_user_logged_in() ) {
 				wp_safe_redirect( home_url( '/login-register/' ) );
 				exit;
