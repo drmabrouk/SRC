@@ -662,6 +662,9 @@ class SRC_Research {
 	 */
 	public function handle_ajax_get_submission_history() {
 		check_ajax_referer( 'src_auth_nonce', 'nonce' );
+		if ( ! current_user_can( 'edit_others_posts' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Access Denied.', 'scientific-research-center' ) ) );
+		}
 		$post_id = absint( $_POST['sub_id'] );
 
 		global $wpdb;

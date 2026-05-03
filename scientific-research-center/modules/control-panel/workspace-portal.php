@@ -50,7 +50,7 @@ $current_section = isset( $_GET['section'] ) ? sanitize_text_field( $_GET['secti
 			<ul class="src-collapsible-menu">
 				<li class="src-menu-item <?php echo $current_section === 'overview' ? 'active' : ''; ?>" data-section="overview">
 					<a href="?section=overview" class="src-menu-toggle">
-						<span class="dashicons dashicons-dashboard"></span> <?php _e( 'Overview', 'scientific-research-center' ); ?>
+						<span class="dashicons dashicons-performance"></span> <?php _e( 'Overview', 'scientific-research-center' ); ?>
 					</a>
 				</li>
 
