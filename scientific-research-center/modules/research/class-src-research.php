@@ -868,7 +868,7 @@ class SRC_Research {
 	}
 
 	public function add_pub_rewrite_rules() {
-		add_rewrite_rule( '^research/([^/]+)/?$', 'index.php?src_pub_id=$matches[1]', 'top' );
+		add_rewrite_rule( '^research/(PUB-[^/]+)/?$', 'index.php?src_pub_id=$matches[1]', 'top' );
 	}
 
 	public function add_pub_query_vars( $vars ) {
@@ -889,15 +889,18 @@ class SRC_Research {
 		$pub_id = get_query_var( 'src_pub_id' );
 		if ( $pub_id ) {
 			$posts = get_posts( array(
-				'post_type'  => 'research_paper',
-				'meta_key'   => 'src_pub_id',
-				'meta_value' => $pub_id,
-				'limit'      => 1
+				'post_type'      => 'research_paper',
+				'meta_key'       => 'src_pub_id',
+				'meta_value'     => $pub_id,
+				'posts_per_page' => 1
 			) );
 
 			if ( ! empty( $posts ) ) {
-				wp_safe_redirect( get_permalink( $posts[0]->ID ) );
-				exit;
+				$post_id = $posts[0]->ID;
+				if ( get_queried_object_id() !== $post_id ) {
+					wp_safe_redirect( get_permalink( $post_id ) );
+					exit;
+				}
 			}
 		}
 	}

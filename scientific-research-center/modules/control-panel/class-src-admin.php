@@ -57,6 +57,9 @@ class SRC_Admin {
 		if ( isset( $_GET['src_imported'] ) ) {
 			echo '<div class="updated"><p>' . sprintf( __( '%d users imported successfully!', 'scientific-research-center' ), absint( $_GET['src_imported'] ) ) . '</p></div>';
 		}
+		if ( isset( $_GET['src_imported_research'] ) ) {
+			echo '<div class="updated"><p>' . sprintf( __( '%d research papers imported successfully!', 'scientific-research-center' ), absint( $_GET['src_imported_research'] ) ) . '</p></div>';
+		}
 		if ( isset( $_GET['src_error'] ) ) {
 			echo '<div class="error"><p>' . esc_html( $_GET['src_error'] ) . '</p></div>';
 		}
@@ -79,10 +82,16 @@ class SRC_Admin {
 
 				<hr>
 
-				<form method="post" enctype="multipart/form-data">
+				<form method="post" enctype="multipart/form-data" style="margin-bottom: 20px;">
 					<?php wp_nonce_field( 'src_user_import', 'src_import_nonce' ); ?>
 					<input type="file" name="src_import_file" accept=".json">
 					<input type="submit" name="src_import_users" class="button" value="<?php _e( 'Import Users from JSON', 'scientific-research-center' ); ?>">
+				</form>
+
+				<form method="post" enctype="multipart/form-data">
+					<?php wp_nonce_field( 'src_research_import', 'src_import_nonce' ); ?>
+					<input type="file" name="src_import_research_file" accept=".json">
+					<input type="submit" name="src_import_research" class="button" value="<?php _e( 'Import Research from JSON', 'scientific-research-center' ); ?>">
 				</form>
 			</div>
 		</div>

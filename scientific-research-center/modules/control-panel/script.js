@@ -629,7 +629,7 @@ jQuery(document).ready(function($) {
         const category = $('#lib_category').val();
         const year = $('#lib_year').val();
 
-        let resultsUrl = src_ajax.site_url + '/research-results/?s=' + encodeURIComponent(query);
+        let resultsUrl = src_ajax.site_url.replace(/\/$/, '') + '/research-results/?s=' + encodeURIComponent(query);
         if (faculty) resultsUrl += '&faculty=' + faculty;
         if (specialty) resultsUrl += '&specialty=' + specialty;
         if (subspecialty) resultsUrl += '&subspecialty=' + subspecialty;

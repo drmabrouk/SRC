@@ -23,6 +23,10 @@ class SRC_User_Management {
 			$this->import_users();
 		}
 
+		if ( isset( $_POST['src_import_research'] ) ) {
+			$this->import_research();
+		}
+
 		if ( isset( $_POST['src_export_research'] ) ) {
 			$this->export_research();
 		}
@@ -136,5 +140,52 @@ class SRC_User_Management {
 		header( 'Content-Disposition: attachment; filename=' . $filename );
 		echo $json_data;
 		exit;
+	}
+
+	/**
+	 * Import research from a JSON file
+	 */
+	public function import_research() {
+		check_admin_referer( 'src_research_import', 'src_import_nonce' );
+
+		if ( ! empty( $_FILES['src_import_research_file']['tmp_name'] ) ) {
+			$json_data = file_get_contents( $_FILES['src_import_research_file']['tmp_name'] );
+			$research_papers = json_decode( $json_data, true );
+
+			if ( json_last_error() !== JSON_ERROR_NONE ) {
+				wp_safe_redirect( add_query_arg( 'src_error', urlencode( __( 'Invalid JSON file provided.', 'scientific-research-center' ) ), menu_page_url( 'src-users', false ) ) );
+				exit;
+			}
+
+			if ( is_array( $research_papers ) ) {
+				$imported_count = 0;
+				foreach ( $research_papers as $data ) {
+					$post_id = wp_insert_post( array(
+						'post_title'   => $data['title'],
+						'post_content' => $data['content'],
+						'post_status'  => $data['status'],
+						'post_type'    => 'research_paper',
+					) );
+
+					if ( $post_id && ! is_wp_error( $post_id ) ) {
+						// Import Meta
+						foreach ( $data['meta'] as $key => $values ) {
+							foreach ( $values as $value ) {
+								update_post_meta( $post_id, $key, maybe_unserialize( $value ) );
+							}
+						}
+
+						// Import Terms
+						foreach ( $data['terms'] as $taxonomy => $slugs ) {
+							wp_set_object_terms( $post_id, $slugs, $taxonomy );
+						}
+
+						$imported_count++;
+					}
+				}
+				wp_safe_redirect( add_query_arg( 'src_imported_research', $imported_count, menu_page_url( 'src-users', false ) ) );
+				exit;
+			}
+		}
 	}
 }
